@@ -1,0 +1,747 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1E7715832E6579B3005914E9 /* UIHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BB89972A59B85B0038A0E0 /* UIHelpers.swift */; };
+		A1338FE9298ABB02007DC669 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1338FE8298ABB02007DC669 /* AppDelegate.swift */; };
+		A1338FEB298ABB02007DC669 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1338FEA298ABB02007DC669 /* SceneDelegate.swift */; };
+		A1338FED298ABB02007DC669 /* GettingStartedVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1338FEC298ABB02007DC669 /* GettingStartedVC.swift */; };
+		A1338FF0298ABB02007DC669 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1338FEE298ABB02007DC669 /* Main.storyboard */; };
+		A1338FF2298ABB06007DC669 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1338FF1298ABB06007DC669 /* Assets.xcassets */; };
+		A1338FF5298ABB06007DC669 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1338FF3298ABB06007DC669 /* LaunchScreen.storyboard */; };
+		A1339003298ABB64007DC669 /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1339002298ABB64007DC669 /* KeyboardViewController.swift */; };
+		A1339007298ABB64007DC669 /* FusionENSKeyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A1339000298ABB64007DC669 /* FusionENSKeyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A1339015298ABF82007DC669 /* FusionENSAutoCompleteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1339014298ABF82007DC669 /* FusionENSAutoCompleteProvider.swift */; };
+		A1339017298AC072007DC669 /* FusionENSKeyboardAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1339016298AC072007DC669 /* FusionENSKeyboardAppearance.swift */; };
+		A1339019298AC0D6007DC669 /* FusionENSKeyboardActionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1339018298AC0D6007DC669 /* FusionENSKeyboardActionHandler.swift */; };
+		A133901B298AC232007DC669 /* FusionENSKeyboardLayoutProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A133901A298AC232007DC669 /* FusionENSKeyboardLayoutProvider.swift */; };
+		A133901D298AC290007DC669 /* KeyboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A133901C298AC290007DC669 /* KeyboardView.swift */; };
+		A13B1D3E2A4A25D700463E17 /* APICaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13B1D3D2A4A25D700463E17 /* APICaller.swift */; };
+		A13B1D402A4A261800463E17 /* URLS.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13B1D3F2A4A261700463E17 /* URLS.swift */; };
+		A173F3062A4A6310006B0ACB /* HelperClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = A173F3052A4A6310006B0ACB /* HelperClass.swift */; };
+		A17DFA862A48F93E003FB8B5 /* KeyboardKit in Frameworks */ = {isa = PBXBuildFile; productRef = A17DFA852A48F93E003FB8B5 /* KeyboardKit */; };
+		A17DFA882A48F950003FB8B5 /* KeyboardKit in Frameworks */ = {isa = PBXBuildFile; productRef = A17DFA872A48F950003FB8B5 /* KeyboardKit */; };
+		A1BB89902A599A820038A0E0 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1BB898F2A599A820038A0E0 /* SnapKit */; };
+		A1BB89942A59AA3A0038A0E0 /* Poppins-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A1BB89922A59AA390038A0E0 /* Poppins-Bold.ttf */; };
+		A1BB89952A59AA3A0038A0E0 /* Poppins-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A1BB89932A59AA3A0038A0E0 /* Poppins-Regular.ttf */; };
+		A1BB899B2A59C3AF0038A0E0 /* FusionENSButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BB899A2A59C3AF0038A0E0 /* FusionENSButton.swift */; };
+		A1BB899E2A5A0A120038A0E0 /* GettingStartedVC_Page2.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BB899D2A5A0A120038A0E0 /* GettingStartedVC_Page2.swift */; };
+		A1BB89A02A5ABD610038A0E0 /* GettingStartedVC_Page3.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BB899F2A5ABD610038A0E0 /* GettingStartedVC_Page3.swift */; };
+		A1BCEF1D2A490A3600A0D0C4 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = A1BCEF1C2A490A3600A0D0C4 /* Alamofire */; };
+		A1BCEF1F2A490A5E00A0D0C4 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = A1BCEF1E2A490A5E00A0D0C4 /* Alamofire */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A1339005298ABB64007DC669 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1338FDD298ABB02007DC669 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1338FFF298ABB64007DC669;
+			remoteInfo = FusionENSKeyboard;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A133900B298ABB64007DC669 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A1339007298ABB64007DC669 /* FusionENSKeyboard.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1BB898D2A5998CA0038A0E0 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		A1338FE5298ABB02007DC669 /* FusionENSApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FusionENSApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1338FE8298ABB02007DC669 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A1338FEA298ABB02007DC669 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		A1338FEC298ABB02007DC669 /* GettingStartedVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GettingStartedVC.swift; sourceTree = "<group>"; };
+		A1338FEF298ABB02007DC669 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		A1338FF1298ABB06007DC669 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A1338FF4298ABB06007DC669 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		A1338FF6298ABB06007DC669 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1339000298ABB64007DC669 /* FusionENSKeyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FusionENSKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1339002298ABB64007DC669 /* KeyboardViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardViewController.swift; sourceTree = "<group>"; };
+		A1339004298ABB64007DC669 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1339014298ABF82007DC669 /* FusionENSAutoCompleteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FusionENSAutoCompleteProvider.swift; sourceTree = "<group>"; };
+		A1339016298AC072007DC669 /* FusionENSKeyboardAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FusionENSKeyboardAppearance.swift; sourceTree = "<group>"; };
+		A1339018298AC0D6007DC669 /* FusionENSKeyboardActionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FusionENSKeyboardActionHandler.swift; sourceTree = "<group>"; };
+		A133901A298AC232007DC669 /* FusionENSKeyboardLayoutProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FusionENSKeyboardLayoutProvider.swift; sourceTree = "<group>"; };
+		A133901C298AC290007DC669 /* KeyboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardView.swift; sourceTree = "<group>"; };
+		A13B1D3D2A4A25D700463E17 /* APICaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APICaller.swift; sourceTree = "<group>"; };
+		A13B1D3F2A4A261700463E17 /* URLS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLS.swift; sourceTree = "<group>"; };
+		A13B1D412A4A26A800463E17 /* KeyboardKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = KeyboardKit; path = ../GitHub/KeyboardKit; sourceTree = "<group>"; };
+		A173F3052A4A6310006B0ACB /* HelperClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperClass.swift; sourceTree = "<group>"; };
+		A1BB89922A59AA390038A0E0 /* Poppins-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Poppins-Bold.ttf"; sourceTree = "<group>"; };
+		A1BB89932A59AA3A0038A0E0 /* Poppins-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Poppins-Regular.ttf"; sourceTree = "<group>"; };
+		A1BB89972A59B85B0038A0E0 /* UIHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIHelpers.swift; sourceTree = "<group>"; };
+		A1BB899A2A59C3AF0038A0E0 /* FusionENSButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FusionENSButton.swift; sourceTree = "<group>"; };
+		A1BB899D2A5A0A120038A0E0 /* GettingStartedVC_Page2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GettingStartedVC_Page2.swift; sourceTree = "<group>"; };
+		A1BB899F2A5ABD610038A0E0 /* GettingStartedVC_Page3.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GettingStartedVC_Page3.swift; sourceTree = "<group>"; };
+		A1BB89A12A5AC2720038A0E0 /* FusionENSAppRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FusionENSAppRelease.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A1338FE2298ABB02007DC669 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1BB89902A599A820038A0E0 /* SnapKit in Frameworks */,
+				A17DFA862A48F93E003FB8B5 /* KeyboardKit in Frameworks */,
+				A1BCEF1D2A490A3600A0D0C4 /* Alamofire in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1338FFD298ABB64007DC669 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A17DFA882A48F950003FB8B5 /* KeyboardKit in Frameworks */,
+				A1BCEF1F2A490A5E00A0D0C4 /* Alamofire in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A1338FDC298ABB02007DC669 = {
+			isa = PBXGroup;
+			children = (
+				A17DFA822A48F915003FB8B5 /* Packages */,
+				A1338FE7298ABB02007DC669 /* FusionENSApp */,
+				A1339001298ABB64007DC669 /* FusionENSKeyboard */,
+				A1338FE6298ABB02007DC669 /* Products */,
+				A133900F298ABC90007DC669 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		A1338FE6298ABB02007DC669 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A1338FE5298ABB02007DC669 /* FusionENSApp.app */,
+				A1339000298ABB64007DC669 /* FusionENSKeyboard.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A1338FE7298ABB02007DC669 /* FusionENSApp */ = {
+			isa = PBXGroup;
+			children = (
+				A1BB89A12A5AC2720038A0E0 /* FusionENSAppRelease.entitlements */,
+				A1BB899C2A5A09790038A0E0 /* ViewControllers */,
+				A1BB89962A59B8200038A0E0 /* UIComponents */,
+				A1BB89912A59AA160038A0E0 /* Fonts */,
+				A1338FE8298ABB02007DC669 /* AppDelegate.swift */,
+				A1338FEA298ABB02007DC669 /* SceneDelegate.swift */,
+				A1338FEE298ABB02007DC669 /* Main.storyboard */,
+				A1338FF1298ABB06007DC669 /* Assets.xcassets */,
+				A1338FF3298ABB06007DC669 /* LaunchScreen.storyboard */,
+				A1338FF6298ABB06007DC669 /* Info.plist */,
+			);
+			path = FusionENSApp;
+			sourceTree = "<group>";
+		};
+		A1339001298ABB64007DC669 /* FusionENSKeyboard */ = {
+			isa = PBXGroup;
+			children = (
+				A13B1D3B2A4A259300463E17 /* Utilties */,
+				A1339004298ABB64007DC669 /* Info.plist */,
+				A1339002298ABB64007DC669 /* KeyboardViewController.swift */,
+				A1339014298ABF82007DC669 /* FusionENSAutoCompleteProvider.swift */,
+				A1339016298AC072007DC669 /* FusionENSKeyboardAppearance.swift */,
+				A1339018298AC0D6007DC669 /* FusionENSKeyboardActionHandler.swift */,
+				A133901A298AC232007DC669 /* FusionENSKeyboardLayoutProvider.swift */,
+				A133901C298AC290007DC669 /* KeyboardView.swift */,
+			);
+			path = FusionENSKeyboard;
+			sourceTree = "<group>";
+		};
+		A133900F298ABC90007DC669 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A13B1D3B2A4A259300463E17 /* Utilties */ = {
+			isa = PBXGroup;
+			children = (
+				A173F3042A4A62D9006B0ACB /* HelperMethods */,
+				A13B1D3C2A4A25BB00463E17 /* WebRequests */,
+			);
+			path = Utilties;
+			sourceTree = "<group>";
+		};
+		A13B1D3C2A4A25BB00463E17 /* WebRequests */ = {
+			isa = PBXGroup;
+			children = (
+				A13B1D3D2A4A25D700463E17 /* APICaller.swift */,
+				A13B1D3F2A4A261700463E17 /* URLS.swift */,
+			);
+			path = WebRequests;
+			sourceTree = "<group>";
+		};
+		A173F3042A4A62D9006B0ACB /* HelperMethods */ = {
+			isa = PBXGroup;
+			children = (
+				A173F3052A4A6310006B0ACB /* HelperClass.swift */,
+			);
+			path = HelperMethods;
+			sourceTree = "<group>";
+		};
+		A17DFA822A48F915003FB8B5 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				A13B1D412A4A26A800463E17 /* KeyboardKit */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		A1BB89912A59AA160038A0E0 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				A1BB89922A59AA390038A0E0 /* Poppins-Bold.ttf */,
+				A1BB89932A59AA3A0038A0E0 /* Poppins-Regular.ttf */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		A1BB89962A59B8200038A0E0 /* UIComponents */ = {
+			isa = PBXGroup;
+			children = (
+				A1BB89992A59C39B0038A0E0 /* Components */,
+				A1BB89972A59B85B0038A0E0 /* UIHelpers.swift */,
+			);
+			path = UIComponents;
+			sourceTree = "<group>";
+		};
+		A1BB89992A59C39B0038A0E0 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				A1BB899A2A59C3AF0038A0E0 /* FusionENSButton.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		A1BB899C2A5A09790038A0E0 /* ViewControllers */ = {
+			isa = PBXGroup;
+			children = (
+				A1338FEC298ABB02007DC669 /* GettingStartedVC.swift */,
+				A1BB899D2A5A0A120038A0E0 /* GettingStartedVC_Page2.swift */,
+				A1BB899F2A5ABD610038A0E0 /* GettingStartedVC_Page3.swift */,
+			);
+			path = ViewControllers;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A1338FE4298ABB02007DC669 /* FusionENSApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1338FF9298ABB06007DC669 /* Build configuration list for PBXNativeTarget "FusionENSApp" */;
+			buildPhases = (
+				A1338FE1298ABB02007DC669 /* Sources */,
+				A1338FE2298ABB02007DC669 /* Frameworks */,
+				A1338FE3298ABB02007DC669 /* Resources */,
+				A133900B298ABB64007DC669 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1339006298ABB64007DC669 /* PBXTargetDependency */,
+			);
+			name = FusionENSApp;
+			packageProductDependencies = (
+				A17DFA852A48F93E003FB8B5 /* KeyboardKit */,
+				A1BCEF1C2A490A3600A0D0C4 /* Alamofire */,
+				A1BB898F2A599A820038A0E0 /* SnapKit */,
+			);
+			productName = FusionENSApp;
+			productReference = A1338FE5298ABB02007DC669 /* FusionENSApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A1338FFF298ABB64007DC669 /* FusionENSKeyboard */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1339008298ABB64007DC669 /* Build configuration list for PBXNativeTarget "FusionENSKeyboard" */;
+			buildPhases = (
+				A1338FFC298ABB64007DC669 /* Sources */,
+				A1338FFD298ABB64007DC669 /* Frameworks */,
+				A1338FFE298ABB64007DC669 /* Resources */,
+				A1BB898D2A5998CA0038A0E0 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FusionENSKeyboard;
+			packageProductDependencies = (
+				A17DFA872A48F950003FB8B5 /* KeyboardKit */,
+				A1BCEF1E2A490A5E00A0D0C4 /* Alamofire */,
+			);
+			productName = FusionENSKeyboard;
+			productReference = A1339000298ABB64007DC669 /* FusionENSKeyboard.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A1338FDD298ABB02007DC669 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1400;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					A1338FE4298ABB02007DC669 = {
+						CreatedOnToolsVersion = 14.0.1;
+					};
+					A1338FFF298ABB64007DC669 = {
+						CreatedOnToolsVersion = 14.0.1;
+					};
+				};
+			};
+			buildConfigurationList = A1338FE0298ABB02007DC669 /* Build configuration list for PBXProject "FusionENSApp" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A1338FDC298ABB02007DC669;
+			packageReferences = (
+				A17DFA842A48F93E003FB8B5 /* XCRemoteSwiftPackageReference "KeyboardKit" */,
+				A1BCEF1B2A490A3600A0D0C4 /* XCRemoteSwiftPackageReference "Alamofire" */,
+				A1BB898E2A599A820038A0E0 /* XCRemoteSwiftPackageReference "SnapKit" */,
+			);
+			productRefGroup = A1338FE6298ABB02007DC669 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A1338FE4298ABB02007DC669 /* FusionENSApp */,
+				A1338FFF298ABB64007DC669 /* FusionENSKeyboard */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A1338FE3298ABB02007DC669 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1338FF5298ABB06007DC669 /* LaunchScreen.storyboard in Resources */,
+				A1338FF2298ABB06007DC669 /* Assets.xcassets in Resources */,
+				A1338FF0298ABB02007DC669 /* Main.storyboard in Resources */,
+				A1BB89942A59AA3A0038A0E0 /* Poppins-Bold.ttf in Resources */,
+				A1BB89952A59AA3A0038A0E0 /* Poppins-Regular.ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1338FFE298ABB64007DC669 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A1338FE1298ABB02007DC669 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1E7715832E6579B3005914E9 /* UIHelpers.swift in Sources */,
+				A1338FED298ABB02007DC669 /* GettingStartedVC.swift in Sources */,
+				A1BB899E2A5A0A120038A0E0 /* GettingStartedVC_Page2.swift in Sources */,
+				A1BB89A02A5ABD610038A0E0 /* GettingStartedVC_Page3.swift in Sources */,
+				A1338FE9298ABB02007DC669 /* AppDelegate.swift in Sources */,
+				A1338FEB298ABB02007DC669 /* SceneDelegate.swift in Sources */,
+				A1BB899B2A59C3AF0038A0E0 /* FusionENSButton.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1338FFC298ABB64007DC669 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1339015298ABF82007DC669 /* FusionENSAutoCompleteProvider.swift in Sources */,
+				A1339003298ABB64007DC669 /* KeyboardViewController.swift in Sources */,
+				A133901B298AC232007DC669 /* FusionENSKeyboardLayoutProvider.swift in Sources */,
+				A173F3062A4A6310006B0ACB /* HelperClass.swift in Sources */,
+				A13B1D402A4A261800463E17 /* URLS.swift in Sources */,
+				A13B1D3E2A4A25D700463E17 /* APICaller.swift in Sources */,
+				A133901D298AC290007DC669 /* KeyboardView.swift in Sources */,
+				A1339017298AC072007DC669 /* FusionENSKeyboardAppearance.swift in Sources */,
+				A1339019298AC0D6007DC669 /* FusionENSKeyboardActionHandler.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A1339006298ABB64007DC669 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1338FFF298ABB64007DC669 /* FusionENSKeyboard */;
+			targetProxy = A1339005298ABB64007DC669 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		A1338FEE298ABB02007DC669 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A1338FEF298ABB02007DC669 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		A1338FF3298ABB06007DC669 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A1338FF4298ABB06007DC669 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		A1338FF7298ABB06007DC669 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = TF669678QH;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A1338FF8298ABB06007DC669 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = TF669678QH;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A1338FFA298ABB06007DC669 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WC7S9A7PR9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FusionENSApp/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.FusionENSApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A1338FFB298ABB06007DC669 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = FusionENSApp/FusionENSAppRelease.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WC7S9A7PR9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FusionENSApp/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.FusionENSApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A1339009298ABB64007DC669 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WC7S9A7PR9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FusionENSKeyboard/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "${PRODUCT_NAME}";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Fusion ENS Technologies. All rights reserved.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.FusionENSApp.FusionENSKeyboard;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A133900A298ABB64007DC669 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WC7S9A7PR9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FusionENSKeyboard/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "${PRODUCT_NAME}";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Fusion ENS Technologies. All rights reserved.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.FusionENSApp.FusionENSKeyboard;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A1338FE0298ABB02007DC669 /* Build configuration list for PBXProject "FusionENSApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1338FF7298ABB06007DC669 /* Debug */,
+				A1338FF8298ABB06007DC669 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1338FF9298ABB06007DC669 /* Build configuration list for PBXNativeTarget "FusionENSApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1338FFA298ABB06007DC669 /* Debug */,
+				A1338FFB298ABB06007DC669 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1339008298ABB64007DC669 /* Build configuration list for PBXNativeTarget "FusionENSKeyboard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1339009298ABB64007DC669 /* Debug */,
+				A133900A298ABB64007DC669 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A17DFA842A48F93E003FB8B5 /* XCRemoteSwiftPackageReference "KeyboardKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/KeyboardKit/KeyboardKit.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+		A1BB898E2A599A820038A0E0 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SnapKit/SnapKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
+		A1BCEF1B2A490A3600A0D0C4 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A17DFA852A48F93E003FB8B5 /* KeyboardKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A17DFA842A48F93E003FB8B5 /* XCRemoteSwiftPackageReference "KeyboardKit" */;
+			productName = KeyboardKit;
+		};
+		A17DFA872A48F950003FB8B5 /* KeyboardKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = KeyboardKit;
+		};
+		A1BB898F2A599A820038A0E0 /* SnapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1BB898E2A599A820038A0E0 /* XCRemoteSwiftPackageReference "SnapKit" */;
+			productName = SnapKit;
+		};
+		A1BCEF1C2A490A3600A0D0C4 /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1BCEF1B2A490A3600A0D0C4 /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
+		};
+		A1BCEF1E2A490A5E00A0D0C4 /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1BCEF1B2A490A3600A0D0C4 /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = A1338FDD298ABB02007DC669 /* Project object */;
+}
