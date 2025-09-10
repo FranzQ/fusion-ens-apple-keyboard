@@ -54,7 +54,7 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
             ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
             ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
             ["⇧", "Z", "X", "C", "V", "B", "N", "M", "⌫"],
-            ["123", "Space", ".", "Return"]
+            ["123", "🌐", "Space", "Return"]
         ]
         
         var previousRow: UIView?
@@ -88,15 +88,19 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
                 
                 button.translatesAutoresizingMaskIntoConstraints = false
                 
-                // Set different widths for different keys
+                // Set different widths for different keys (iOS standard proportions)
                 let keyWidth: CGFloat
                 switch key {
                 case "Space":
-                    keyWidth = 150
-                case "⇧", "⌫", "123", "Return", ".":
-                    keyWidth = 50
+                    keyWidth = 200  // Wider space bar
+                case "⇧", "⌫":
+                    keyWidth = 60   // Wider shift and delete keys
+                case "123", "🌐":
+                    keyWidth = 45   // Standard function key width
+                case "Return":
+                    keyWidth = 80   // Wider return key
                 default:
-                    keyWidth = 32
+                    keyWidth = 35   // Standard letter key width
                 }
                 
                 NSLayoutConstraint.activate([
@@ -130,18 +134,28 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         button.titleLabel?.font = UIFont.systemFont(ofSize: 22, weight: .regular)
         button.setTitleColor(UIColor.black, for: .normal)
         
-        // Standard iOS keyboard styling
+        // Enhanced iOS keyboard styling
         button.backgroundColor = UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
-        button.layer.cornerRadius = 5
-        button.layer.borderWidth = 0.5
-        button.layer.borderColor = UIColor(red: 0.7, green: 0.7, blue: 0.7, alpha: 0.3).cgColor
+        button.layer.cornerRadius = 6
+        button.layer.borderWidth = 0.3
+        button.layer.borderColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 0.2).cgColor
         
-        // Add subtle shadow like iOS keyboard
+        // Enhanced shadow like real iOS keyboard
         button.layer.shadowColor = UIColor.black.cgColor
-        button.layer.shadowOffset = CGSize(width: 0, height: 1)
-        button.layer.shadowOpacity = 0.1
-        button.layer.shadowRadius = 0
+        button.layer.shadowOffset = CGSize(width: 0, height: 1.5)
+        button.layer.shadowOpacity = 0.15
+        button.layer.shadowRadius = 1
         button.layer.masksToBounds = false
+        
+        // Add subtle gradient effect
+        let gradientLayer = CAGradientLayer()
+        gradientLayer.frame = CGRect(x: 0, y: 0, width: 100, height: 100) // Will be resized
+        gradientLayer.colors = [
+            UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0).cgColor,
+            UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0).cgColor
+        ]
+        gradientLayer.cornerRadius = 6
+        button.layer.insertSublayer(gradientLayer, at: 0)
         
         // Add touch feedback
         button.addTarget(self, action: #selector(buttonTouchDown(_:)), for: .touchDown)
