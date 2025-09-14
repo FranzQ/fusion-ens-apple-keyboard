@@ -11,12 +11,14 @@ class GettingStartedVC_Page3: UIViewController {
     
     var titleLabel = UILabel()
     var subtitleLabel = UILabel()
+    var openSettingsButton = UIButton(type: .system)
     var doneButton = UIButton(type: .system)
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         setupUI()
+        setupNavigationBar()
     }
     
     func setupUI() {
@@ -35,7 +37,16 @@ class GettingStartedVC_Page3: UIViewController {
         subtitleLabel.numberOfLines = 0
         view.addSubview(subtitleLabel)
         
-        // Button
+        // Open Settings Button
+        openSettingsButton.setTitle("Open iOS Settings", for: .normal)
+        openSettingsButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        openSettingsButton.backgroundColor = .systemGreen
+        openSettingsButton.setTitleColor(.white, for: .normal)
+        openSettingsButton.layer.cornerRadius = 12
+        openSettingsButton.addTarget(self, action: #selector(openSettingsTapped), for: .touchUpInside)
+        view.addSubview(openSettingsButton)
+        
+        // Done Button
         doneButton.setTitle("Done", for: .normal)
         doneButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
         doneButton.backgroundColor = .systemBlue
@@ -50,6 +61,7 @@ class GettingStartedVC_Page3: UIViewController {
     func setupConstraints() {
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        openSettingsButton.translatesAutoresizingMaskIntoConstraints = false
         doneButton.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
@@ -63,11 +75,36 @@ class GettingStartedVC_Page3: UIViewController {
             subtitleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             subtitleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             
+            openSettingsButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            openSettingsButton.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 60),
+            openSettingsButton.widthAnchor.constraint(equalToConstant: 200),
+            openSettingsButton.heightAnchor.constraint(equalToConstant: 50),
+            
             doneButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            doneButton.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 60),
+            doneButton.topAnchor.constraint(equalTo: openSettingsButton.bottomAnchor, constant: 20),
             doneButton.widthAnchor.constraint(equalToConstant: 200),
             doneButton.heightAnchor.constraint(equalToConstant: 50)
         ])
+    }
+    
+    private func setupNavigationBar() {
+        navigationItem.title = "Enable Full Access"
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem: .cancel,
+            target: self,
+            action: #selector(cancelTapped)
+        )
+    }
+    
+    @objc private func cancelTapped() {
+        dismiss(animated: true)
+    }
+    
+    @objc func openSettingsTapped() {
+        // Open iOS Settings to Keyboard settings
+        if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(settingsURL)
+        }
     }
     
     @objc func doneTapped() {

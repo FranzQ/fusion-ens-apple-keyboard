@@ -16,6 +16,7 @@ class GettingStartedVC_Page2: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         setupUI()
+        setupNavigationBar()
     }
     
     func setupUI() {
@@ -69,10 +70,24 @@ class GettingStartedVC_Page2: UIViewController {
         ])
     }
     
+    private func setupNavigationBar() {
+        navigationItem.title = "Setup Keyboard"
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem: .cancel,
+            target: self,
+            action: #selector(cancelTapped)
+        )
+    }
+    
+    @objc private func cancelTapped() {
+        dismiss(animated: true)
+    }
+    
     @objc func continueTapped() {
         let vc = GettingStartedVC_Page3()
-        vc.modalPresentationStyle = .fullScreen
-        self.present(vc, animated: true)
+        let navController = UINavigationController(rootViewController: vc)
+        navController.modalPresentationStyle = .fullScreen
+        self.present(navController, animated: true)
     }
 }
 

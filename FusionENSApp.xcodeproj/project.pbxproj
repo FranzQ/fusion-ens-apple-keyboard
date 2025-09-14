@@ -34,6 +34,12 @@
 		A1BB89A02A5ABD610038A0E0 /* GettingStartedVC_Page3.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BB899F2A5ABD610038A0E0 /* GettingStartedVC_Page3.swift */; };
 		A1BCEF1D2A490A3600A0D0C4 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = A1BCEF1C2A490A3600A0D0C4 /* Alamofire */; };
 		A1BCEF1F2A490A5E00A0D0C4 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = A1BCEF1E2A490A5E00A0D0C4 /* Alamofire */; };
+		NEW0012A490A3600A0D0C4 /* ENSManagerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0011A490A3600A0D0C4 /* ENSManagerViewController.swift */; };
+		NEW0022A490A3600A0D0C4 /* ENSNameTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0021A490A3600A0D0C4 /* ENSNameTableViewCell.swift */; };
+		NEW0032A490A3600A0D0C4 /* AddENSNameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0031A490A3600A0D0C4 /* AddENSNameViewController.swift */; };
+		NEW0042A490A3600A0D0C4 /* PaymentRequestViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0041A490A3600A0D0C4 /* PaymentRequestViewController.swift */; };
+		NEW0052A490A3600A0D0C4 /* APICaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0051A490A3600A0D0C4 /* APICaller.swift */; };
+		NEW0062A490A3600A0D0C4 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0061A490A3600A0D0C4 /* SettingsViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -98,6 +104,12 @@
 		A1BB899D2A5A0A120038A0E0 /* GettingStartedVC_Page2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GettingStartedVC_Page2.swift; sourceTree = "<group>"; };
 		A1BB899F2A5ABD610038A0E0 /* GettingStartedVC_Page3.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GettingStartedVC_Page3.swift; sourceTree = "<group>"; };
 		A1BB89A12A5AC2720038A0E0 /* FusionENSAppRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FusionENSAppRelease.entitlements; sourceTree = "<group>"; };
+		NEW0011A490A3600A0D0C4 /* ENSManagerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ENSManagerViewController.swift; sourceTree = "<group>"; };
+		NEW0021A490A3600A0D0C4 /* ENSNameTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ENSNameTableViewCell.swift; sourceTree = "<group>"; };
+		NEW0031A490A3600A0D0C4 /* AddENSNameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddENSNameViewController.swift; sourceTree = "<group>"; };
+		NEW0041A490A3600A0D0C4 /* PaymentRequestViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentRequestViewController.swift; sourceTree = "<group>"; };
+		NEW0051A490A3600A0D0C4 /* APICaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APICaller.swift; sourceTree = "<group>"; };
+		NEW0061A490A3600A0D0C4 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -248,6 +260,12 @@
 				A1338FEC298ABB02007DC669 /* GettingStartedVC.swift */,
 				A1BB899D2A5A0A120038A0E0 /* GettingStartedVC_Page2.swift */,
 				A1BB899F2A5ABD610038A0E0 /* GettingStartedVC_Page3.swift */,
+				NEW0011A490A3600A0D0C4 /* ENSManagerViewController.swift */,
+				NEW0021A490A3600A0D0C4 /* ENSNameTableViewCell.swift */,
+				NEW0031A490A3600A0D0C4 /* AddENSNameViewController.swift */,
+				NEW0041A490A3600A0D0C4 /* PaymentRequestViewController.swift */,
+				NEW0051A490A3600A0D0C4 /* APICaller.swift */,
+				NEW0061A490A3600A0D0C4 /* SettingsViewController.swift */,
 			);
 			path = ViewControllers;
 			sourceTree = "<group>";
@@ -377,6 +395,12 @@
 				A1338FE9298ABB02007DC669 /* AppDelegate.swift in Sources */,
 				A1338FEB298ABB02007DC669 /* SceneDelegate.swift in Sources */,
 				A1BB899B2A59C3AF0038A0E0 /* FusionENSButton.swift in Sources */,
+				NEW0012A490A3600A0D0C4 /* ENSManagerViewController.swift in Sources */,
+				NEW0022A490A3600A0D0C4 /* ENSNameTableViewCell.swift in Sources */,
+				NEW0032A490A3600A0D0C4 /* AddENSNameViewController.swift in Sources */,
+				NEW0042A490A3600A0D0C4 /* PaymentRequestViewController.swift in Sources */,
+				NEW0052A490A3600A0D0C4 /* APICaller.swift in Sources */,
+				NEW0062A490A3600A0D0C4 /* SettingsViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -564,8 +588,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.keyboard.app;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.keyboard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -598,8 +622,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.keyboard.app;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.keyboard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -627,8 +651,8 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.keyboard.app.FusionENSKeyboard;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.keyboard.FusionENSKeyboard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
@@ -654,8 +678,8 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.keyboard.app.FusionENSKeyboard;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.keyboard.FusionENSKeyboard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;

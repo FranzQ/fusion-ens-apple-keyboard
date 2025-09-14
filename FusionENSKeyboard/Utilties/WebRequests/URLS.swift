@@ -8,8 +8,8 @@
 import Foundation
 
 struct URLS{
-    static let BASEURL = "https://api.ensideas.com/"
-    static let ensResolve = BASEURL + "ens/resolve/"
+    static let BASEURL = "https://api.fusionens.com/"
+    static let ensResolve = BASEURL + "resolve/"
     
     static func fusionNameResolver(name: String) -> String {
         return ensResolve + name

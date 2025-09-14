@@ -14,6 +14,15 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     var previousCurrentWord: String?
     private var isKeyboardViewSetup = false
     private var isShiftPressed = false
+    private var isNumbersLayout = false
+    
+    // Haptic feedback settings
+    private let hapticFeedbackKey = "hapticFeedbackEnabled"
+    private var isHapticFeedbackEnabled: Bool {
+        get {
+            return UserDefaults(suiteName: "group.com.fusionens.keyboard")?.bool(forKey: hapticFeedbackKey) ?? true
+        }
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,6 +35,21 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         
         // Setup keyboard view only once
         if !isKeyboardViewSetup {
+            setupKeyboardView()
+            isKeyboardViewSetup = true
+        }
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        
+        // Recreate keyboard when dark mode changes
+        if traitCollection.userInterfaceStyle != previousTraitCollection?.userInterfaceStyle {
+            print("Dark mode changed, recreating keyboard")
+            // Remove existing keyboard view
+            view.subviews.forEach { $0.removeFromSuperview() }
+            isKeyboardViewSetup = false
+            // Recreate with new theme
             setupKeyboardView()
             isKeyboardViewSetup = true
         }
@@ -48,14 +72,39 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     
     private func createSimpleKeyboard() -> UIView {
         let containerView = UIView()
-        containerView.backgroundColor = UIColor(red: 0.82, green: 0.84, blue: 0.86, alpha: 1.0) // iOS keyboard gray
         
-        let rows = [
-            ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
-            ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
-            ["⇧", "Z", "X", "C", "V", "B", "N", "M", "⌫"],
-            ["123", "🌐", "Space", "Return"]
-        ]
+        // Support dark mode
+        if traitCollection.userInterfaceStyle == .dark {
+            containerView.backgroundColor = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 1.0) // Dark keyboard background
+        } else {
+            containerView.backgroundColor = UIColor(red: 0.82, green: 0.84, blue: 0.86, alpha: 1.0) // Light keyboard background
+        }
+        
+        let rows: [[String]]
+        if isNumbersLayout {
+            rows = [
+                ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+                ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""],
+                ["#+=", ".", ",", "?", "!", "'", "⌫"],
+                ["ABC", ".eth", "space", "return"]
+            ]
+        } else {
+            if isShiftPressed {
+                rows = [
+                    ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+                    ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+                    ["⇧", "Z", "X", "C", "V", "B", "N", "M", "⌫"],
+                    ["123", ".eth", "space", "return"]
+                ]
+            } else {
+                rows = [
+                    ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
+                    ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
+                    ["⇧", "z", "x", "c", "v", "b", "n", "m", "⌫"],
+                    ["123", ".eth", "space", "return"]
+                ]
+            }
+        }
         
         var previousRow: UIView?
         
@@ -91,16 +140,18 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
                 // Set different widths for different keys (iOS standard proportions)
                 let keyWidth: CGFloat
                 switch key {
-                case "Space":
+                case "space":
                     keyWidth = 200  // Wider space bar
-                case "⇧", "⌫":
-                    keyWidth = 60   // Wider shift and delete keys
-                case "123", "🌐":
+                case "⇧", "⌫", "#+=":
+                    keyWidth = 60   // Wider shift, delete, and symbol keys
+                case "123", "ABC":
                     keyWidth = 45   // Standard function key width
-                case "Return":
+                case ".eth":
+                    keyWidth = 60   // Wider .eth button for better visibility
+                case "return":
                     keyWidth = 80   // Wider return key
                 default:
-                    keyWidth = 35   // Standard letter key width
+                    keyWidth = 35   // Standard letter/number key width
                 }
                 
                 NSLayoutConstraint.activate([
@@ -132,13 +183,36 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         let button = UIButton(type: .system)
         button.setTitle(title, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 22, weight: .regular)
-        button.setTitleColor(UIColor.black, for: .normal)
         
-        // Enhanced iOS keyboard styling
-        button.backgroundColor = UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+        // Support dark mode for text color
+        if traitCollection.userInterfaceStyle == .dark {
+            button.setTitleColor(UIColor.white, for: .normal)
+        } else {
+            button.setTitleColor(UIColor.black, for: .normal)
+        }
+        
+        // Enhanced iOS keyboard styling with dark mode support
+        // Special styling for shift key when active
+        if title == "⇧" && isShiftPressed {
+            if traitCollection.userInterfaceStyle == .dark {
+                button.backgroundColor = UIColor(red: 0.1, green: 0.4, blue: 0.8, alpha: 1.0) // Blue when active in dark mode
+                button.setTitleColor(UIColor.white, for: .normal)
+            } else {
+                button.backgroundColor = UIColor(red: 0.0, green: 0.5, blue: 1.0, alpha: 1.0) // Blue when active in light mode
+                button.setTitleColor(UIColor.white, for: .normal)
+            }
+        } else {
+            if traitCollection.userInterfaceStyle == .dark {
+                button.backgroundColor = UIColor(red: 0.3, green: 0.3, blue: 0.3, alpha: 1.0) // Dark button background
+                button.layer.borderColor = UIColor(red: 0.4, green: 0.4, blue: 0.4, alpha: 0.3).cgColor
+            } else {
+                button.backgroundColor = UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0) // Light button background
+                button.layer.borderColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 0.2).cgColor
+            }
+        }
+        
         button.layer.cornerRadius = 6
         button.layer.borderWidth = 0.3
-        button.layer.borderColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 0.2).cgColor
         
         // Enhanced shadow like real iOS keyboard
         button.layer.shadowColor = UIColor.black.cgColor
@@ -147,13 +221,20 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         button.layer.shadowRadius = 1
         button.layer.masksToBounds = false
         
-        // Add subtle gradient effect
+        // Add subtle gradient effect with dark mode support
         let gradientLayer = CAGradientLayer()
         gradientLayer.frame = CGRect(x: 0, y: 0, width: 100, height: 100) // Will be resized
-        gradientLayer.colors = [
-            UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0).cgColor,
-            UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0).cgColor
-        ]
+        if traitCollection.userInterfaceStyle == .dark {
+            gradientLayer.colors = [
+                UIColor(red: 0.3, green: 0.3, blue: 0.3, alpha: 1.0).cgColor,
+                UIColor(red: 0.25, green: 0.25, blue: 0.25, alpha: 1.0).cgColor
+            ]
+        } else {
+            gradientLayer.colors = [
+                UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0).cgColor,
+                UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0).cgColor
+            ]
+        }
         gradientLayer.cornerRadius = 6
         button.layer.insertSublayer(gradientLayer, at: 0)
         
@@ -162,6 +243,8 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         button.addTarget(self, action: #selector(buttonTouchUp(_:)), for: [.touchUpInside, .touchUpOutside, .touchCancel])
         
         button.addAction(UIAction { _ in
+            // Trigger haptic feedback for button press
+            self.triggerHapticFeedback()
             self.handleKeyPress(title)
         }, for: .touchUpInside)
         
@@ -169,16 +252,24 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     }
     
     @objc private func buttonTouchDown(_ sender: UIButton) {
-        // Darken button on press like iOS keyboard
+        // Darken button on press like iOS keyboard with dark mode support
         UIView.animate(withDuration: 0.1) {
-            sender.backgroundColor = UIColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 1.0)
+            if self.traitCollection.userInterfaceStyle == .dark {
+                sender.backgroundColor = UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0) // Dark mode press
+            } else {
+                sender.backgroundColor = UIColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 1.0) // Light mode press
+            }
         }
     }
     
     @objc private func buttonTouchUp(_ sender: UIButton) {
-        // Return to normal color
+        // Return to normal color with dark mode support
         UIView.animate(withDuration: 0.1) {
-            sender.backgroundColor = UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+            if self.traitCollection.userInterfaceStyle == .dark {
+                sender.backgroundColor = UIColor(red: 0.3, green: 0.3, blue: 0.3, alpha: 1.0) // Dark mode normal
+            } else {
+                sender.backgroundColor = UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0) // Light mode normal
+            }
         }
     }
     
@@ -186,13 +277,23 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         switch key {
         case "⌫":
             deleteBackward()
-        case "Space":
+        case "space":
             insertText(" ")
-        case "Return":
+        case "return":
             insertText("\n")
         case "123":
-            // Switch to numbers (placeholder)
+            // Switch to numbers layout
+            switchToNumbersLayout()
             break
+        case "ABC":
+            // Switch back to letters layout
+            switchToLettersLayout()
+            break
+        case "#+=":
+            // Switch to symbols layout (placeholder for now)
+            break
+        case ".eth":
+            insertText(".eth")
         case ".":
             insertText(".")
         case "⇧":
@@ -227,9 +328,58 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     }
     
     private func updateKeyboardAppearance() {
-        // Update shift key appearance based on state
-        // This is a simplified version - in a real implementation you'd update the button colors
+        // Recreate keyboard when shift state changes
         print("Shift state: \(isShiftPressed)")
+        
+        // Remove existing keyboard view
+        view.subviews.forEach { $0.removeFromSuperview() }
+        isKeyboardViewSetup = false
+        // Recreate with new shift state
+        setupKeyboardView()
+        isKeyboardViewSetup = true
+    }
+    
+    private func switchToNumbersLayout() {
+        isNumbersLayout = true
+        // Remove existing keyboard view
+        view.subviews.forEach { $0.removeFromSuperview() }
+        isKeyboardViewSetup = false
+        // Recreate with numbers layout
+        setupKeyboardView()
+        isKeyboardViewSetup = true
+    }
+    
+    private func switchToLettersLayout() {
+        isNumbersLayout = false
+        // Remove existing keyboard view
+        view.subviews.forEach { $0.removeFromSuperview() }
+        isKeyboardViewSetup = false
+        // Recreate with letters layout
+        setupKeyboardView()
+        isKeyboardViewSetup = true
+    }
+    
+    // MARK: - Haptic Feedback
+    
+    private func triggerHapticFeedback() {
+        guard isHapticFeedbackEnabled else { return }
+        
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
+    }
+    
+    private func triggerSuccessHaptic() {
+        guard isHapticFeedbackEnabled else { return }
+        
+        let notificationFeedback = UINotificationFeedbackGenerator()
+        notificationFeedback.notificationOccurred(.success)
+    }
+    
+    private func triggerErrorHaptic() {
+        guard isHapticFeedbackEnabled else { return }
+        
+        let notificationFeedback = UINotificationFeedbackGenerator()
+        notificationFeedback.notificationOccurred(.error)
     }
     
     // MARK: - KeyboardController Protocol
@@ -259,6 +409,9 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         if(HelperClass.checkFormat(selectedText)) {
             print("Text format is valid for ENS resolution")
             
+            // Trigger haptic feedback when starting resolution
+            triggerHapticFeedback()
+            
             APICaller.shared.resolveENSName(name: selectedText) { mappedAddress in
                 DispatchQueue.main.async {
                     if !mappedAddress.isEmpty {
@@ -268,13 +421,20 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
                             self.textDocumentProxy.deleteBackward()
                         }
                         self.textDocumentProxy.insertText(mappedAddress)
+                        
+                        // Trigger success haptic feedback
+                        self.triggerSuccessHaptic()
                     } else {
                         print("ENS resolution failed for: \(selectedText)")
+                        // Trigger error haptic feedback
+                        self.triggerErrorHaptic()
                     }
                 }
             }
         } else {
             print("Text format is not valid for ENS resolution: \(selectedText)")
+            // Trigger error haptic feedback for invalid format
+            triggerErrorHaptic()
         }
     }
     
