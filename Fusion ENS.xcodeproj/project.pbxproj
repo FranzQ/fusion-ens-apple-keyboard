@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1E7715832E6579B3005914E9 /* UIHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BB89972A59B85B0038A0E0 /* UIHelpers.swift */; };
+		1EE787172E79896F000E62E3 /* SafeCopyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EE787162E79896F000E62E3 /* SafeCopyViewController.swift */; };
 		A1338FE9298ABB02007DC669 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1338FE8298ABB02007DC669 /* AppDelegate.swift */; };
 		A1338FEB298ABB02007DC669 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1338FEA298ABB02007DC669 /* SceneDelegate.swift */; };
 		A1338FED298ABB02007DC669 /* GettingStartedVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1338FEC298ABB02007DC669 /* GettingStartedVC.swift */; };
@@ -77,6 +78,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1EE787162E79896F000E62E3 /* SafeCopyViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafeCopyViewController.swift; sourceTree = "<group>"; };
 		A1338FE5298ABB02007DC669 /* FusionENSApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FusionENSApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1338FE8298ABB02007DC669 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A1338FEA298ABB02007DC669 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -158,6 +160,7 @@
 		A1338FE7298ABB02007DC669 /* FusionENSApp */ = {
 			isa = PBXGroup;
 			children = (
+				1EE787162E79896F000E62E3 /* SafeCopyViewController.swift */,
 				A1BB89A12A5AC2720038A0E0 /* FusionENSAppRelease.entitlements */,
 				A1BB899C2A5A09790038A0E0 /* ViewControllers */,
 				A1BB89962A59B8200038A0E0 /* UIComponents */,
@@ -390,6 +393,7 @@
 			files = (
 				1E7715832E6579B3005914E9 /* UIHelpers.swift in Sources */,
 				A1338FED298ABB02007DC669 /* GettingStartedVC.swift in Sources */,
+				1EE787172E79896F000E62E3 /* SafeCopyViewController.swift in Sources */,
 				A1BB899E2A5A0A120038A0E0 /* GettingStartedVC_Page2.swift in Sources */,
 				A1BB89A02A5ABD610038A0E0 /* GettingStartedVC_Page3.swift in Sources */,
 				A1338FE9298ABB02007DC669 /* AppDelegate.swift in Sources */,
@@ -644,7 +648,7 @@
 				DEVELOPMENT_TEAM = WC7S9A7PR9;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FusionENSKeyboard/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "${PRODUCT_NAME}";
+				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS Keyboard";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Fusion ENS Technologies. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -671,7 +675,7 @@
 				DEVELOPMENT_TEAM = WC7S9A7PR9;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FusionENSKeyboard/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "${PRODUCT_NAME}";
+				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS Keyboard";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Fusion ENS Technologies. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
