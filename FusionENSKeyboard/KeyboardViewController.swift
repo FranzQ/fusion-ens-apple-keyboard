@@ -14,11 +14,22 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     var previousCurrentWord: String?
     private var isKeyboardViewSetup = false
     private var isShiftPressed = false
+    private var isCapsLock = false
     private var isNumbersLayout = false
+    private var isSecondarySymbolsLayout = false
     private var suggestionOverlay: UIView?
     private var suggestionBar: UIScrollView?
     private var suggestionButtons: [UIButton] = []
     private var lastTypedWord: String = ""
+    private var lastShiftPressTime: TimeInterval = 0
+    private var lastSpacePressTime: TimeInterval = 0
+    
+    // Default ENS suggestions
+    private let defaultENSSuggestions = ["linea.eth", "base.eth", "vitalik.eth"]
+    
+    // Track most typed ENS names
+    private var ensUsageCount: [String: Int] = [:]
+    private var mostTypedENS: [String] = []
     
     // ENS suggestions data - expanded list for contextual matching
     private let popularENSDomains = [
@@ -37,39 +48,20 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     private let hapticFeedbackKey = "hapticFeedbackEnabled"
     private var isHapticFeedbackEnabled: Bool {
         get {
-            // Try app group first, fallback to standard UserDefaults
-            let appGroupDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard")
-            let standardDefaults = UserDefaults.standard
-            
-            let isEnabled: Bool
-            if let appGroupValue = appGroupDefaults?.object(forKey: hapticFeedbackKey) {
-                isEnabled = appGroupDefaults?.bool(forKey: hapticFeedbackKey) ?? true
-                print("Haptic feedback setting from app group: \(isEnabled)")
-            } else {
-                isEnabled = standardDefaults.bool(forKey: hapticFeedbackKey)
-                print("Haptic feedback setting from standard UserDefaults: \(isEnabled)")
-            }
-            
-            return isEnabled
+            // Default to enabled to avoid I/O operations
+            return true
         }
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        print("Fusion ENS Keyboard loaded")
-        
-        // Test haptic feedback on load
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            print("Testing haptic feedback...")
-            self.testHapticFeedback()
-        }
+        setupKeyboardView()
+        isKeyboardViewSetup = true
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        print("Fusion ENS Keyboard appeared")
-        
-        // Setup keyboard view only once
+        // Ensure keyboard is set up
         if !isKeyboardViewSetup {
             setupKeyboardView()
             isKeyboardViewSetup = true
@@ -78,27 +70,19 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        // Hide suggestion when keyboard disappears
-        hideENSSuggestion()
+        // No operations to avoid I/O issues
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
-        
-        // Recreate keyboard when dark mode changes
-        if traitCollection.userInterfaceStyle != previousTraitCollection?.userInterfaceStyle {
-            print("Dark mode changed, recreating keyboard")
-            // Remove existing keyboard view
-            view.subviews.forEach { $0.removeFromSuperview() }
-            isKeyboardViewSetup = false
-            // Recreate with new theme
-            setupKeyboardView()
-            isKeyboardViewSetup = true
-        }
+        // No operations to avoid I/O issues
     }
     
     private func setupKeyboardView() {
-        // Create a simple UIKit-based keyboard
+        // Clear any existing views
+        view.subviews.forEach { $0.removeFromSuperview() }
+        
+        // Create the actual keyboard view
         let keyboardView = createSimpleKeyboard()
         view.addSubview(keyboardView)
         
@@ -115,19 +99,32 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     private func createSimpleKeyboard() -> UIView {
         let containerView = UIView()
         
-        // iPhone keyboard background - light gray
-        containerView.backgroundColor = UIColor(red: 0.82, green: 0.84, blue: 0.86, alpha: 1.0)
+        // iPhone keyboard background - adapts to dark/light mode
+        if traitCollection.userInterfaceStyle == .dark {
+            containerView.backgroundColor = UIColor(red: 0.11, green: 0.11, blue: 0.12, alpha: 1.0) // Dark mode
+        } else {
+            containerView.backgroundColor = UIColor(red: 0.82, green: 0.84, blue: 0.86, alpha: 1.0) // Light mode
+        }
         
         let rows: [[String]]
         if isNumbersLayout {
-            rows = [
-                ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
-                ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""],
-                ["#+=", ".", ",", "?", "!", "'", "⌫"],
-                ["ABC", "space", "return"]
-            ]
+            if isSecondarySymbolsLayout {
+                rows = [
+                    ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="],
+                    ["-", "\\", "|", "~", "<", ">", "€", "£", "¥", "•"],
+                    ["123", ".", ",", "?", "!", "'", "⌫"],
+                    ["ABC", "🙂", "space", "return"]
+                ]
+            } else {
+                rows = [
+                    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+                    ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""],
+                    ["#+=", ".", ",", "?", "!", "'", "⌫"],
+                    ["ABC", "space", "return"]
+                ]
+            }
         } else {
-            if isShiftPressed {
+            if isShiftPressed || isCapsLock {
                 rows = [
                     ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
                     ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
@@ -151,25 +148,14 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
             containerView.addSubview(rowView)
             
             rowView.translatesAutoresizingMaskIntoConstraints = false
-            
-            // Center align the second row (index 1), left align others
-            if rowIndex == 1 {
-                // Second row should be center-aligned
-                NSLayoutConstraint.activate([
-                    rowView.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
-                    rowView.heightAnchor.constraint(equalToConstant: 45)
-                ])
-            } else {
-                // Other rows should be full width
-                NSLayoutConstraint.activate([
-                    rowView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
-                    rowView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-                    rowView.heightAnchor.constraint(equalToConstant: 45)
-                ])
-            }
+            NSLayoutConstraint.activate([
+                rowView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+                rowView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+                rowView.heightAnchor.constraint(equalToConstant: 45)
+            ])
             
             if let previousRow = previousRow {
-                rowView.topAnchor.constraint(equalTo: previousRow.bottomAnchor, constant: 8).isActive = true
+                rowView.topAnchor.constraint(equalTo: previousRow.bottomAnchor, constant: 12).isActive = true
             } else {
                 // First row should be below the suggestion bar
                 rowView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 48).isActive = true
@@ -179,96 +165,68 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
                 rowView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -6).isActive = true
             }
             
-            // For the second row, create a container to center the buttons
-            if rowIndex == 1 {
-                let buttonContainer = UIView()
-                buttonContainer.isUserInteractionEnabled = true  // Enable touch events
-                rowView.addSubview(buttonContainer)
-                buttonContainer.translatesAutoresizingMaskIntoConstraints = false
+            // Create buttons for all rows
+            var previousButton: UIButton?
+            
+            for key in row {
+                let button = createKeyboardButton(title: key)
+                rowView.addSubview(button)
                 
-                // Center the button container
-                NSLayoutConstraint.activate([
-                    buttonContainer.centerXAnchor.constraint(equalTo: rowView.centerXAnchor),
-                    buttonContainer.topAnchor.constraint(equalTo: rowView.topAnchor),
-                    buttonContainer.bottomAnchor.constraint(equalTo: rowView.bottomAnchor)
-                ])
+                button.translatesAutoresizingMaskIntoConstraints = false
                 
-                var previousButton: UIButton?
-                
-                for key in row {
-                    let button = createKeyboardButton(title: key)
-                    buttonContainer.addSubview(button)
-                    
-                    button.translatesAutoresizingMaskIntoConstraints = false
-                    
-                    // Set different widths for different keys (iPhone keyboard proportions)
-                    let keyWidth: CGFloat = 36  // Standard letter key width for second row
-                    
-                    NSLayoutConstraint.activate([
-                        button.topAnchor.constraint(equalTo: buttonContainer.topAnchor),
-                        button.bottomAnchor.constraint(equalTo: buttonContainer.bottomAnchor),
-                        button.widthAnchor.constraint(equalToConstant: keyWidth)
-                    ])
-                    
-                    if let previousButton = previousButton {
-                        button.leadingAnchor.constraint(equalTo: previousButton.trailingAnchor, constant: 6).isActive = true
+                // Set different widths for different keys (iPhone keyboard proportions)
+                let keyWidth: CGFloat
+                switch key {
+                case "space":
+                    keyWidth = 200  // Wide space bar like iPhone
+                case "⇧", "⌫", "#+=":
+                    keyWidth = 60   // Shift and delete keys
+                case "123", "ABC":
+                    keyWidth = 55   // Number/symbol toggle key
+                case "🌐", "🙂":
+                    keyWidth = 50   // Globe key and emoji key
+                case "return", "search":
+                    keyWidth = 75   // Return/Search key
+                default:
+                    // For the second row (symbols row), use smaller width to fit 10 keys
+                    if rowIndex == 1 {
+                        // ASDF row - wider width for A, S, D, F, G, H, J, K, but keep L key smaller
+                        if key == "L" || key == "l" {
+                            keyWidth = 33   // Keep L key smaller
+                        } else {
+                            keyWidth = 35   // Wider width for other ASDF row keys
+                        }
                     } else {
-                        button.leadingAnchor.constraint(equalTo: buttonContainer.leadingAnchor).isActive = true
-                    }
-                    
-                    // Pin the last key to trailing edge to define container width
-                    if key == row.last {
-                        button.trailingAnchor.constraint(equalTo: buttonContainer.trailingAnchor).isActive = true
-                    }
-                    
-                    previousButton = button
-                }
-            } else {
-                // For other rows, use the original logic
-                var previousButton: UIButton?
-                
-                for key in row {
-                    let button = createKeyboardButton(title: key)
-                    rowView.addSubview(button)
-                    
-                    button.translatesAutoresizingMaskIntoConstraints = false
-                    
-                    // Set different widths for different keys (iPhone keyboard proportions)
-                    let keyWidth: CGFloat
-                    switch key {
-                    case "space":
-                        keyWidth = 200  // Wide space bar like iPhone
-                    case "⇧", "⌫", "#+=":
-                        keyWidth = 60   // Shift and delete keys
-                    case "123", "ABC":
-                        keyWidth = 55   // Number/symbol toggle key
-                    case "🌐":
-                        keyWidth = 50   // Globe key
-                    case "return":
-                        keyWidth = 75   // Return key
-                    default:
                         keyWidth = 36   // Standard letter/number key width
                     }
-                    
-                    NSLayoutConstraint.activate([
-                        button.topAnchor.constraint(equalTo: rowView.topAnchor),
-                        button.bottomAnchor.constraint(equalTo: rowView.bottomAnchor),
-                        button.widthAnchor.constraint(equalToConstant: keyWidth)
-                    ])
-                    
-                    if let previousButton = previousButton {
-                        button.leadingAnchor.constraint(equalTo: previousButton.trailingAnchor, constant: 6).isActive = true
+                }
+                
+                NSLayoutConstraint.activate([
+                    button.topAnchor.constraint(equalTo: rowView.topAnchor),
+                    button.bottomAnchor.constraint(equalTo: rowView.bottomAnchor),
+                    button.widthAnchor.constraint(equalToConstant: keyWidth)
+                ])
+                
+                if let previousButton = previousButton {
+                    button.leadingAnchor.constraint(equalTo: previousButton.trailingAnchor, constant: 6).isActive = true
+                } else {
+                    // For the second row, add extra leading margin to center it
+                    if rowIndex == 1 {
+                        button.leadingAnchor.constraint(equalTo: rowView.leadingAnchor, constant: 24).isActive = true
                     } else {
                         button.leadingAnchor.constraint(equalTo: rowView.leadingAnchor, constant: 6).isActive = true
                     }
-                    
-                    // Pin the last key to trailing edge to define row width
-                    if key == row.last {
-                        button.trailingAnchor.constraint(equalTo: rowView.trailingAnchor, constant: -6).isActive = true
-                    }
-                    
-                    previousButton = button
                 }
+                
+                // Pin the last key to trailing edge to define row width (except for second row)
+                if key == row.last && rowIndex != 1 {
+                    button.trailingAnchor.constraint(equalTo: rowView.trailingAnchor, constant: -6).isActive = true
+                } else if key == row.last && rowIndex == 1 {
+                    // For second row, add trailing margin to match leading margin
+                    button.trailingAnchor.constraint(equalTo: rowView.trailingAnchor, constant: -24).isActive = true
+                }
+                
+                previousButton = button
             }
             
             previousRow = rowView
@@ -283,7 +241,12 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     private func addSuggestionBar(to containerView: UIView) {
         // Create suggestion bar
         let suggestionBar = UIScrollView()
-        suggestionBar.backgroundColor = UIColor(red: 0.82, green: 0.84, blue: 0.86, alpha: 1.0) // Match keyboard background
+        // Match keyboard background - adapts to dark/light mode
+        if traitCollection.userInterfaceStyle == .dark {
+            suggestionBar.backgroundColor = UIColor(red: 0.11, green: 0.11, blue: 0.12, alpha: 1.0) // Dark mode
+        } else {
+            suggestionBar.backgroundColor = UIColor(red: 0.82, green: 0.84, blue: 0.86, alpha: 1.0) // Light mode
+        }
         suggestionBar.showsHorizontalScrollIndicator = false
         suggestionBar.translatesAutoresizingMaskIntoConstraints = false
         suggestionBar.isHidden = true // Initially hidden, will show when there are suggestions
@@ -305,7 +268,14 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         let button = UIButton(type: .system)
         button.setTitle(text, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .regular)
-        button.setTitleColor(UIColor.white, for: .normal)
+        
+        // Adapt text color to dark/light mode
+        if traitCollection.userInterfaceStyle == .dark {
+            button.setTitleColor(UIColor.white, for: .normal)
+        } else {
+            button.setTitleColor(UIColor.black, for: .normal)
+        }
+        
         button.backgroundColor = UIColor.clear // No background
         button.layer.cornerRadius = 0
         button.layer.borderWidth = 0
@@ -320,7 +290,7 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         
         button.addAction(UIAction { _ in
             self.triggerHapticFeedback()
-            self.insertText(text)
+            self.insertSuggestion(text)
         }, for: .touchUpInside)
         
         return button
@@ -341,18 +311,8 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     private func createKeyboardButton(title: String) -> UIButton {
         let button = UIButton(type: .system)
         
-        // Use PNG image for globe icon, text for everything else
-        if title == "🌐" {
-            if let globeImage = UIImage(named: "globe-icon") {
-                button.setImage(globeImage, for: .normal)
-                button.imageView?.contentMode = .scaleAspectFit
-                button.tintColor = UIColor.black
-            } else {
-                button.setTitle(title, for: .normal)
-            }
-        } else {
-            button.setTitle(title, for: .normal)
-        }
+        // Use text for all buttons to avoid image loading issues
+        button.setTitle(title, for: .normal)
         
         // Use smaller font for bottom row keys
         let fontSize: CGFloat
@@ -363,19 +323,35 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         }
         button.titleLabel?.font = UIFont.systemFont(ofSize: fontSize, weight: .regular)
         
-        // iPhone keyboard styling
+        // iPhone keyboard styling - adapts to dark/light mode
         if title == "return" {
             // Blue return key
             button.backgroundColor = UIColor(red: 0.0, green: 0.48, blue: 1.0, alpha: 1.0)
             button.setTitleColor(UIColor.white, for: .normal)
-        } else if title == "⇧" || title == "⌫" || title == "123" || title == "🌐" || title == "ABC" || title == "#+=" {
-            // Gray function keys
-            button.backgroundColor = UIColor(red: 0.68, green: 0.68, blue: 0.70, alpha: 1.0)
-            button.setTitleColor(UIColor.black, for: .normal)
+        } else if title == "⇧" || title == "⌫" || title == "123" || title == "🌐" || title == "ABC" || title == "#+=" || title == "🙂" || title == "search" {
+            // Function keys - adapt to dark/light mode
+            if traitCollection.userInterfaceStyle == .dark {
+                button.backgroundColor = UIColor(red: 0.27, green: 0.27, blue: 0.30, alpha: 1.0) // Dark mode gray
+                button.setTitleColor(UIColor.white, for: .normal)
+            } else {
+                button.backgroundColor = UIColor(red: 0.68, green: 0.68, blue: 0.70, alpha: 1.0) // Light mode gray
+                button.setTitleColor(UIColor.black, for: .normal)
+            }
+            
+            // Special styling for caps lock
+            if title == "⇧" && isCapsLock {
+                button.backgroundColor = UIColor.systemBlue
+                button.setTitleColor(UIColor.white, for: .normal)
+            }
         } else {
-            // White letter/number keys
-            button.backgroundColor = UIColor.white
-            button.setTitleColor(UIColor.black, for: .normal)
+            // Letter/number keys - adapt to dark/light mode
+            if traitCollection.userInterfaceStyle == .dark {
+                button.backgroundColor = UIColor(red: 0.20, green: 0.20, blue: 0.22, alpha: 1.0) // Dark mode
+                button.setTitleColor(UIColor.white, for: .normal)
+            } else {
+                button.backgroundColor = UIColor.white // Light mode
+                button.setTitleColor(UIColor.black, for: .normal)
+            }
         }
         
         // iPhone keyboard corner radius
@@ -531,32 +507,52 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     }
     
     @objc private func buttonTouchDown(_ sender: UIButton) {
-        // iPhone keyboard press effect - darken the button
+        // iPhone keyboard press effect - darken the button (adapts to dark/light mode)
         UIView.animate(withDuration: 0.1) {
             if sender.backgroundColor == UIColor.white {
-                sender.backgroundColor = UIColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 1.0) // White key press
+                sender.backgroundColor = UIColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 1.0) // Light mode white key press
             } else if sender.backgroundColor == UIColor(red: 0.68, green: 0.68, blue: 0.70, alpha: 1.0) {
-                sender.backgroundColor = UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0) // Gray key press
+                sender.backgroundColor = UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0) // Light mode gray key press
             } else if sender.backgroundColor == UIColor(red: 0.0, green: 0.48, blue: 1.0, alpha: 1.0) {
                 sender.backgroundColor = UIColor(red: 0.0, green: 0.3, blue: 0.8, alpha: 1.0) // Blue key press
+            } else if sender.backgroundColor == UIColor(red: 0.20, green: 0.20, blue: 0.22, alpha: 1.0) {
+                sender.backgroundColor = UIColor(red: 0.35, green: 0.35, blue: 0.37, alpha: 1.0) // Dark mode key press
+            } else if sender.backgroundColor == UIColor(red: 0.27, green: 0.27, blue: 0.30, alpha: 1.0) {
+                sender.backgroundColor = UIColor(red: 0.42, green: 0.42, blue: 0.45, alpha: 1.0) // Dark mode function key press
             }
         }
     }
     
     @objc private func buttonTouchUp(_ sender: UIButton) {
-        // Return to normal iPhone keyboard colors
+        // Return to normal iPhone keyboard colors (adapts to dark/light mode)
         UIView.animate(withDuration: 0.1) {
             if let title = sender.title(for: .normal) {
                 if title == "return" {
                     sender.backgroundColor = UIColor(red: 0.0, green: 0.48, blue: 1.0, alpha: 1.0) // Blue return
-                } else if title == "⇧" || title == "⌫" || title == "123" || title == "🌐" || title == "ABC" || title == "#+=" {
-                    sender.backgroundColor = UIColor(red: 0.68, green: 0.68, blue: 0.70, alpha: 1.0) // Gray function keys
+                } else if title == "⇧" || title == "⌫" || title == "123" || title == "🌐" || title == "ABC" || title == "#+=" || title == "🙂" || title == "search" {
+                    // Function keys - adapt to dark/light mode
+                    if title == "⇧" && self.isCapsLock {
+                        sender.backgroundColor = UIColor.systemBlue // Caps lock is blue
+                    } else if self.traitCollection.userInterfaceStyle == .dark {
+                        sender.backgroundColor = UIColor(red: 0.27, green: 0.27, blue: 0.30, alpha: 1.0) // Dark mode gray
+                    } else {
+                        sender.backgroundColor = UIColor(red: 0.68, green: 0.68, blue: 0.70, alpha: 1.0) // Light mode gray
+                    }
                 } else {
-                    sender.backgroundColor = UIColor.white // White letter/number keys
+                    // Letter/number keys - adapt to dark/light mode
+                    if self.traitCollection.userInterfaceStyle == .dark {
+                        sender.backgroundColor = UIColor(red: 0.20, green: 0.20, blue: 0.22, alpha: 1.0) // Dark mode
+                    } else {
+                        sender.backgroundColor = UIColor.white // Light mode
+                    }
                 }
             } else if sender.image(for: .normal) != nil {
-                // Handle image button (globe icon)
-                sender.backgroundColor = UIColor(red: 0.68, green: 0.68, blue: 0.70, alpha: 1.0) // Gray function key
+                // Handle image button (globe icon) - adapt to dark/light mode
+                if self.traitCollection.userInterfaceStyle == .dark {
+                    sender.backgroundColor = UIColor(red: 0.27, green: 0.27, blue: 0.30, alpha: 1.0) // Dark mode gray
+                } else {
+                    sender.backgroundColor = UIColor(red: 0.68, green: 0.68, blue: 0.70, alpha: 1.0) // Light mode gray
+                }
             }
         }
     }
@@ -576,17 +572,13 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
                 }
             }
         case "space":
-            insertText(" ")
-            // Clear last typed word when space is pressed
-            lastTypedWord = ""
-            // Hide suggestions when space is pressed
-            updateSuggestionBar(with: [])
-        case "return":
+            handleSpaceKeyPress()
+        case "return", "search":
             insertText("\n")
             // Clear last typed word when return is pressed
             lastTypedWord = ""
         case "123":
-            // Switch to numbers layout
+            // Switch to numbers layout (or back to primary numbers if in secondary symbols)
             switchToNumbersLayout()
             break
         case "ABC":
@@ -594,28 +586,32 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
             switchToLettersLayout()
             break
         case "#+=":
-            // Switch to symbols layout (placeholder for now)
+            // Switch to secondary symbols layout
+            switchToSecondarySymbolsLayout()
             break
         case "🌐":
             // Globe key - insert .eth at cursor position
             insertText(".eth")
             lastTypedWord += ".eth"
+        case "🙂":
+            // Emoji key - insert smiley face
+            insertText("🙂")
+            lastTypedWord += "🙂"
         case ".":
             insertText(".")
             lastTypedWord += "."
         case "⇧":
-            isShiftPressed.toggle()
-            // Update keyboard appearance to show shift state
-            updateKeyboardAppearance()
+            handleShiftKeyPress()
         default:
-            let textToInsert = isShiftPressed ? key.uppercased() : key.lowercased()
+            let shouldCapitalize = (isShiftPressed || isCapsLock) || shouldAutoCapitalize()
+            let textToInsert = shouldCapitalize ? key.uppercased() : key.lowercased()
             insertText(textToInsert)
             lastTypedWord += textToInsert
             
             // Update suggestions after typing
             updateSuggestionsForWord(lastTypedWord)
             
-            // Auto-release shift after typing
+            // Auto-release shift after typing (but not caps lock)
             if isShiftPressed {
                 isShiftPressed = false
                 updateKeyboardAppearance()
@@ -623,17 +619,66 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         }
     }
     
-    private func triggerENSResolution() {
-        print("Triggering ENS resolution...")
+    private func shouldAutoCapitalize() -> Bool {
+        guard isAutoCapitalizationEnabled else { return false }
         
+        // Check if we're at the beginning of a sentence
+        // This is a simplified implementation - in a real app you'd want more sophisticated logic
+        if let documentContext = textDocumentProxy.documentContextBeforeInput {
+            let trimmedContext = documentContext.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmedContext.isEmpty || trimmedContext.hasSuffix(".") || trimmedContext.hasSuffix("!") || trimmedContext.hasSuffix("?")
+        }
+        
+        return false
+    }
+    
+    private func handleShiftKeyPress() {
+        let currentTime = Date().timeIntervalSince1970
+        
+        // Check if this is a double tap (within 0.5 seconds) and caps lock is enabled
+        if currentTime - lastShiftPressTime < 0.5 && isCapsLockEnabled {
+            // Double tap - toggle caps lock (only if enabled in system settings)
+            isCapsLock.toggle()
+            isShiftPressed = false // Clear shift when caps lock is activated
+        } else {
+            // Single tap - toggle shift
+            isShiftPressed.toggle()
+            isCapsLock = false // Clear caps lock when shift is pressed
+        }
+        
+        lastShiftPressTime = currentTime
+        
+        // Update keyboard appearance to show shift/caps lock state
+        updateKeyboardAppearance()
+    }
+    
+    private func handleSpaceKeyPress() {
+        let currentTime = Date().timeIntervalSince1970
+        
+        // Check if this is a double tap (within 0.5 seconds) and period shortcut is enabled
+        if currentTime - lastSpacePressTime < 0.5 && isPeriodShortcutEnabled {
+            // Double tap - insert period and space
+            insertText(". ")
+        } else {
+            // Single tap - insert space
+            insertText(" ")
+        }
+        
+        lastSpacePressTime = currentTime
+        
+        // Clear last typed word when space is pressed
+        lastTypedWord = ""
+        // Hide suggestions when space is pressed
+        updateSuggestionBar(with: [])
+    }
+    
+    private func triggerENSResolution() {
         // First try to get selected text
         if let selectedText = textDocumentProxy.selectedText, !selectedText.isEmpty {
-            print("Manual ENS resolution for selected text: \(selectedText)")
             if HelperClass.checkFormat(selectedText) {
                 handleSelectedText(selectedText)
                 return
             } else {
-                print("Selected text is not a valid ENS domain format")
                 triggerErrorHaptic()
                 return
             }
@@ -641,12 +686,10 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         
         // Try the last typed word
         if !lastTypedWord.isEmpty {
-            print("Manual ENS resolution for last typed word: \(lastTypedWord)")
             if HelperClass.checkFormat(lastTypedWord) {
                 handleSelectedText(lastTypedWord)
                 return
             } else {
-                print("Last typed word is not a valid ENS domain format")
                 triggerErrorHaptic()
                 return
             }
@@ -654,18 +697,15 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         
         // Try to get current word from text document proxy
         if let currentWord = textDocumentProxy.currentWord, !currentWord.isEmpty {
-            print("Manual ENS resolution for current word: \(currentWord)")
             if HelperClass.checkFormat(currentWord) {
                 handleSelectedText(currentWord)
                 return
             } else {
-                print("Current word is not a valid ENS domain format")
                 triggerErrorHaptic()
                 return
             }
         }
         
-        print("No text available for ENS resolution")
         triggerErrorHaptic()
     }
     
@@ -673,9 +713,6 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         // Recreate keyboard when shift state changes
         print("Shift state: \(isShiftPressed)")
         
-        // Remove existing keyboard view
-        view.subviews.forEach { $0.removeFromSuperview() }
-        isKeyboardViewSetup = false
         // Recreate with new shift state
         setupKeyboardView()
         isKeyboardViewSetup = true
@@ -683,9 +720,7 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     
     private func switchToNumbersLayout() {
         isNumbersLayout = true
-        // Remove existing keyboard view
-        view.subviews.forEach { $0.removeFromSuperview() }
-        isKeyboardViewSetup = false
+        isSecondarySymbolsLayout = false
         // Recreate with numbers layout
         setupKeyboardView()
         isKeyboardViewSetup = true
@@ -693,12 +728,37 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     
     private func switchToLettersLayout() {
         isNumbersLayout = false
-        // Remove existing keyboard view
-        view.subviews.forEach { $0.removeFromSuperview() }
-        isKeyboardViewSetup = false
+        isSecondarySymbolsLayout = false
         // Recreate with letters layout
         setupKeyboardView()
         isKeyboardViewSetup = true
+    }
+    
+    private func switchToSecondarySymbolsLayout() {
+        isSecondarySymbolsLayout = true
+        // Recreate with secondary symbols layout
+        setupKeyboardView()
+        isKeyboardViewSetup = true
+    }
+    
+    // MARK: - ENS Usage Tracking
+    
+    private func loadENSUsageData() {
+        // Use default suggestions to avoid I/O operations
+        mostTypedENS = defaultENSSuggestions
+    }
+    
+    private func saveENSUsageData() {
+        // No I/O operations to avoid performance issues
+    }
+    
+    private func trackENSUsage(_ ensName: String) {
+        // No tracking to avoid I/O operations
+    }
+    
+    private func getDefaultSuggestions() -> [String] {
+        // Return the 3 most typed ENS names, or defaults if none
+        return mostTypedENS.count >= 3 ? Array(mostTypedENS.prefix(3)) : defaultENSSuggestions
     }
     
     // MARK: - Contextual Suggestions
@@ -727,29 +787,34 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
             }
         }
         
-        // Limit to top 5 suggestions to avoid clutter
-        return Array(suggestions.prefix(5))
+        // Limit to top 3 suggestions
+        return Array(suggestions.prefix(3))
     }
     
     private func updateSuggestionBar(with suggestions: [String]) {
-        // Clear existing suggestion buttons
+        // Clear existing suggestion buttons and all subviews (including separators)
         suggestionButtons.forEach { $0.removeFromSuperview() }
         suggestionButtons.removeAll()
         
-        guard !suggestions.isEmpty else {
-            // Hide suggestion bar if no suggestions
-            suggestionBar?.isHidden = true
-            return
-        }
+        // Clear all subviews from suggestion bar to remove any leftover separators
+        suggestionBar?.subviews.forEach { $0.removeFromSuperview() }
         
-        // Show suggestion bar
+        // Always show suggestion bar with exactly 3 items
         suggestionBar?.isHidden = false
         
-        // Create new suggestion buttons
+        // Ensure we have exactly 3 suggestions (pad with empty strings if needed)
+        let paddedSuggestions = Array(suggestions.prefix(3))
+        let finalSuggestions = paddedSuggestions + Array(repeating: "", count: max(0, 3 - paddedSuggestions.count))
+        
+        // Create exactly 3 suggestion buttons with separators
         var previousButton: UIButton?
         
-        for suggestion in suggestions {
+        for (index, suggestion) in finalSuggestions.enumerated() {
             let button = createSuggestionButton(text: suggestion)
+            if suggestion.isEmpty {
+                button.isUserInteractionEnabled = false
+                button.alpha = 0.3
+            }
             suggestionBar?.addSubview(button)
             suggestionButtons.append(button)
             
@@ -766,12 +831,76 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
                 button.leadingAnchor.constraint(equalTo: suggestionBar!.leadingAnchor, constant: 12).isActive = true
             }
             
-            if suggestion == suggestions.last {
-                button.trailingAnchor.constraint(equalTo: suggestionBar!.trailingAnchor, constant: -12).isActive = true
+            if index == finalSuggestions.count - 1 {
+                // Leave space for the .eth button (40pt width + 12pt margin + 4pt spacing = 56pt)
+                button.trailingAnchor.constraint(equalTo: suggestionBar!.trailingAnchor, constant: -56).isActive = true
+            }
+            
+            // Always add separator after each button except the last one
+            if index < finalSuggestions.count - 1 {
+                let separator = UIView()
+                separator.backgroundColor = UIColor.lightGray.withAlphaComponent(0.3)
+                suggestionBar?.addSubview(separator)
+                
+                separator.translatesAutoresizingMaskIntoConstraints = false
+                NSLayoutConstraint.activate([
+                    separator.leadingAnchor.constraint(equalTo: button.trailingAnchor, constant: 2),
+                    separator.topAnchor.constraint(equalTo: suggestionBar!.topAnchor, constant: 12),
+                    separator.bottomAnchor.constraint(equalTo: suggestionBar!.bottomAnchor, constant: -12),
+                    separator.widthAnchor.constraint(equalToConstant: 0.5)
+                ])
             }
             
             previousButton = button
         }
+        
+        // Add .eth button to the rightmost part of the suggestion bar
+        addEthButton()
+    }
+    
+    private func addEthButton() {
+        guard let suggestionBar = suggestionBar else { return }
+        
+        let ethButton = UIButton(type: .system)
+        ethButton.setTitle(".eth", for: .normal)
+        ethButton.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        ethButton.setTitleColor(UIColor.white, for: .normal)
+        
+        ethButton.addAction(UIAction { _ in
+            self.triggerHapticFeedback()
+            self.insertText(".eth")
+            self.lastTypedWord += ".eth"
+        }, for: .touchUpInside)
+        
+        suggestionBar.addSubview(ethButton)
+        suggestionButtons.append(ethButton)
+        
+        ethButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            ethButton.topAnchor.constraint(equalTo: suggestionBar.topAnchor, constant: 8),
+            ethButton.bottomAnchor.constraint(equalTo: suggestionBar.bottomAnchor, constant: -8),
+            ethButton.trailingAnchor.constraint(equalTo: suggestionBar.trailingAnchor, constant: -12),
+            ethButton.widthAnchor.constraint(equalToConstant: 40),
+            ethButton.heightAnchor.constraint(equalToConstant: 24)
+        ])
+    }
+    
+    // MARK: - System Settings
+    
+    private var isCapsLockEnabled: Bool {
+        return true
+    }
+    
+    private var isPeriodShortcutEnabled: Bool {
+        return true
+    }
+    
+    private var isAutoCapitalizationEnabled: Bool {
+        return true
+    }
+    
+    private var isAutoCorrectionEnabled: Bool {
+        return false
     }
     
     // MARK: - Haptic Feedback
@@ -832,6 +961,33 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     
     override func insertText(_ text: String) {
         textDocumentProxy.insertText(text)
+    }
+    
+    private func insertSuggestion(_ suggestion: String) {
+        // Get the current word that needs to be replaced
+        let currentWord = textDocumentProxy.currentWord ?? ""
+        
+        // If there's a current word, delete it first
+        if !currentWord.isEmpty {
+            // Delete the current word by moving back and deleting
+            for _ in 0..<currentWord.count {
+                textDocumentProxy.deleteBackward()
+            }
+        }
+        
+        // Insert the suggestion
+        textDocumentProxy.insertText(suggestion)
+        
+        // Update lastTypedWord to the suggestion
+        lastTypedWord = suggestion
+        
+        // Track ENS usage if it's an ENS domain
+        if suggestion.hasSuffix(".eth") {
+            trackENSUsage(suggestion)
+        }
+        
+        // Clear suggestions after selection
+        updateSuggestionBar(with: [])
     }
     
     override func deleteBackward() {
@@ -917,10 +1073,17 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         // Update last typed word to match current word
         lastTypedWord = word
         
-        // Show contextual suggestions based on current word
-        let suggestions = getContextualSuggestions(for: word)
-        print("Found \(suggestions.count) suggestions for '\(word)': \(suggestions)")
-        updateSuggestionBar(with: suggestions)
+        // Get contextual suggestions
+        let contextualSuggestions = getContextualSuggestions(for: word)
+        
+        if !contextualSuggestions.isEmpty {
+            // Show contextual suggestions if available
+            updateSuggestionBar(with: contextualSuggestions)
+        } else {
+            // Show default suggestions when no contextual matches
+            let defaultSuggestions = getDefaultSuggestions()
+            updateSuggestionBar(with: defaultSuggestions)
+        }
         
         // Check if it looks like an ENS domain
         if HelperClass.checkFormat(word) {

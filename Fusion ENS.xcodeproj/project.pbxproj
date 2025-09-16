@@ -79,7 +79,7 @@
 
 /* Begin PBXFileReference section */
 		1EE787162E79896F000E62E3 /* SafeCopyViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafeCopyViewController.swift; sourceTree = "<group>"; };
-		A1338FE5298ABB02007DC669 /* FusionENSApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FusionENSApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1338FE5298ABB02007DC669 /* Fusion ENS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Fusion ENS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1338FE8298ABB02007DC669 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A1338FEA298ABB02007DC669 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		A1338FEC298ABB02007DC669 /* GettingStartedVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GettingStartedVC.swift; sourceTree = "<group>"; };
@@ -151,7 +151,7 @@
 		A1338FE6298ABB02007DC669 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A1338FE5298ABB02007DC669 /* FusionENSApp.app */,
+				A1338FE5298ABB02007DC669 /* Fusion ENS.app */,
 				A1339000298ABB64007DC669 /* FusionENSKeyboard.appex */,
 			);
 			name = Products;
@@ -276,9 +276,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A1338FE4298ABB02007DC669 /* FusionENSApp */ = {
+		A1338FE4298ABB02007DC669 /* Fusion ENS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A1338FF9298ABB06007DC669 /* Build configuration list for PBXNativeTarget "FusionENSApp" */;
+			buildConfigurationList = A1338FF9298ABB06007DC669 /* Build configuration list for PBXNativeTarget "Fusion ENS" */;
 			buildPhases = (
 				A1338FE1298ABB02007DC669 /* Sources */,
 				A1338FE2298ABB02007DC669 /* Frameworks */,
@@ -290,14 +290,14 @@
 			dependencies = (
 				A1339006298ABB64007DC669 /* PBXTargetDependency */,
 			);
-			name = FusionENSApp;
+			name = "Fusion ENS";
 			packageProductDependencies = (
 				A17DFA852A48F93E003FB8B5 /* KeyboardKit */,
 				A1BCEF1C2A490A3600A0D0C4 /* Alamofire */,
 				A1BB898F2A599A820038A0E0 /* SnapKit */,
 			);
 			productName = FusionENSApp;
-			productReference = A1338FE5298ABB02007DC669 /* FusionENSApp.app */;
+			productReference = A1338FE5298ABB02007DC669 /* Fusion ENS.app */;
 			productType = "com.apple.product-type.application";
 		};
 		A1338FFF298ABB64007DC669 /* FusionENSKeyboard */ = {
@@ -340,7 +340,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A1338FE0298ABB02007DC669 /* Build configuration list for PBXProject "FusionENSApp" */;
+			buildConfigurationList = A1338FE0298ABB02007DC669 /* Build configuration list for PBXProject "Fusion ENS" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -358,7 +358,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A1338FE4298ABB02007DC669 /* FusionENSApp */,
+				A1338FE4298ABB02007DC669 /* Fusion ENS */,
 				A1338FFF298ABB64007DC669 /* FusionENSKeyboard */,
 			);
 		};
@@ -648,8 +648,8 @@
 				DEVELOPMENT_TEAM = WC7S9A7PR9;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FusionENSKeyboard/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS Keyboard";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Fusion ENS Technologies. All rights reserved.";
+				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Fusion ENS. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -675,8 +675,8 @@
 				DEVELOPMENT_TEAM = WC7S9A7PR9;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FusionENSKeyboard/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS Keyboard";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Fusion ENS Technologies. All rights reserved.";
+				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Fusion ENS. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -696,7 +696,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A1338FE0298ABB02007DC669 /* Build configuration list for PBXProject "FusionENSApp" */ = {
+		A1338FE0298ABB02007DC669 /* Build configuration list for PBXProject "Fusion ENS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A1338FF7298ABB06007DC669 /* Debug */,
@@ -705,7 +705,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A1338FF9298ABB06007DC669 /* Build configuration list for PBXNativeTarget "FusionENSApp" */ = {
+		A1338FF9298ABB06007DC669 /* Build configuration list for PBXNativeTarget "Fusion ENS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A1338FFA298ABB06007DC669 /* Debug */,
