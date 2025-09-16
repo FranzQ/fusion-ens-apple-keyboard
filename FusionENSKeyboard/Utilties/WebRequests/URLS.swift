@@ -12,14 +12,14 @@ struct URLS{
     static let ensResolve = BASEURL + "resolve/"
     
     static func fusionNameResolver(name: String) -> String {
-        return ensResolve + name
+        return ensResolve + name + "?source=ios"
     }
     
     static func ensNameResolver(name: String) -> String {
-        return ensResolve + name
+        return ensResolve + name + "?source=ios"
     }
     
     static func unsNameResolver(name: String) -> String {
-        return ensResolve + name
+        return ensResolve + name + "?source=ios"
     }
 }

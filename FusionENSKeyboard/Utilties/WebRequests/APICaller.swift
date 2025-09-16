@@ -18,31 +18,32 @@ class APICaller {
             guard let data = response.data,
                   let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
             else {
+                print("Failed to parse JSON response")
                 completion("") // Return empty string if the response cannot be parsed
                 return
             }
             
-            // Handle ENS Ideas API response format
-            // The API returns the address directly or in a different structure
+            print("API Response: \(json)")
+            
+            // Handle Fusion ENS API response format
+            // The API returns: {"success": true, "data": {"name": "ses.eth", "address": "0x1234...", "network": "mainnet"}}
+            if let success = json["success"] as? Bool, success {
+                if let data = json["data"] as? [String: Any],
+                   let address = data["address"] as? String {
+                    print("Resolved address: \(address)")
+                    completion(address)
+                    return
+                }
+            }
+            
+            // Fallback: try direct address field (for backward compatibility)
             if let address = json["address"] as? String {
                 completion(address)
             } else if let address = json["result"] as? String {
                 completion(address)
-            } else if let address = json["data"] as? String {
-                completion(address)
             } else {
-                // Try to find any field that might contain the address
-                let possibleAddressFields = ["address", "result", "data", "mappedAddress", "resolvedAddress"]
-                var foundAddress: String?
-                
-                for field in possibleAddressFields {
-                    if let value = json[field] as? String, !value.isEmpty {
-                        foundAddress = value
-                        break
-                    }
-                }
-                
-                completion(foundAddress ?? "")
+                print("No address found in response")
+                completion("")
             }
         }
     }

@@ -44,11 +44,22 @@ class ENSManagerViewController: UIViewController {
         
         // Navigation Bar
         navigationItem.title = "ENS Names"
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
+        
+        // Create toolbar with multiple buttons
+        let addButton = UIBarButtonItem(
             barButtonSystemItem: .add,
             target: self,
             action: #selector(addButtonTapped)
         )
+        
+        let safeCopyButton = UIBarButtonItem(
+            title: "Safe Copy",
+            style: .plain,
+            target: self,
+            action: #selector(safeCopyButtonTapped)
+        )
+        
+        navigationItem.rightBarButtonItems = [addButton, safeCopyButton]
         
         // Scroll View
         view.addSubview(scrollView)
@@ -193,6 +204,12 @@ class ENSManagerViewController: UIViewController {
     @objc private func addButtonTapped() {
         let vc = AddENSNameViewController()
         vc.delegate = self
+        let navController = UINavigationController(rootViewController: vc)
+        present(navController, animated: true)
+    }
+    
+    @objc private func safeCopyButtonTapped() {
+        let vc = SafeCopyViewController()
         let navController = UINavigationController(rootViewController: vc)
         present(navController, animated: true)
     }
