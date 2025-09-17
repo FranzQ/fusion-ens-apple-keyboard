@@ -340,7 +340,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A1338FE0298ABB02007DC669 /* Build configuration list for PBXProject "Fusion ENS" */;
+			buildConfigurationList = A1338FE0298ABB02007DC669 /* Build configuration list for PBXProject "Q" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -696,7 +696,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A1338FE0298ABB02007DC669 /* Build configuration list for PBXProject "Fusion ENS" */ = {
+		A1338FE0298ABB02007DC669 /* Build configuration list for PBXProject "Q" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A1338FF7298ABB06007DC669 /* Debug */,
