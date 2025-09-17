@@ -24,6 +24,18 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     private var lastShiftPressTime: TimeInterval = 0
     private var lastSpacePressTime: TimeInterval = 0
     
+    // Track the current hosting controller for proper cleanup
+    private var currentHostingController: UIHostingController<KeyboardView>?
+    
+    // Prevent multiple simultaneous view setup calls
+    private var isSettingUpView = false
+    private var lastKeyboardType: KeyboardType?
+    
+    // This keyboard is now SwiftUI-only
+    enum KeyboardType: String {
+        case swiftui = "SwiftUI" // Modern SwiftUI-based keyboard with simplified interface
+    }
+    
     // Default ENS suggestions
     private let defaultENSSuggestions = ["linea.eth", "base.eth", "vitalik.eth"]
     
@@ -55,16 +67,69 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupKeyboardView()
-        isKeyboardViewSetup = true
+        print("🚀 SwiftUI KeyboardViewController: viewDidLoad called")
+        
+        // Initialize lastKeyboardType to SwiftUI
+        lastKeyboardType = .swiftui
+        
+        // Delay setup to ensure proper view dimensions
+        DispatchQueue.main.async {
+            self.setupKeyboardView()
+            self.isKeyboardViewSetup = true
+        }
+        
+        print("🚀 SwiftUI KeyboardViewController: Setup completed")
     }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+        // Clean up hosting controller if it exists
+        if let hostingController = currentHostingController {
+            hostingController.willMove(toParent: nil)
+            hostingController.view.removeFromSuperview()
+            hostingController.removeFromParent()
+        }
+    }
+    
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        print("👁️ KeyboardViewController: viewWillAppear called")
+        print("👁️ View frame: \(view.frame)")
+        print("👁️ View bounds: \(view.bounds)")
+    }
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        // Ensure keyboard is set up
+        print("👁️ SwiftUI KeyboardViewController: viewDidAppear called")
+        print("👁️ View frame: \(view.frame)")
+        print("👁️ View bounds: \(view.bounds)")
+        
+        // Only refresh if not already set up
         if !isKeyboardViewSetup {
+            print("👁️ Refreshing SwiftUI keyboard view")
             setupKeyboardView()
             isKeyboardViewSetup = true
+        } else {
+            print("👁️ SwiftUI keyboard already set up, skipping refresh")
+        }
+    }
+    
+    override func updateViewConstraints() {
+        super.updateViewConstraints()
+        print("📐 KeyboardViewController: updateViewConstraints called")
+        print("📐 View frame: \(view.frame)")
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        print("📐 KeyboardViewController: viewDidLayoutSubviews called")
+        print("📐 View frame: \(view.frame)")
+        print("📐 View bounds: \(view.bounds)")
+        
+        // Just log the height - don't try to fix it here to avoid infinite loops
+        if view.frame.height < 216.0 {
+            print("📐 Warning: View height is small (\(view.frame.height))")
         }
     }
     
@@ -79,23 +144,95 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     }
     
     private func setupKeyboardView() {
-        // Clear any existing views
-        view.subviews.forEach { $0.removeFromSuperview() }
+        print("🔧 SwiftUI KeyboardViewController: setupKeyboardView called")
         
-        // Create the actual keyboard view
-        let keyboardView = createSimpleKeyboard()
-        view.addSubview(keyboardView)
+        // Prevent multiple simultaneous setup calls
+        guard !isSettingUpView else {
+            print("🔧 Already setting up view, skipping...")
+            return
+        }
+        
+        // Check if already set up
+        if isKeyboardViewSetup {
+            print("🔧 SwiftUI keyboard already set up, skipping")
+            return
+        }
+        
+        isSettingUpView = true
+        
+        // Properly clean up existing views and child view controllers
+        cleanupExistingViews()
+        
+        // Create SwiftUI keyboard view
+        print("🔧 Creating SwiftUI keyboard view")
+        let swiftUIView = UIHostingController(rootView: KeyboardView(controller: self))
+        currentHostingController = swiftUIView
+        swiftUIView.view.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Properly add as child view controller
+        addChild(swiftUIView)
+        view.addSubview(swiftUIView.view)
+        swiftUIView.didMove(toParent: self)
         
         // Set up constraints
-        keyboardView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            keyboardView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            keyboardView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            keyboardView.topAnchor.constraint(equalTo: view.topAnchor),
-            keyboardView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            swiftUIView.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            swiftUIView.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            swiftUIView.view.topAnchor.constraint(equalTo: view.topAnchor),
+            swiftUIView.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+        print("🔧 SwiftUI keyboard view created and added")
+        
+        isSettingUpView = false
+        print("🔧 SwiftUI setupKeyboardView completed")
     }
     
+    private func cleanupExistingViews() {
+        print("🧹 KeyboardViewController: cleanupExistingViews called")
+        print("🧹 Current subviews count: \(view.subviews.count)")
+        print("🧹 Current hosting controller: \(currentHostingController != nil ? "exists" : "nil")")
+        
+        // Properly remove any existing hosting controller first
+        if let hostingController = currentHostingController {
+            print("🧹 Removing existing hosting controller")
+            hostingController.willMove(toParent: nil)
+            hostingController.view.removeFromSuperview()
+            hostingController.removeFromParent()
+            currentHostingController = nil
+        }
+        
+        // Remove all subviews (this will also remove any constraints)
+        view.subviews.forEach { subview in
+            // Remove all constraints from the subview
+            subview.removeFromSuperview()
+        }
+        
+        // Clear suggestion-related views
+        suggestionOverlay?.removeFromSuperview()
+        suggestionOverlay = nil
+        suggestionBar = nil
+        suggestionButtons.removeAll()
+        
+        // Force layout update to clear any lingering constraints
+        view.setNeedsLayout()
+        view.layoutIfNeeded()
+        
+        print("🧹 Cleanup completed. Subviews count: \(view.subviews.count)")
+    }
+    
+    // Public method to force refresh the keyboard view (useful for debugging)
+    func refreshKeyboardView() {
+        print("🔄 Manual refresh requested")
+        DispatchQueue.main.async {
+            self.isKeyboardViewSetup = false
+            self.setupKeyboardView()
+            self.isKeyboardViewSetup = true
+        }
+    }
+    
+    
+    // UIKit methods removed - this keyboard is now SwiftUI-only
+    /*
     private func createSimpleKeyboard() -> UIView {
         let containerView = UIView()
         
@@ -105,6 +242,19 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         } else {
             containerView.backgroundColor = UIColor(red: 0.82, green: 0.84, blue: 0.86, alpha: 1.0) // Light mode
         }
+        
+        // Add a visible border for debugging
+        containerView.layer.borderWidth = 2.0
+        containerView.layer.borderColor = UIColor.red.cgColor
+        print("🔧 Container view background color set: \(containerView.backgroundColor?.description ?? "nil")")
+        
+        // Get the available width for the keyboard
+        let availableWidth = UIScreen.main.bounds.width
+        print("🔧 Available keyboard width: \(availableWidth)")
+        
+        // Set a minimum height for the container view to prevent 0 height issues
+        let minimumHeight: CGFloat = 216.0 // Standard keyboard height
+        containerView.translatesAutoresizingMaskIntoConstraints = false
         
         let rows: [[String]]
         if isNumbersLayout {
@@ -141,101 +291,159 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
             }
         }
         
-        var previousRow: UIView?
+        // Add suggestion bar first
+        addSuggestionBar(to: containerView)
+        
+        // Create a stack view to handle flexible layout
+        let keyboardStackView = UIStackView()
+        keyboardStackView.axis = .vertical
+        keyboardStackView.distribution = .fillEqually
+        keyboardStackView.spacing = 8
+        keyboardStackView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(keyboardStackView)
+        
+        print("🔧 Created keyboard stack view with axis: \(keyboardStackView.axis.rawValue)")
+        print("🔧 Stack view distribution: \(keyboardStackView.distribution.rawValue)")
+        print("🔧 Stack view spacing: \(keyboardStackView.spacing)")
+        
+        // Position the stack view to fill the container (suggestion bar will be on top)
+        NSLayoutConstraint.activate([
+            keyboardStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            keyboardStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            keyboardStackView.topAnchor.constraint(equalTo: containerView.topAnchor),
+            keyboardStackView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+            // Add minimum height constraint to ensure proper sizing
+            keyboardStackView.heightAnchor.constraint(greaterThanOrEqualToConstant: 200.0)
+        ])
         
         for (rowIndex, row) in rows.enumerated() {
             let rowView = UIView()
-            containerView.addSubview(rowView)
+            keyboardStackView.addArrangedSubview(rowView)
             
-            rowView.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                rowView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
-                rowView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-                rowView.heightAnchor.constraint(equalToConstant: 45)
-            ])
+            // Set a minimum height for the row view to ensure it's visible
+            let heightConstraint = rowView.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
+            heightConstraint.priority = UILayoutPriority(999)
+            heightConstraint.isActive = true
             
-            if let previousRow = previousRow {
-                rowView.topAnchor.constraint(equalTo: previousRow.bottomAnchor, constant: 12).isActive = true
-            } else {
-                // First row should be below the suggestion bar
-                rowView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 48).isActive = true
-            }
-            
-            if rowIndex == rows.count - 1 {
-                rowView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -6).isActive = true
-            }
-            
-            // Create buttons for all rows
+            // Create buttons for all rows using a more flexible approach
             var previousButton: UIButton?
             
-            for key in row {
+            for (keyIndex, key) in row.enumerated() {
                 let button = createKeyboardButton(title: key)
                 rowView.addSubview(button)
                 
                 button.translatesAutoresizingMaskIntoConstraints = false
+                print("🔧 Created button '\(key)' for row \(rowIndex)")
+                print("🔧 Button frame: \(button.frame), isHidden: \(button.isHidden), alpha: \(button.alpha)")
                 
-                // Set different widths for different keys (iPhone keyboard proportions)
-                let keyWidth: CGFloat
-                switch key {
-                case "space":
-                    keyWidth = 200  // Wide space bar like iPhone
-                case "⇧", "⌫", "#+=":
-                    keyWidth = 60   // Shift and delete keys
-                case "123", "ABC":
-                    keyWidth = 55   // Number/symbol toggle key
-                case "🌐", "🙂":
-                    keyWidth = 50   // Globe key and emoji key
-                case "return", "search":
-                    keyWidth = 75   // Return/Search key
-                default:
-                    // For the second row (symbols row), use smaller width to fit 10 keys
-                    if rowIndex == 1 {
-                        // ASDF row - wider width for A, S, D, F, G, H, J, K, but keep L key smaller
-                        if key == "L" || key == "l" {
-                            keyWidth = 33   // Keep L key smaller
-                        } else {
-                            keyWidth = 35   // Wider width for other ASDF row keys
-                        }
-                    } else {
-                        keyWidth = 36   // Standard letter/number key width
-                    }
-                }
+                // Calculate appropriate width based on available space and key type
+                let keyWidth = calculateKeyWidth(for: key, in: row, rowIndex: rowIndex, availableWidth: availableWidth)
+                
+                // Create width constraint with high priority to ensure buttons have proper size
+                let widthConstraint = button.widthAnchor.constraint(equalToConstant: keyWidth)
+                widthConstraint.priority = UILayoutPriority(999) // High priority to ensure proper sizing
+                
+                // Use flexible constraints for vertical positioning
+                let topConstraint = button.topAnchor.constraint(greaterThanOrEqualTo: rowView.topAnchor, constant: 4)
+                let bottomConstraint = button.bottomAnchor.constraint(lessThanOrEqualTo: rowView.bottomAnchor, constant: -4)
+                topConstraint.priority = UILayoutPriority(999)
+                bottomConstraint.priority = UILayoutPriority(999)
                 
                 NSLayoutConstraint.activate([
-                    button.topAnchor.constraint(equalTo: rowView.topAnchor),
-                    button.bottomAnchor.constraint(equalTo: rowView.bottomAnchor),
-                    button.widthAnchor.constraint(equalToConstant: keyWidth)
+                    topConstraint,
+                    bottomConstraint,
+                    widthConstraint,
+                    // Center the button vertically in the row
+                    button.centerYAnchor.constraint(equalTo: rowView.centerYAnchor)
                 ])
                 
                 if let previousButton = previousButton {
-                    button.leadingAnchor.constraint(equalTo: previousButton.trailingAnchor, constant: 6).isActive = true
+                    // Use high priority for spacing to ensure proper layout
+                    let spacingConstraint = button.leadingAnchor.constraint(equalTo: previousButton.trailingAnchor, constant: 6)
+                    spacingConstraint.priority = UILayoutPriority(999)
+                    spacingConstraint.isActive = true
                 } else {
                     // For the second row, add extra leading margin to center it
-                    if rowIndex == 1 {
-                        button.leadingAnchor.constraint(equalTo: rowView.leadingAnchor, constant: 24).isActive = true
-                    } else {
-                        button.leadingAnchor.constraint(equalTo: rowView.leadingAnchor, constant: 6).isActive = true
-                    }
+                    let leadingConstant: CGFloat = rowIndex == 1 ? 24 : 6
+                    let leadingConstraint = button.leadingAnchor.constraint(equalTo: rowView.leadingAnchor, constant: leadingConstant)
+                    leadingConstraint.priority = UILayoutPriority(999)
+                    leadingConstraint.isActive = true
                 }
                 
                 // Pin the last key to trailing edge to define row width (except for second row)
-                if key == row.last && rowIndex != 1 {
-                    button.trailingAnchor.constraint(equalTo: rowView.trailingAnchor, constant: -6).isActive = true
-                } else if key == row.last && rowIndex == 1 {
-                    // For second row, add trailing margin to match leading margin
-                    button.trailingAnchor.constraint(equalTo: rowView.trailingAnchor, constant: -24).isActive = true
+                if keyIndex == row.count - 1 {
+                    let trailingConstant: CGFloat = rowIndex == 1 ? -24 : -6
+                    let trailingConstraint = button.trailingAnchor.constraint(equalTo: rowView.trailingAnchor, constant: trailingConstant)
+                    trailingConstraint.priority = UILayoutPriority(999)
+                    trailingConstraint.isActive = true
                 }
                 
                 previousButton = button
             }
             
-            previousRow = rowView
+            // Debug button frames after constraints are applied
+            DispatchQueue.main.async {
+                print("🔧 Row \(rowIndex) buttons after constraint setup:")
+                for (buttonIndex, subview) in rowView.subviews.enumerated() {
+                    if let button = subview as? UIButton {
+                        print("🔧 Button \(buttonIndex) frame: \(button.frame), title: '\(button.title(for: .normal) ?? "")'")
+                    }
+                }
+            }
         }
         
-        // Add suggestion bar above keyboard
-        addSuggestionBar(to: containerView)
+        print("🔧 Finished creating keyboard with \(keyboardStackView.arrangedSubviews.count) rows")
+        print("🔧 Container view final frame: \(containerView.frame)")
+        print("🔧 Container view final bounds: \(containerView.bounds)")
+        print("🔧 Container view isHidden: \(containerView.isHidden)")
+        print("🔧 Container view alpha: \(containerView.alpha)")
         
         return containerView
+    }
+    */
+    
+    /*
+    private func calculateKeyWidth(for key: String, in row: [String], rowIndex: Int, availableWidth: CGFloat) -> CGFloat {
+        // Calculate total spacing needed (6pt between keys + margins)
+        let spacing = CGFloat(row.count - 1) * 6.0
+        let margins: CGFloat = rowIndex == 1 ? 48.0 : 12.0 // Extra margins for second row
+        let availableForKeys = availableWidth - spacing - margins
+        
+        // Base widths for different key types
+        let baseWidths: [String: CGFloat] = [
+            "space": 200,
+            "⇧": 60, "⌫": 60, "#+=": 60,
+            "123": 55, "ABC": 55,
+            "🌐": 50, "🙂": 50,
+            "return": 75, "search": 75
+        ]
+        
+        // If it's a special key, use its base width
+        if let baseWidth = baseWidths[key] {
+            return min(baseWidth, availableForKeys * 0.3) // Cap at 30% of available width
+        }
+        
+        // For regular keys, calculate based on row
+        let keyCount = CGFloat(row.count)
+        let averageWidth = availableForKeys / keyCount
+        
+        // Adjust for specific rows
+        switch rowIndex {
+        case 0: // QWERTY row
+            return min(36, averageWidth)
+        case 1: // ASDF row
+            if key == "L" || key == "l" {
+                return min(33, averageWidth * 0.9)
+            } else {
+                return min(35, averageWidth)
+            }
+        case 2: // ZXCV row
+            return min(36, averageWidth)
+        case 3: // Bottom row
+            return min(50, averageWidth)
+        default:
+            return min(36, averageWidth)
+        }
     }
     
     private func addSuggestionBar(to containerView: UIView) {
@@ -253,13 +461,19 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         
         containerView.addSubview(suggestionBar)
         
-        // Position suggestion bar at the top
+        // Position suggestion bar at the top with flexible height
+        let heightConstraint = suggestionBar.heightAnchor.constraint(equalToConstant: 40)
+        heightConstraint.priority = UILayoutPriority.defaultHigh
+        
         NSLayoutConstraint.activate([
             suggestionBar.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             suggestionBar.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
             suggestionBar.topAnchor.constraint(equalTo: containerView.topAnchor),
-            suggestionBar.heightAnchor.constraint(equalToConstant: 40)
+            heightConstraint
         ])
+        
+        // Bring suggestion bar to front so it appears above the stack view
+        containerView.bringSubviewToFront(suggestionBar)
         
         self.suggestionBar = suggestionBar
     }
@@ -695,8 +909,8 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
             }
         }
         
-        // Try to get current word from text document proxy
-        if let currentWord = textDocumentProxy.currentWord, !currentWord.isEmpty {
+        // Try to get current word from context
+        if let currentWord = getCurrentWord(), !currentWord.isEmpty {
             if HelperClass.checkFormat(currentWord) {
                 handleSelectedText(currentWord)
                 return
@@ -792,15 +1006,21 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     }
     
     private func updateSuggestionBar(with suggestions: [String]) {
+        // Guard against nil suggestionBar - this can happen if called when SwiftUI keyboard is active
+        guard let suggestionBar = suggestionBar else {
+            print("🔧 updateSuggestionBar called but suggestionBar is nil - skipping")
+            return
+        }
+        
         // Clear existing suggestion buttons and all subviews (including separators)
         suggestionButtons.forEach { $0.removeFromSuperview() }
         suggestionButtons.removeAll()
         
         // Clear all subviews from suggestion bar to remove any leftover separators
-        suggestionBar?.subviews.forEach { $0.removeFromSuperview() }
+        suggestionBar.subviews.forEach { $0.removeFromSuperview() }
         
         // Always show suggestion bar with exactly 3 items
-        suggestionBar?.isHidden = false
+        suggestionBar.isHidden = false
         
         // Ensure we have exactly 3 suggestions (pad with empty strings if needed)
         let paddedSuggestions = Array(suggestions.prefix(3))
@@ -815,38 +1035,38 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
                 button.isUserInteractionEnabled = false
                 button.alpha = 0.3
             }
-            suggestionBar?.addSubview(button)
+            suggestionBar.addSubview(button)
             suggestionButtons.append(button)
             
             button.translatesAutoresizingMaskIntoConstraints = false
             NSLayoutConstraint.activate([
-                button.topAnchor.constraint(equalTo: suggestionBar!.topAnchor, constant: 8),
-                button.bottomAnchor.constraint(equalTo: suggestionBar!.bottomAnchor, constant: -8),
+                button.topAnchor.constraint(equalTo: suggestionBar.topAnchor, constant: 8),
+                button.bottomAnchor.constraint(equalTo: suggestionBar.bottomAnchor, constant: -8),
                 button.heightAnchor.constraint(equalToConstant: 24)
             ])
             
             if let previousButton = previousButton {
                 button.leadingAnchor.constraint(equalTo: previousButton.trailingAnchor, constant: 4).isActive = true
             } else {
-                button.leadingAnchor.constraint(equalTo: suggestionBar!.leadingAnchor, constant: 12).isActive = true
+                button.leadingAnchor.constraint(equalTo: suggestionBar.leadingAnchor, constant: 12).isActive = true
             }
             
             if index == finalSuggestions.count - 1 {
                 // Leave space for the .eth button (40pt width + 12pt margin + 4pt spacing = 56pt)
-                button.trailingAnchor.constraint(equalTo: suggestionBar!.trailingAnchor, constant: -56).isActive = true
+                button.trailingAnchor.constraint(equalTo: suggestionBar.trailingAnchor, constant: -56).isActive = true
             }
             
             // Always add separator after each button except the last one
             if index < finalSuggestions.count - 1 {
                 let separator = UIView()
                 separator.backgroundColor = UIColor.lightGray.withAlphaComponent(0.3)
-                suggestionBar?.addSubview(separator)
+                suggestionBar.addSubview(separator)
                 
                 separator.translatesAutoresizingMaskIntoConstraints = false
                 NSLayoutConstraint.activate([
                     separator.leadingAnchor.constraint(equalTo: button.trailingAnchor, constant: 2),
-                    separator.topAnchor.constraint(equalTo: suggestionBar!.topAnchor, constant: 12),
-                    separator.bottomAnchor.constraint(equalTo: suggestionBar!.bottomAnchor, constant: -12),
+                    separator.topAnchor.constraint(equalTo: suggestionBar.topAnchor, constant: 12),
+                    separator.bottomAnchor.constraint(equalTo: suggestionBar.bottomAnchor, constant: -12),
                     separator.widthAnchor.constraint(equalToConstant: 0.5)
                 ])
             }
@@ -965,7 +1185,7 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     
     private func insertSuggestion(_ suggestion: String) {
         // Get the current word that needs to be replaced
-        let currentWord = textDocumentProxy.currentWord ?? ""
+        let currentWord = getCurrentWord() ?? ""
         
         // If there's a current word, delete it first
         if !currentWord.isEmpty {
@@ -998,7 +1218,7 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     
     override var autocompleteText: String? {
         // Get the current word for autocomplete
-        if let currentWord = textDocumentProxy.currentWord, !currentWord.isEmpty {
+        if let currentWord = getCurrentWord(), !currentWord.isEmpty {
             return currentWord
         }
         
@@ -1042,7 +1262,7 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     
     override func textDidChange(_ textInput: UITextInput?) {
         super.textDidChange(textInput)
-        print("textDidChange called")
+        print("SwiftUI textDidChange called")
         
         // Check if there's selected text first
         if let selectedText = textDocumentProxy.selectedText, !selectedText.isEmpty {
@@ -1052,21 +1272,42 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
                 handleSelectedText(selectedText)
             }
         }
-        // Check current word for suggestions
-        else if let currentWord = textDocumentProxy.currentWord, !currentWord.isEmpty {
-            print("Current word from textDocumentProxy: \(currentWord)")
-            updateSuggestionsForWord(currentWord)
+        // Try to detect ENS domains from the current context
+        else {
+            detectAndResolveENSFromContext()
         }
-        // Fallback to last typed word if textDocumentProxy doesn't work
-        else if !lastTypedWord.isEmpty {
-            print("Using last typed word: \(lastTypedWord)")
-            updateSuggestionsForWord(lastTypedWord)
-        } else {
-            print("No current word available")
-            // Hide suggestions if no current word
-            hideENSSuggestion()
-            updateSuggestionBar(with: [])
+    }
+    
+    private func detectAndResolveENSFromContext() {
+        // Try to get the current word or recent text
+        if let currentWord = getCurrentWord(), HelperClass.checkFormat(currentWord) {
+            print("🔍 SwiftUI: Detected ENS domain in context: \(currentWord)")
+            handleSelectedText(currentWord)
         }
+        // SwiftUI keyboard handles suggestions through its own UI
+        else {
+            print("SwiftUI keyboard - suggestions handled by SwiftUI interface")
+        }
+    }
+    
+    private func getCurrentWord() -> String? {
+        // Try to get text around the cursor
+        if let beforeContext = textDocumentProxy.documentContextBeforeInput,
+           let afterContext = textDocumentProxy.documentContextAfterInput {
+            
+            // Look for ENS domains in the recent context
+            let fullContext = beforeContext + afterContext
+            let words = fullContext.components(separatedBy: .whitespacesAndNewlines)
+            
+            // Check the last few words for ENS domains
+            for word in words.suffix(3) {
+                if HelperClass.checkFormat(word) {
+                    return word
+                }
+            }
+        }
+        
+        return nil
     }
     
     private func updateSuggestionsForWord(_ word: String) {
@@ -1094,6 +1335,7 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
             hideENSSuggestion()
         }
     }
+    */
 }
 
 

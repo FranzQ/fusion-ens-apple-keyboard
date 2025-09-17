@@ -13,60 +13,225 @@ protocol KeyboardController {
     func deleteBackward()
 }
 
+// SwiftUI-based keyboard implementation - alternative to the UIKit version
+// This provides a modern, simplified keyboard interface that users can choose in settings
 struct KeyboardView: View {
+    @State private var isShiftPressed = false
+    @State private var isNumbersLayout = false
+    @State private var isSecondarySymbolsLayout = false
     
     let controller: KeyboardController
     
+    // Add an id to force view refresh when controller changes
+    private var viewId: String {
+        return "\(ObjectIdentifier(controller as AnyObject))"
+    }
+    
+    init(controller: KeyboardController) {
+        self.controller = controller
+        print("🎨 SwiftUI KeyboardView: Initialized with controller: \(ObjectIdentifier(controller as AnyObject))")
+    }
+    
     var body: some View {
+        let _ = print("🎨 SwiftUI KeyboardView: body computed for controller: \(ObjectIdentifier(controller as AnyObject))")
+        
         VStack(spacing: 8) {
-            // Top row
-            HStack(spacing: 4) {
-                ForEach(["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"], id: \.self) { key in
-                    KeyboardButton(title: key) {
-                        controller.insertText(key)
+            // Suggestion bar
+            HStack {
+                Text("vitalik.eth")
+                    .font(.system(size: 16))
+                    .foregroundColor(.blue)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color(.systemGray5))
+                    .cornerRadius(8)
+                    .onTapGesture {
+                        controller.insertText("vitalik.eth")
                     }
-                }
-            }
-            
-            // Middle row
-            HStack(spacing: 4) {
-                ForEach(["A", "S", "D", "F", "G", "H", "J", "K", "L"], id: \.self) { key in
-                    KeyboardButton(title: key) {
-                        controller.insertText(key)
+                
+                Spacer()
+                
+                Text(".eth")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.blue)
+                    .cornerRadius(8)
+                    .onTapGesture {
+                        controller.insertText(".eth")
                     }
-                }
             }
+            .padding(.horizontal, 8)
             
-            // Bottom row
-            HStack(spacing: 4) {
-                ForEach(["Z", "X", "C", "V", "B", "N", "M"], id: \.self) { key in
-                    KeyboardButton(title: key) {
-                        controller.insertText(key)
+            // Keyboard rows
+            VStack(spacing: 8) {
+                if isNumbersLayout {
+                    if isSecondarySymbolsLayout {
+                        // Secondary symbols layout
+                        VStack(spacing: 8) {
+                            HStack(spacing: 4) {
+                                ForEach(["[", "]", "{", "}", "#", "%", "^", "*", "+", "="], id: \.self) { key in
+                                    KeyboardButton(title: key) {
+                                        controller.insertText(key)
+                                    }
+                                }
+                            }
+                            
+                            HStack(spacing: 4) {
+                                ForEach(["-", "\\", "|", "~", "<", ">", "€", "£", "¥", "•"], id: \.self) { key in
+                                    KeyboardButton(title: key) {
+                                        controller.insertText(key)
+                                    }
+                                }
+                            }
+                            
+                            HStack(spacing: 4) {
+                                KeyboardButton(title: "123") {
+                                    isSecondarySymbolsLayout = false
+                                }
+                                
+                                ForEach([".", ",", "?", "!", "'"], id: \.self) { key in
+                                    KeyboardButton(title: key) {
+                                        controller.insertText(key)
+                                    }
+                                }
+                                
+                                KeyboardButton(title: "⌫") {
+                                    controller.deleteBackward()
+                                }
+                            }
+                            
+                            HStack(spacing: 4) {
+                                KeyboardButton(title: "ABC") {
+                                    isNumbersLayout = false
+                                    isSecondarySymbolsLayout = false
+                                }
+                                
+                                KeyboardButton(title: "🙂") {
+                                    controller.insertText("🙂")
+                                }
+                                
+                                KeyboardButton(title: "Space", isWide: true) {
+                                    controller.insertText(" ")
+                                }
+                                
+                                KeyboardButton(title: "Return") {
+                                    controller.insertText("\n")
+                                }
+                            }
+                        }
+                    } else {
+                        // Numbers layout
+                        VStack(spacing: 8) {
+                            HStack(spacing: 4) {
+                                ForEach(["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"], id: \.self) { key in
+                                    KeyboardButton(title: key) {
+                                        controller.insertText(key)
+                                    }
+                                }
+                            }
+                            
+                            HStack(spacing: 4) {
+                                ForEach(["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""], id: \.self) { key in
+                                    KeyboardButton(title: key) {
+                                        controller.insertText(key)
+                                    }
+                                }
+                            }
+                            
+                            HStack(spacing: 4) {
+                                KeyboardButton(title: "#+=") {
+                                    isSecondarySymbolsLayout = true
+                                }
+                                
+                                ForEach([".", ",", "?", "!", "'"], id: \.self) { key in
+                                    KeyboardButton(title: key) {
+                                        controller.insertText(key)
+                                    }
+                                }
+                                
+                                KeyboardButton(title: "⌫") {
+                                    controller.deleteBackward()
+                                }
+                            }
+                            
+                            HStack(spacing: 4) {
+                                KeyboardButton(title: "ABC") {
+                                    isNumbersLayout = false
+                                    isSecondarySymbolsLayout = false
+                                }
+                                
+                                KeyboardButton(title: "Space", isWide: true) {
+                                    controller.insertText(" ")
+                                }
+                                
+                                KeyboardButton(title: "Return") {
+                                    controller.insertText("\n")
+                                }
+                            }
+                        }
                     }
-                }
-                
-                KeyboardButton(title: "⌫") {
-                    controller.deleteBackward()
-                }
-            }
-            
-            // Function row
-            HStack(spacing: 4) {
-                KeyboardButton(title: "123") {
-                    // Switch to numbers
-                }
-                
-                KeyboardButton(title: "Space", isWide: true) {
-                    controller.insertText(" ")
-                }
-                
-                KeyboardButton(title: "Return") {
-                    controller.insertText("\n")
+                } else {
+                    // Letters layout
+                    VStack(spacing: 8) {
+                        HStack(spacing: 4) {
+                            ForEach(isShiftPressed ? ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"] : ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"], id: \.self) { key in
+                                KeyboardButton(title: key) {
+                                    controller.insertText(key)
+                                }
+                            }
+                        }
+                        
+                        HStack(spacing: 4) {
+                            ForEach(isShiftPressed ? ["A", "S", "D", "F", "G", "H", "J", "K", "L"] : ["a", "s", "d", "f", "g", "h", "j", "k", "l"], id: \.self) { key in
+                                KeyboardButton(title: key) {
+                                    controller.insertText(key)
+                                }
+                            }
+                        }
+                        
+                        HStack(spacing: 4) {
+                            KeyboardButton(title: "⇧") {
+                                isShiftPressed.toggle()
+                            }
+                            
+                            ForEach(isShiftPressed ? ["Z", "X", "C", "V", "B", "N", "M"] : ["z", "x", "c", "v", "b", "n", "m"], id: \.self) { key in
+                                KeyboardButton(title: key) {
+                                    controller.insertText(key)
+                                }
+                            }
+                            
+                            KeyboardButton(title: "⌫") {
+                                controller.deleteBackward()
+                            }
+                        }
+                        
+                        HStack(spacing: 4) {
+                            KeyboardButton(title: "123") {
+                                isNumbersLayout = true
+                                isSecondarySymbolsLayout = false
+                            }
+                            
+                            KeyboardButton(title: "🌐") {
+                                controller.insertText(".eth")
+                            }
+                            
+                            KeyboardButton(title: "Space", isWide: true) {
+                                controller.insertText(" ")
+                            }
+                            
+                            KeyboardButton(title: "Return") {
+                                controller.insertText("\n")
+                            }
+                        }
+                    }
                 }
             }
         }
         .padding(8)
         .background(Color(.systemGray6))
+        .id(viewId) // Force view refresh when controller changes
     }
 }
 

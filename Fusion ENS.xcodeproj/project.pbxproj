@@ -3,11 +3,14 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		1E7715832E6579B3005914E9 /* UIHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BB89972A59B85B0038A0E0 /* UIHelpers.swift */; };
+		1E9AA1F82E7AA4C900FEA0D4 /* KeyboardType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9AA1F72E7AA4C900FEA0D4 /* KeyboardType.swift */; };
+		1E9AA2042E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E9AA1FD2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		1E9AA2172E7AFB0800FEA0D4 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 1E9AA2162E7AFB0800FEA0D4 /* Alamofire */; };
 		1EE787172E79896F000E62E3 /* SafeCopyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EE787162E79896F000E62E3 /* SafeCopyViewController.swift */; };
 		A1338FE9298ABB02007DC669 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1338FE8298ABB02007DC669 /* AppDelegate.swift */; };
 		A1338FEB298ABB02007DC669 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1338FEA298ABB02007DC669 /* SceneDelegate.swift */; };
@@ -44,6 +47,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		1E9AA2022E7ACF6800FEA0D4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1338FDD298ABB02007DC669 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1E9AA1FC2E7ACF6800FEA0D4;
+			remoteInfo = FusionENSUIKitKeyboard;
+		};
 		A1339005298ABB64007DC669 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = A1338FDD298ABB02007DC669 /* Project object */;
@@ -61,6 +71,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				A1339007298ABB64007DC669 /* FusionENSKeyboard.appex in Embed Foundation Extensions */,
+				1E9AA2042E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -78,6 +89,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1E9AA1F72E7AA4C900FEA0D4 /* KeyboardType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardType.swift; sourceTree = "<group>"; };
+		1E9AA1FD2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FusionENSUIKitKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		1E9AA2152E7AD8B800FEA0D4 /* FusionENSKeyboard.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FusionENSKeyboard.entitlements; sourceTree = "<group>"; };
 		1EE787162E79896F000E62E3 /* SafeCopyViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafeCopyViewController.swift; sourceTree = "<group>"; };
 		A1338FE5298ABB02007DC669 /* Fusion ENS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Fusion ENS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1338FE8298ABB02007DC669 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -114,7 +128,29 @@
 		NEW0061A490A3600A0D0C4 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		1E9AA2052E7ACF6900FEA0D4 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 1E9AA1FC2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		1E9AA1FE2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (1E9AA2052E7ACF6900FEA0D4 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = FusionENSUIKitKeyboard; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
+		1E9AA1FA2E7ACF6800FEA0D4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1E9AA2172E7AFB0800FEA0D4 /* Alamofire in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A1338FE2298ABB02007DC669 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -143,6 +179,7 @@
 				A17DFA822A48F915003FB8B5 /* Packages */,
 				A1338FE7298ABB02007DC669 /* FusionENSApp */,
 				A1339001298ABB64007DC669 /* FusionENSKeyboard */,
+				1E9AA1FE2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard */,
 				A1338FE6298ABB02007DC669 /* Products */,
 				A133900F298ABC90007DC669 /* Frameworks */,
 			);
@@ -153,6 +190,7 @@
 			children = (
 				A1338FE5298ABB02007DC669 /* Fusion ENS.app */,
 				A1339000298ABB64007DC669 /* FusionENSKeyboard.appex */,
+				1E9AA1FD2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -178,6 +216,8 @@
 		A1339001298ABB64007DC669 /* FusionENSKeyboard */ = {
 			isa = PBXGroup;
 			children = (
+				1E9AA2152E7AD8B800FEA0D4 /* FusionENSKeyboard.entitlements */,
+				1E9AA1F72E7AA4C900FEA0D4 /* KeyboardType.swift */,
 				A13B1D3B2A4A259300463E17 /* Utilties */,
 				A1339004298ABB64007DC669 /* Info.plist */,
 				A1339002298ABB64007DC669 /* KeyboardViewController.swift */,
@@ -276,6 +316,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		1E9AA1FC2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1E9AA2062E7ACF6900FEA0D4 /* Build configuration list for PBXNativeTarget "FusionENSUIKitKeyboard" */;
+			buildPhases = (
+				1E9AA1F92E7ACF6800FEA0D4 /* Sources */,
+				1E9AA1FA2E7ACF6800FEA0D4 /* Frameworks */,
+				1E9AA1FB2E7ACF6800FEA0D4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				1E9AA1FE2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard */,
+			);
+			name = FusionENSUIKitKeyboard;
+			packageProductDependencies = (
+				1E9AA2162E7AFB0800FEA0D4 /* Alamofire */,
+			);
+			productName = FusionENSUIKitKeyboard;
+			productReference = 1E9AA1FD2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		A1338FE4298ABB02007DC669 /* Fusion ENS */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A1338FF9298ABB06007DC669 /* Build configuration list for PBXNativeTarget "Fusion ENS" */;
@@ -289,6 +352,7 @@
 			);
 			dependencies = (
 				A1339006298ABB64007DC669 /* PBXTargetDependency */,
+				1E9AA2032E7ACF6800FEA0D4 /* PBXTargetDependency */,
 			);
 			name = "Fusion ENS";
 			packageProductDependencies = (
@@ -329,9 +393,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1400;
+				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
+					1E9AA1FC2E7ACF6800FEA0D4 = {
+						CreatedOnToolsVersion = 16.4;
+					};
 					A1338FE4298ABB02007DC669 = {
 						CreatedOnToolsVersion = 14.0.1;
 					};
@@ -340,7 +407,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A1338FE0298ABB02007DC669 /* Build configuration list for PBXProject "Q" */;
+			buildConfigurationList = A1338FE0298ABB02007DC669 /* Build configuration list for PBXProject "Fusion ENS" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -360,11 +427,19 @@
 			targets = (
 				A1338FE4298ABB02007DC669 /* Fusion ENS */,
 				A1338FFF298ABB64007DC669 /* FusionENSKeyboard */,
+				1E9AA1FC2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		1E9AA1FB2E7ACF6800FEA0D4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A1338FE3298ABB02007DC669 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -387,6 +462,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		1E9AA1F92E7ACF6800FEA0D4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A1338FE1298ABB02007DC669 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -418,6 +500,7 @@
 				A173F3062A4A6310006B0ACB /* HelperClass.swift in Sources */,
 				A13B1D402A4A261800463E17 /* URLS.swift in Sources */,
 				A13B1D3E2A4A25D700463E17 /* APICaller.swift in Sources */,
+				1E9AA1F82E7AA4C900FEA0D4 /* KeyboardType.swift in Sources */,
 				A133901D298AC290007DC669 /* KeyboardView.swift in Sources */,
 				A1339017298AC072007DC669 /* FusionENSKeyboardAppearance.swift in Sources */,
 				A1339019298AC0D6007DC669 /* FusionENSKeyboardActionHandler.swift in Sources */,
@@ -427,6 +510,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		1E9AA2032E7ACF6800FEA0D4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1E9AA1FC2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard */;
+			targetProxy = 1E9AA2022E7ACF6800FEA0D4 /* PBXContainerItemProxy */;
+		};
 		A1339006298ABB64007DC669 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A1338FFF298ABB64007DC669 /* FusionENSKeyboard */;
@@ -454,6 +542,69 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		1E9AA2072E7ACF6900FEA0D4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_ENTITLEMENTS = FusionENSUIKitKeyboard/FusionENSUIKitKeyboard.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WC7S9A7PR9;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FusionENSUIKitKeyboard/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS (Advanced)";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.keyboard.FusionENSUIKitKeyboard;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		1E9AA2082E7ACF6900FEA0D4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_ENTITLEMENTS = FusionENSUIKitKeyboard/FusionENSUIKitKeyboard.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WC7S9A7PR9;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FusionENSUIKitKeyboard/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS (Advanced)";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.keyboard.FusionENSUIKitKeyboard;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		A1338FF7298ABB06007DC669 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -642,13 +793,14 @@
 		A1339009298ABB64007DC669 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FusionENSKeyboard/FusionENSKeyboard.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = WC7S9A7PR9;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FusionENSKeyboard/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS";
+				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS (Lite)";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Fusion ENS. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -669,13 +821,14 @@
 		A133900A298ABB64007DC669 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FusionENSKeyboard/FusionENSKeyboard.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = WC7S9A7PR9;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FusionENSKeyboard/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS";
+				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS (Lite)";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Fusion ENS. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -696,7 +849,16 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A1338FE0298ABB02007DC669 /* Build configuration list for PBXProject "Q" */ = {
+		1E9AA2062E7ACF6900FEA0D4 /* Build configuration list for PBXNativeTarget "FusionENSUIKitKeyboard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1E9AA2072E7ACF6900FEA0D4 /* Debug */,
+				1E9AA2082E7ACF6900FEA0D4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1338FE0298ABB02007DC669 /* Build configuration list for PBXProject "Fusion ENS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A1338FF7298ABB06007DC669 /* Debug */,
@@ -753,6 +915,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		1E9AA2162E7AFB0800FEA0D4 /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1BCEF1B2A490A3600A0D0C4 /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
+		};
 		A17DFA852A48F93E003FB8B5 /* KeyboardKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A17DFA842A48F93E003FB8B5 /* XCRemoteSwiftPackageReference "KeyboardKit" */;

@@ -9,7 +9,23 @@ import SwiftUI
 
 struct SettingsView: View {
     @State private var hapticFeedbackEnabled: Bool = true
+    @State private var keyboardType: KeyboardType = .uikit
     private let hapticFeedbackKey = "hapticFeedbackEnabled"
+    private let keyboardTypeKey = "keyboardType"
+    
+    enum KeyboardType: String, CaseIterable {
+        case uikit = "UIKit"
+        case swiftui = "SwiftUI"
+        
+        var displayName: String {
+            switch self {
+            case .uikit:
+                return "UIKit (Default)"
+            case .swiftui:
+                return "SwiftUI (Modern)"
+            }
+        }
+    }
     
     var body: some View {
         NavigationView {
@@ -19,6 +35,15 @@ struct SettingsView: View {
                         .onChange(of: hapticFeedbackEnabled) { newValue in
                             saveHapticFeedbackSetting(newValue)
                         }
+                    
+                    Picker("Keyboard Type", selection: $keyboardType) {
+                        ForEach(KeyboardType.allCases, id: \.self) { type in
+                            Text(type.displayName).tag(type)
+                        }
+                    }
+                    .onChange(of: keyboardType) { newValue in
+                        saveKeyboardTypeSetting(newValue)
+                    }
                 }
                 
                 Section(header: Text("About")) {
@@ -45,6 +70,7 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .onAppear {
                 loadHapticFeedbackSetting()
+                loadKeyboardTypeSetting()
             }
         }
     }
@@ -55,6 +81,21 @@ struct SettingsView: View {
     
     private func saveHapticFeedbackSetting(_ enabled: Bool) {
         UserDefaults(suiteName: "group.com.fusionens.keyboard")?.set(enabled, forKey: hapticFeedbackKey)
+        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.synchronize()
+    }
+    
+    private func loadKeyboardTypeSetting() {
+        if let savedType = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.string(forKey: keyboardTypeKey),
+           let type = KeyboardType(rawValue: savedType) {
+            keyboardType = type
+        } else {
+            keyboardType = .uikit // Default to UIKit
+        }
+    }
+    
+    private func saveKeyboardTypeSetting(_ type: KeyboardType) {
+        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.set(type.rawValue, forKey: keyboardTypeKey)
+        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.synchronize()
     }
 }
 
