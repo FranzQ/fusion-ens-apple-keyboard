@@ -534,7 +534,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FusionENSUIKitKeyboard/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS (Advanced)";
+				INFOPLIST_KEY_CFBundleDisplayName = "Pro";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -566,7 +566,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FusionENSUIKitKeyboard/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS (Advanced)";
+				INFOPLIST_KEY_CFBundleDisplayName = "Pro";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -780,7 +780,7 @@
 				DEVELOPMENT_TEAM = WC7S9A7PR9;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FusionENSKeyboard/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS (Lite)";
+				INFOPLIST_KEY_CFBundleDisplayName = "Basic";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Fusion ENS. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -808,7 +808,7 @@
 				DEVELOPMENT_TEAM = WC7S9A7PR9;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FusionENSKeyboard/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Fusion ENS (Lite)";
+				INFOPLIST_KEY_CFBundleDisplayName = "Basic";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Fusion ENS. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

@@ -87,10 +87,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
     // MARK: - Setup Methods
     private func setupKeyboardView() {
         guard !isSettingUpView else {
-            return
-        }
-        
-        if isKeyboardViewSetup {
+            print("⚠️ Already setting up view, skipping")
             return
         }
         
@@ -98,7 +95,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         
         cleanupExistingViews()
         
-        print("🔧 Creating UIKit keyboard view")
+        print("🔧 Creating UIKit keyboard view - Numbers: \(isNumbersLayout), Secondary: \(isSecondarySymbolsLayout), Shift: \(isShiftPressed), CapsLock: \(isCapsLock)")
         let keyboardView = createSimpleKeyboard()
         view.addSubview(keyboardView)
         
@@ -126,6 +123,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         containerView = nil
         keyboardStackView = nil
         suggestionBar = nil
+        suggestionButtons.removeAll()
         
         // Force layout update
         view.setNeedsLayout()
@@ -264,14 +262,14 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                     ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
                     ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
                     ["⇧", "Z", "X", "C", "V", "B", "N", "M", "⌫"],
-                    ["123", ".eth", "space", "return"]
+                    ["123", ".eth", "space", ":btc", "return"]
                 ]
             } else {
                 rows = [
                     ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
                     ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
                     ["⇧", "z", "x", "c", "v", "b", "n", "m", "⌫"],
-                    ["123", ".eth", "space", "return"]
+                    ["123", ".eth", "space", ":btc", "return"]
                 ]
             }
         }
@@ -356,7 +354,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         
         // Use smaller font for bottom row keys
         let fontSize: CGFloat
-        if title == "123" || title == "ABC" || title == ".eth" || title == "space" || title == "return" {
+        if title == "123" || title == "ABC" || title == ".eth" || title == ":btc" || title == "space" || title == "return" {
             fontSize = 16  // Smaller font for bottom row
         } else {
             fontSize = 22  // Standard font for other keys
@@ -368,7 +366,15 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             // Blue return key
             button.backgroundColor = UIColor(red: 0.0, green: 0.48, blue: 1.0, alpha: 1.0)
             button.setTitleColor(UIColor.white, for: .normal)
-        } else if title == "⇧" || title == "⌫" || title == "123" || title == ".eth" || title == "ABC" || title == "#+=" || title == "🙂" {
+        } else if title == ":btc" {
+            // Orange crypto ticker key
+            button.backgroundColor = UIColor(red: 1.0, green: 0.58, blue: 0.0, alpha: 1.0) // Orange color
+            button.setTitleColor(UIColor.white, for: .normal)
+        } else if title == ".eth" {
+            // Blue .eth key
+            button.backgroundColor = UIColor(red: 0.0, green: 0.5, blue: 0.74, alpha: 1.0) // #0080BC
+            button.setTitleColor(UIColor.white, for: .normal)
+        } else if title == "⇧" || title == "⌫" || title == "123" || title == "ABC" || title == "#+=" || title == "🙂" {
             // Function keys - adapt to dark/light mode
             if traitCollection.userInterfaceStyle == .dark {
                 button.backgroundColor = UIColor(red: 0.27, green: 0.27, blue: 0.30, alpha: 1.0) // Dark mode gray
@@ -410,8 +416,26 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         
         
         button.addAction(UIAction { _ in
-            self.handleKeyPress(title)
+            // Only handle tap if it's not the :btc key (which has long press)
+            if title != ":btc" {
+                self.handleKeyPress(title)
+            }
         }, for: .touchUpInside)
+        
+        // Add long press gesture for crypto ticker key
+        if title == ":btc" {
+            let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(showCryptoTickerOptions(_:)))
+            longPressGesture.minimumPressDuration = 0.5
+            longPressGesture.cancelsTouchesInView = true
+            longPressGesture.delaysTouchesBegan = true
+            longPressGesture.delaysTouchesEnded = true
+            button.addGestureRecognizer(longPressGesture)
+            
+            // Add tap gesture for short taps
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleBtcTap(_:)))
+            tapGesture.require(toFail: longPressGesture)
+            button.addGestureRecognizer(tapGesture)
+        }
         
         return button
     }
@@ -452,7 +476,11 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         if let title = sender.title(for: .normal) {
             if title == "return" {
                 sender.backgroundColor = UIColor(red: 0.0, green: 0.38, blue: 0.8, alpha: 1.0) // Darker blue
-            } else if title == "⇧" || title == "⌫" || title == "123" || title == ".eth" || title == "ABC" || title == "#+=" || title == "🙂" {
+            } else if title == ":btc" {
+                sender.backgroundColor = UIColor(red: 0.8, green: 0.48, blue: 0.0, alpha: 1.0) // Darker orange
+            } else if title == ".eth" {
+                sender.backgroundColor = UIColor(red: 0.0, green: 0.4, blue: 0.64, alpha: 1.0) // Darker blue
+            } else if title == "⇧" || title == "⌫" || title == "123" || title == "ABC" || title == "#+=" || title == "🙂" {
                 // Function keys
                 if traitCollection.userInterfaceStyle == .dark {
                     sender.backgroundColor = UIColor(red: 0.37, green: 0.37, blue: 0.40, alpha: 1.0) // Lighter dark mode gray
@@ -475,7 +503,11 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         if let title = sender.title(for: .normal) {
             if title == "return" {
                 sender.backgroundColor = UIColor(red: 0.0, green: 0.48, blue: 1.0, alpha: 1.0) // Blue return key
-            } else if title == "⇧" || title == "⌫" || title == "123" || title == ".eth" || title == "ABC" || title == "#+=" || title == "🙂" {
+            } else if title == ":btc" {
+                sender.backgroundColor = UIColor(red: 1.0, green: 0.58, blue: 0.0, alpha: 1.0) // Orange crypto ticker key
+            } else if title == ".eth" {
+                sender.backgroundColor = UIColor(red: 0.0, green: 0.5, blue: 0.74, alpha: 1.0) // #0080BC
+            } else if title == "⇧" || title == "⌫" || title == "123" || title == "ABC" || title == "#+=" || title == "🙂" {
                 // Function keys - adapt to dark/light mode
                 if traitCollection.userInterfaceStyle == .dark {
                     sender.backgroundColor = UIColor(red: 0.27, green: 0.27, blue: 0.30, alpha: 1.0) // Dark mode gray
@@ -543,21 +575,52 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             lastTypedWord = ""
         case "123":
             // Switch to numbers layout
+            print("🔢 123 key pressed - switching to numbers layout")
             switchToNumbersLayout()
         case "ABC":
             // Switch back to letters layout
+            print("🔤 ABC key pressed - switching to letters layout")
             switchToLettersLayout()
         case "#+=":
             // Switch to secondary symbols layout
+            print("🔣 #+= key pressed - switching to secondary symbols layout")
             switchToSecondarySymbolsLayout()
         case ".eth":
             // .eth key - insert .eth at cursor position
             insertText(".eth")
             lastTypedWord += ".eth"
+            // Turn off shift after key press (unless caps lock is on)
+            if isShiftPressed && !isCapsLock {
+                isShiftPressed = false
+                print("⇧ Shift turned off after .eth key press")
+                isKeyboardViewSetup = false
+                setupKeyboardView()
+                isKeyboardViewSetup = true
+            }
+        case ":btc":
+            // Crypto ticker key - insert :btc at cursor position
+            insertText(":btc")
+            lastTypedWord += ":btc"
+            // Turn off shift after key press (unless caps lock is on)
+            if isShiftPressed && !isCapsLock {
+                isShiftPressed = false
+                print("⇧ Shift turned off after :btc key press")
+                isKeyboardViewSetup = false
+                setupKeyboardView()
+                isKeyboardViewSetup = true
+            }
         case "🙂":
             // Emoji key - insert smiley face
             insertText("🙂")
             lastTypedWord += "🙂"
+            // Turn off shift after key press (unless caps lock is on)
+            if isShiftPressed && !isCapsLock {
+                isShiftPressed = false
+                print("⇧ Shift turned off after emoji key press")
+                isKeyboardViewSetup = false
+                setupKeyboardView()
+                isKeyboardViewSetup = true
+            }
         case "⇧":
             // Shift key
             let currentTime = Date().timeIntervalSince1970
@@ -567,21 +630,42 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                 isShiftPressed = false
                 print("🔒 Caps lock toggled: \(isCapsLock)")
             } else {
-                // Single tap shift
-                isShiftPressed.toggle()
+                // Single tap shift - enable for next key only
+                isShiftPressed = true
                 isCapsLock = false
-                print("⇧ Shift toggled: \(isShiftPressed)")
+                print("⇧ Shift enabled for next key: \(isShiftPressed)")
             }
             lastShiftPressTime = currentTime
             // Recreate keyboard with new case
+            print("🔄 Recreating keyboard for shift state: shift=\(isShiftPressed), capslock=\(isCapsLock)")
+            isKeyboardViewSetup = false
             setupKeyboardView()
             isKeyboardViewSetup = true
         case ".":
             insertText(".")
             lastTypedWord += "."
+            // Turn off shift after key press (unless caps lock is on)
+            if isShiftPressed && !isCapsLock {
+                isShiftPressed = false
+                print("⇧ Shift turned off after period key press")
+                isKeyboardViewSetup = false
+                setupKeyboardView()
+                isKeyboardViewSetup = true
+            }
         default:
             insertText(key)
             lastTypedWord += key
+            
+            // Turn off shift after key press (unless caps lock is on)
+            if isShiftPressed && !isCapsLock {
+                isShiftPressed = false
+                print("⇧ Shift turned off after key press")
+                // Recreate keyboard to show lowercase
+                isKeyboardViewSetup = false
+                setupKeyboardView()
+                isKeyboardViewSetup = true
+            }
+            
             // Update suggestions as user types
             updateSuggestionsForWord(lastTypedWord)
         }
@@ -589,7 +673,13 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
     
     
     private func detectAndResolveENSFromContext() {
-        // Try to get the current word or recent text
+        // First try to get selected text from the text document proxy
+        if let selectedText = textDocumentProxy.selectedText, HelperClass.checkFormat(selectedText) {
+            handleSelectedText(selectedText)
+            return
+        }
+        
+        // Fallback: Try to get the current word or recent text
         if let currentWord = getCurrentWord(), HelperClass.checkFormat(currentWord) {
             handleSelectedText(currentWord)
         }
@@ -626,19 +716,26 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             triggerHapticFeedback()
             
             APICaller.shared.resolveENSName(name: selectedText) { mappedAddress in
-                DispatchQueue.main.async {
+                DispatchQueue.main.async { [weak self] in
                     if !mappedAddress.isEmpty {
-                        // Delete the original text and insert the resolved address
-                        for _ in 0..<selectedText.count {
-                            self.textDocumentProxy.deleteBackward()
+                        // Check if we have selected text (proper selection)
+                        if let currentSelectedText = self?.textDocumentProxy.selectedText, currentSelectedText == selectedText {
+                            // We have proper selected text, so we can replace it directly
+                            // The text document proxy will handle the replacement correctly
+                            self?.textDocumentProxy.insertText(mappedAddress)
+                        } else {
+                            // Fallback: delete the selected text length and insert
+                            for _ in 0..<selectedText.count {
+                                self?.textDocumentProxy.deleteBackward()
+                            }
+                            self?.textDocumentProxy.insertText(mappedAddress)
                         }
-                        self.textDocumentProxy.insertText(mappedAddress)
                         
                         // Trigger success haptic feedback
-                        self.triggerSuccessHaptic()
+                        self?.triggerSuccessHaptic()
                     } else {
                         // Trigger error haptic feedback
-                        self.triggerErrorHaptic()
+                        self?.triggerErrorHaptic()
                     }
                 }
             }
@@ -817,6 +914,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         print("🔢 Switching to numbers layout")
         isNumbersLayout = true
         isSecondarySymbolsLayout = false
+        isKeyboardViewSetup = false
         setupKeyboardView()
         isKeyboardViewSetup = true
     }
@@ -825,6 +923,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         print("🔤 Switching to letters layout")
         isNumbersLayout = false
         isSecondarySymbolsLayout = false
+        isKeyboardViewSetup = false
         setupKeyboardView()
         isKeyboardViewSetup = true
     }
@@ -832,6 +931,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
     @objc private func switchToSecondarySymbolsLayout() {
         print("🔣 Switching to secondary symbols layout")
         isSecondarySymbolsLayout = true
+        isKeyboardViewSetup = false
         setupKeyboardView()
         isKeyboardViewSetup = true
     }
@@ -888,5 +988,57 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
     
     func deleteBackward() {
         textDocumentProxy.deleteBackward()
+    }
+    
+    // MARK: - Crypto Ticker Options
+    
+    @objc private func handleBtcTap(_ gesture: UITapGestureRecognizer) {
+        // Handle short tap on :btc key
+        handleKeyPress(":btc")
+    }
+    
+    @objc private func showCryptoTickerOptions(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        
+        // Prevent keyboard switching by consuming the gesture
+        gesture.cancelsTouchesInView = true
+        
+        // Add haptic feedback
+        triggerHapticFeedback()
+        
+        let cryptoOptions = [
+            // Most popular blockchain networks
+            ":btc", ":eth", ":sol", ":doge", ":arbi", ":op",
+            // Additional blockchain networks  
+            ":xrp", ":ltc", ":ada",
+            // Text records
+            ":url", ":x", ":github", ":name", ":bio"
+        ]
+        
+        // Create alert controller
+        let alert = UIAlertController(title: "Crypto Ticker", message: "Select a cryptocurrency ticker", preferredStyle: .actionSheet)
+        
+        for ticker in cryptoOptions {
+            let action = UIAlertAction(title: ticker, style: .default) { _ in
+                self.insertText(ticker)
+                self.lastTypedWord += ticker
+                // Turn off shift after key press (unless caps lock is on)
+                if self.isShiftPressed && !self.isCapsLock {
+                    self.isShiftPressed = false
+                    print("⇧ Shift turned off after \(ticker) key press")
+                    self.isKeyboardViewSetup = false
+                    self.setupKeyboardView()
+                    self.isKeyboardViewSetup = true
+                }
+            }
+            alert.addAction(action)
+        }
+        
+        // Add cancel action
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        alert.addAction(cancelAction)
+        
+        // Present the alert
+        present(alert, animated: true)
     }
 }
