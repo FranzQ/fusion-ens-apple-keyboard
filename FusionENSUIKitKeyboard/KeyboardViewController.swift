@@ -7,7 +7,14 @@
 
 import UIKit
 
-class KeyboardViewController: UIInputViewController {
+// Protocol for keyboard functionality
+protocol KeyboardController {
+    func insertText(_ text: String)
+    func deleteBackward()
+    func triggerENSResolution()
+}
+
+class KeyboardViewController: UIInputViewController, KeyboardController {
     
     // MARK: - Properties
     private var containerView: UIView!
@@ -32,6 +39,10 @@ class KeyboardViewController: UIInputViewController {
     private var ensUsageCount: [String: Int] = [:]
     private var mostTypedENS: [String] = []
     
+    // Selection monitoring
+    private var lastSelectedText: String = ""
+    private var selectionTimer: Timer?
+    
     // ENS suggestions data - expanded list for contextual matching
     private let popularENSDomains = [
         "vitalik.eth", "ethereum.eth", "uniswap.eth", "aave.eth", "compound.eth",
@@ -48,7 +59,6 @@ class KeyboardViewController: UIInputViewController {
     // MARK: - View Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        print("🚀 UIKit KeyboardViewController: viewDidLoad called")
         
         // Load ENS usage data
         loadENSUsageData()
@@ -58,48 +68,29 @@ class KeyboardViewController: UIInputViewController {
             self.setupKeyboardView()
             self.isKeyboardViewSetup = true
         }
-        
-        print("🚀 UIKit KeyboardViewController: Setup completed")
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        print("👁️ UIKit KeyboardViewController: viewDidAppear called")
-        print("👁️ View frame: \(view.frame)")
-        print("👁️ View bounds: \(view.bounds)")
         
         // Only refresh if not already set up
         if !isKeyboardViewSetup {
-            print("👁️ Refreshing UIKit keyboard view")
             setupKeyboardView()
             isKeyboardViewSetup = true
-        } else {
-            print("👁️ UIKit keyboard already set up, skipping refresh")
         }
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        print("📐 UIKit KeyboardViewController: viewDidLayoutSubviews called")
-        print("📐 View frame: \(view.frame)")
-        print("📐 View bounds: \(view.bounds)")
-        
-        if view.frame.height < 100 {
-            print("⚠️ UIKit KeyboardViewController: View height is unexpectedly small: \(view.frame.height)")
-        }
     }
     
     // MARK: - Setup Methods
     private func setupKeyboardView() {
-        print("🔧 UIKit KeyboardViewController: setupKeyboardView called")
-        
         guard !isSettingUpView else {
-            print("🔧 Already setting up view, skipping...")
             return
         }
         
         if isKeyboardViewSetup {
-            print("🔧 UIKit keyboard already set up, skipping")
             return
         }
         
@@ -417,12 +408,6 @@ class KeyboardViewController: UIInputViewController {
         button.addTarget(self, action: #selector(buttonTouchDown), for: .touchDown)
         button.addTarget(self, action: #selector(buttonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
         
-        // Add long press gesture for space bar to trigger ENS resolution
-        if title == "space" {
-            let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(spaceBarLongPress(_:)))
-            longPressGesture.minimumPressDuration = 0.5
-            button.addGestureRecognizer(longPressGesture)
-        }
         
         button.addAction(UIAction { _ in
             self.handleKeyPress(title)
@@ -513,48 +498,24 @@ class KeyboardViewController: UIInputViewController {
         }
     }
     
-    @objc private func spaceBarLongPress(_ gesture: UILongPressGestureRecognizer) {
-        if gesture.state == .began {
-            print("🔍 Space bar long press detected - triggering ENS resolution")
-            triggerENSResolution()
-        }
-    }
     
-    private func triggerENSResolution() {
-        // First try to get selected text
+    func triggerENSResolution() {
+        print("🔍 ENS Resolution triggered (Lite Version)")
+        
+        // Only resolve if there's selected text
         if let selectedText = textDocumentProxy.selectedText, !selectedText.isEmpty {
+            print("📝 Selected text: '\(selectedText)'")
             if HelperClass.checkFormat(selectedText) {
+                print("✅ ENS format detected, resolving...")
                 handleSelectedText(selectedText)
-                return
             } else {
+                print("❌ Not a valid ENS format")
                 triggerErrorHaptic()
-                return
             }
+        } else {
+            print("❌ No text selected")
+            triggerErrorHaptic()
         }
-        
-        // Try the last typed word
-        if !lastTypedWord.isEmpty {
-            if HelperClass.checkFormat(lastTypedWord) {
-                handleSelectedText(lastTypedWord)
-                return
-            } else {
-                triggerErrorHaptic()
-                return
-            }
-        }
-        
-        // Try to get current word from context
-        if let currentWord = getCurrentWord(), !currentWord.isEmpty {
-            if HelperClass.checkFormat(currentWord) {
-                handleSelectedText(currentWord)
-                return
-            } else {
-                triggerErrorHaptic()
-                return
-            }
-        }
-        
-        triggerErrorHaptic()
     }
     
     // MARK: - Key Handling
@@ -626,34 +587,11 @@ class KeyboardViewController: UIInputViewController {
         }
     }
     
-    // MARK: - Text Change Handling
-    override func textDidChange(_ textInput: UITextInput?) {
-        super.textDidChange(textInput)
-        print("📝 UIKit KeyboardViewController: textDidChange called")
-        
-        // Check if there's selected text first
-        if let selectedText = textDocumentProxy.selectedText, !selectedText.isEmpty {
-            print("Selected text: \(selectedText)")
-            // Only resolve if it's an ENS domain
-            if HelperClass.checkFormat(selectedText) {
-                handleSelectedText(selectedText)
-            }
-        }
-        // Try to detect ENS domains from the current context
-        else {
-            detectAndResolveENSFromContext()
-        }
-    }
     
     private func detectAndResolveENSFromContext() {
         // Try to get the current word or recent text
         if let currentWord = getCurrentWord(), HelperClass.checkFormat(currentWord) {
-            print("🔍 Detected ENS domain in context: \(currentWord)")
             handleSelectedText(currentWord)
-        }
-        // UIKit keyboard handles suggestions through its own UI
-        else {
-            print("UIKit keyboard - suggestions handled by UIKit interface")
         }
     }
     
@@ -683,18 +621,13 @@ class KeyboardViewController: UIInputViewController {
     }
     
     private func handleSelectedText(_ selectedText: String) {
-        print("🔍 UIKit KeyboardViewController: Attempting ENS resolution for: \(selectedText)")
-        
         if HelperClass.checkFormat(selectedText) {
-            print("🔍 Text format is valid for ENS resolution")
-            
             // Trigger haptic feedback when starting resolution
             triggerHapticFeedback()
             
             APICaller.shared.resolveENSName(name: selectedText) { mappedAddress in
                 DispatchQueue.main.async {
                     if !mappedAddress.isEmpty {
-                        print("🔍 ENS resolved to: \(mappedAddress)")
                         // Delete the original text and insert the resolved address
                         for _ in 0..<selectedText.count {
                             self.textDocumentProxy.deleteBackward()
@@ -704,14 +637,12 @@ class KeyboardViewController: UIInputViewController {
                         // Trigger success haptic feedback
                         self.triggerSuccessHaptic()
                     } else {
-                        print("🔍 ENS resolution failed for: \(selectedText)")
                         // Trigger error haptic feedback
                         self.triggerErrorHaptic()
                     }
                 }
             }
         } else {
-            print("🔍 Text format is not valid for ENS resolution: \(selectedText)")
             // Trigger error haptic feedback for invalid format
             triggerErrorHaptic()
         }
@@ -732,6 +663,42 @@ class KeyboardViewController: UIInputViewController {
     private func triggerErrorHaptic() {
         let notificationFeedback = UINotificationFeedbackGenerator()
         notificationFeedback.notificationOccurred(.error)
+    }
+    
+    // MARK: - Selection Monitoring
+    
+    override func textDidChange(_ textInput: UITextInput?) {
+        super.textDidChange(textInput)
+        checkForSelectedText()
+    }
+    
+    private func checkForSelectedText() {
+        // Cancel previous timer
+        selectionTimer?.invalidate()
+        
+        // Start a new timer to check for selection after a short delay
+        selectionTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { [weak self] _ in
+            self?.processSelectedText()
+        }
+    }
+    
+    private func processSelectedText() {
+        guard let selectedText = textDocumentProxy.selectedText, !selectedText.isEmpty else {
+            lastSelectedText = ""
+            return
+        }
+        
+        // Only process if the selection has changed
+        guard selectedText != lastSelectedText else { return }
+        
+        lastSelectedText = selectedText
+        print("📝 Text selected (Lite): '\(selectedText)'")
+        
+        // Check if it's an ENS domain and resolve automatically
+        if HelperClass.checkFormat(selectedText) {
+            print("✅ ENS format detected, auto-resolving (Lite)...")
+            handleSelectedText(selectedText)
+        }
     }
     
     // MARK: - Helper Methods

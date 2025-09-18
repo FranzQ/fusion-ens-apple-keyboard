@@ -11,6 +11,15 @@
 		1E9AA1F82E7AA4C900FEA0D4 /* KeyboardType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9AA1F72E7AA4C900FEA0D4 /* KeyboardType.swift */; };
 		1E9AA2042E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E9AA1FD2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1E9AA2172E7AFB0800FEA0D4 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 1E9AA2162E7AFB0800FEA0D4 /* Alamofire */; };
+		1E9AA22A2E7C0F1500FEA0D4 /* APICaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9AA2272E7C0F1500FEA0D4 /* APICaller.swift */; };
+		1E9AA22B2E7C0F1500FEA0D4 /* HelperClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9AA2282E7C0F1500FEA0D4 /* HelperClass.swift */; };
+		1E9AA22C2E7C0F1500FEA0D4 /* URLS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9AA2292E7C0F1500FEA0D4 /* URLS.swift */; };
+		1E9AA22D2E7C0F1500FEA0D4 /* APICaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9AA2272E7C0F1500FEA0D4 /* APICaller.swift */; };
+		1E9AA22E2E7C0F1500FEA0D4 /* HelperClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9AA2282E7C0F1500FEA0D4 /* HelperClass.swift */; };
+		1E9AA22F2E7C0F1500FEA0D4 /* URLS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9AA2292E7C0F1500FEA0D4 /* URLS.swift */; };
+		1E9AA2302E7C0F1500FEA0D4 /* APICaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9AA2272E7C0F1500FEA0D4 /* APICaller.swift */; };
+		1E9AA2312E7C0F1500FEA0D4 /* HelperClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9AA2282E7C0F1500FEA0D4 /* HelperClass.swift */; };
+		1E9AA2322E7C0F1500FEA0D4 /* URLS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9AA2292E7C0F1500FEA0D4 /* URLS.swift */; };
 		1EE787172E79896F000E62E3 /* SafeCopyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EE787162E79896F000E62E3 /* SafeCopyViewController.swift */; };
 		A1338FE9298ABB02007DC669 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1338FE8298ABB02007DC669 /* AppDelegate.swift */; };
 		A1338FEB298ABB02007DC669 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1338FEA298ABB02007DC669 /* SceneDelegate.swift */; };
@@ -25,9 +34,6 @@
 		A1339019298AC0D6007DC669 /* FusionENSKeyboardActionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1339018298AC0D6007DC669 /* FusionENSKeyboardActionHandler.swift */; };
 		A133901B298AC232007DC669 /* FusionENSKeyboardLayoutProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A133901A298AC232007DC669 /* FusionENSKeyboardLayoutProvider.swift */; };
 		A133901D298AC290007DC669 /* KeyboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A133901C298AC290007DC669 /* KeyboardView.swift */; };
-		A13B1D3E2A4A25D700463E17 /* APICaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13B1D3D2A4A25D700463E17 /* APICaller.swift */; };
-		A13B1D402A4A261800463E17 /* URLS.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13B1D3F2A4A261700463E17 /* URLS.swift */; };
-		A173F3062A4A6310006B0ACB /* HelperClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = A173F3052A4A6310006B0ACB /* HelperClass.swift */; };
 		A17DFA862A48F93E003FB8B5 /* KeyboardKit in Frameworks */ = {isa = PBXBuildFile; productRef = A17DFA852A48F93E003FB8B5 /* KeyboardKit */; };
 		A17DFA882A48F950003FB8B5 /* KeyboardKit in Frameworks */ = {isa = PBXBuildFile; productRef = A17DFA872A48F950003FB8B5 /* KeyboardKit */; };
 		A1BB89902A599A820038A0E0 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1BB898F2A599A820038A0E0 /* SnapKit */; };
@@ -42,7 +48,6 @@
 		NEW0022A490A3600A0D0C4 /* ENSNameTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0021A490A3600A0D0C4 /* ENSNameTableViewCell.swift */; };
 		NEW0032A490A3600A0D0C4 /* AddENSNameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0031A490A3600A0D0C4 /* AddENSNameViewController.swift */; };
 		NEW0042A490A3600A0D0C4 /* PaymentRequestViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0041A490A3600A0D0C4 /* PaymentRequestViewController.swift */; };
-		NEW0052A490A3600A0D0C4 /* APICaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0051A490A3600A0D0C4 /* APICaller.swift */; };
 		NEW0062A490A3600A0D0C4 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0061A490A3600A0D0C4 /* SettingsViewController.swift */; };
 /* End PBXBuildFile section */
 
@@ -92,6 +97,9 @@
 		1E9AA1F72E7AA4C900FEA0D4 /* KeyboardType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardType.swift; sourceTree = "<group>"; };
 		1E9AA1FD2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FusionENSUIKitKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E9AA2152E7AD8B800FEA0D4 /* FusionENSKeyboard.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FusionENSKeyboard.entitlements; sourceTree = "<group>"; };
+		1E9AA2272E7C0F1500FEA0D4 /* APICaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APICaller.swift; sourceTree = "<group>"; };
+		1E9AA2282E7C0F1500FEA0D4 /* HelperClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperClass.swift; sourceTree = "<group>"; };
+		1E9AA2292E7C0F1500FEA0D4 /* URLS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLS.swift; sourceTree = "<group>"; };
 		1EE787162E79896F000E62E3 /* SafeCopyViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafeCopyViewController.swift; sourceTree = "<group>"; };
 		A1338FE5298ABB02007DC669 /* Fusion ENS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Fusion ENS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1338FE8298ABB02007DC669 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -109,10 +117,7 @@
 		A1339018298AC0D6007DC669 /* FusionENSKeyboardActionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FusionENSKeyboardActionHandler.swift; sourceTree = "<group>"; };
 		A133901A298AC232007DC669 /* FusionENSKeyboardLayoutProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FusionENSKeyboardLayoutProvider.swift; sourceTree = "<group>"; };
 		A133901C298AC290007DC669 /* KeyboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardView.swift; sourceTree = "<group>"; };
-		A13B1D3D2A4A25D700463E17 /* APICaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APICaller.swift; sourceTree = "<group>"; };
-		A13B1D3F2A4A261700463E17 /* URLS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLS.swift; sourceTree = "<group>"; };
 		A13B1D412A4A26A800463E17 /* KeyboardKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = KeyboardKit; path = ../GitHub/KeyboardKit; sourceTree = "<group>"; };
-		A173F3052A4A6310006B0ACB /* HelperClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperClass.swift; sourceTree = "<group>"; };
 		A1BB89922A59AA390038A0E0 /* Poppins-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Poppins-Bold.ttf"; sourceTree = "<group>"; };
 		A1BB89932A59AA3A0038A0E0 /* Poppins-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Poppins-Regular.ttf"; sourceTree = "<group>"; };
 		A1BB89972A59B85B0038A0E0 /* UIHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIHelpers.swift; sourceTree = "<group>"; };
@@ -124,7 +129,6 @@
 		NEW0021A490A3600A0D0C4 /* ENSNameTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ENSNameTableViewCell.swift; sourceTree = "<group>"; };
 		NEW0031A490A3600A0D0C4 /* AddENSNameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddENSNameViewController.swift; sourceTree = "<group>"; };
 		NEW0041A490A3600A0D0C4 /* PaymentRequestViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentRequestViewController.swift; sourceTree = "<group>"; };
-		NEW0051A490A3600A0D0C4 /* APICaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APICaller.swift; sourceTree = "<group>"; };
 		NEW0061A490A3600A0D0C4 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -176,6 +180,9 @@
 		A1338FDC298ABB02007DC669 = {
 			isa = PBXGroup;
 			children = (
+				1E9AA2272E7C0F1500FEA0D4 /* APICaller.swift */,
+				1E9AA2282E7C0F1500FEA0D4 /* HelperClass.swift */,
+				1E9AA2292E7C0F1500FEA0D4 /* URLS.swift */,
 				A17DFA822A48F915003FB8B5 /* Packages */,
 				A1338FE7298ABB02007DC669 /* FusionENSApp */,
 				A1339001298ABB64007DC669 /* FusionENSKeyboard */,
@@ -249,8 +256,6 @@
 		A13B1D3C2A4A25BB00463E17 /* WebRequests */ = {
 			isa = PBXGroup;
 			children = (
-				A13B1D3D2A4A25D700463E17 /* APICaller.swift */,
-				A13B1D3F2A4A261700463E17 /* URLS.swift */,
 			);
 			path = WebRequests;
 			sourceTree = "<group>";
@@ -258,7 +263,6 @@
 		A173F3042A4A62D9006B0ACB /* HelperMethods */ = {
 			isa = PBXGroup;
 			children = (
-				A173F3052A4A6310006B0ACB /* HelperClass.swift */,
 			);
 			path = HelperMethods;
 			sourceTree = "<group>";
@@ -307,7 +311,6 @@
 				NEW0021A490A3600A0D0C4 /* ENSNameTableViewCell.swift */,
 				NEW0031A490A3600A0D0C4 /* AddENSNameViewController.swift */,
 				NEW0041A490A3600A0D0C4 /* PaymentRequestViewController.swift */,
-				NEW0051A490A3600A0D0C4 /* APICaller.swift */,
 				NEW0061A490A3600A0D0C4 /* SettingsViewController.swift */,
 			);
 			path = ViewControllers;
@@ -466,6 +469,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1E9AA22D2E7C0F1500FEA0D4 /* APICaller.swift in Sources */,
+				1E9AA22E2E7C0F1500FEA0D4 /* HelperClass.swift in Sources */,
+				1E9AA22F2E7C0F1500FEA0D4 /* URLS.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -473,6 +479,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1E9AA2302E7C0F1500FEA0D4 /* APICaller.swift in Sources */,
+				1E9AA2312E7C0F1500FEA0D4 /* HelperClass.swift in Sources */,
+				1E9AA2322E7C0F1500FEA0D4 /* URLS.swift in Sources */,
 				1E7715832E6579B3005914E9 /* UIHelpers.swift in Sources */,
 				A1338FED298ABB02007DC669 /* GettingStartedVC.swift in Sources */,
 				1EE787172E79896F000E62E3 /* SafeCopyViewController.swift in Sources */,
@@ -485,7 +494,6 @@
 				NEW0022A490A3600A0D0C4 /* ENSNameTableViewCell.swift in Sources */,
 				NEW0032A490A3600A0D0C4 /* AddENSNameViewController.swift in Sources */,
 				NEW0042A490A3600A0D0C4 /* PaymentRequestViewController.swift in Sources */,
-				NEW0052A490A3600A0D0C4 /* APICaller.swift in Sources */,
 				NEW0062A490A3600A0D0C4 /* SettingsViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -497,10 +505,10 @@
 				A1339015298ABF82007DC669 /* FusionENSAutoCompleteProvider.swift in Sources */,
 				A1339003298ABB64007DC669 /* KeyboardViewController.swift in Sources */,
 				A133901B298AC232007DC669 /* FusionENSKeyboardLayoutProvider.swift in Sources */,
-				A173F3062A4A6310006B0ACB /* HelperClass.swift in Sources */,
-				A13B1D402A4A261800463E17 /* URLS.swift in Sources */,
-				A13B1D3E2A4A25D700463E17 /* APICaller.swift in Sources */,
 				1E9AA1F82E7AA4C900FEA0D4 /* KeyboardType.swift in Sources */,
+				1E9AA22A2E7C0F1500FEA0D4 /* APICaller.swift in Sources */,
+				1E9AA22B2E7C0F1500FEA0D4 /* HelperClass.swift in Sources */,
+				1E9AA22C2E7C0F1500FEA0D4 /* URLS.swift in Sources */,
 				A133901D298AC290007DC669 /* KeyboardView.swift in Sources */,
 				A1339017298AC072007DC669 /* FusionENSKeyboardAppearance.swift in Sources */,
 				A1339019298AC0D6007DC669 /* FusionENSKeyboardActionHandler.swift in Sources */,

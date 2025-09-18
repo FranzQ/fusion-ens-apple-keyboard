@@ -1,0 +1,23 @@
+{
+  "": {
+    "swift-dependencies": "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/.build/arm64-apple-macosx/debug/FusionENSShared.build/master.swiftdeps"
+  },
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/Sources/FusionENSShared/APICaller.swift": {
+    "dependencies": "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/.build/arm64-apple-macosx/debug/FusionENSShared.build/APICaller.d",
+    "object": "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/.build/arm64-apple-macosx/debug/FusionENSShared.build/APICaller.swift.o",
+    "swiftmodule": "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/.build/arm64-apple-macosx/debug/FusionENSShared.build/APICaller~partial.swiftmodule",
+    "swift-dependencies": "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/.build/arm64-apple-macosx/debug/FusionENSShared.build/APICaller.swiftdeps"
+  },
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/Sources/FusionENSShared/HelperClass.swift": {
+    "dependencies": "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/.build/arm64-apple-macosx/debug/FusionENSShared.build/HelperClass.d",
+    "object": "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/.build/arm64-apple-macosx/debug/FusionENSShared.build/HelperClass.swift.o",
+    "swiftmodule": "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/.build/arm64-apple-macosx/debug/FusionENSShared.build/HelperClass~partial.swiftmodule",
+    "swift-dependencies": "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/.build/arm64-apple-macosx/debug/FusionENSShared.build/HelperClass.swiftdeps"
+  },
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/Sources/FusionENSShared/URLS.swift": {
+    "dependencies": "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/.build/arm64-apple-macosx/debug/FusionENSShared.build/URLS.d",
+    "object": "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/.build/arm64-apple-macosx/debug/FusionENSShared.build/URLS.swift.o",
+    "swiftmodule": "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/.build/arm64-apple-macosx/debug/FusionENSShared.build/URLS~partial.swiftmodule",
+    "swift-dependencies": "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/.build/arm64-apple-macosx/debug/FusionENSShared.build/URLS.swiftdeps"
+  }
+}

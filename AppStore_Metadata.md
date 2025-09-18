@@ -1,7 +1,7 @@
-# Fusion ENS Keyboard - App Store Metadata
+# Fusion ENS - App Store Metadata
 
 ## App Information
-- **App Name**: Fusion ENS Keyboard
+- **App Name**: Fusion ENS
 - **Bundle ID**: com.fusionens.keyboard
 - **Version**: 1.0.0
 - **Build**: 1

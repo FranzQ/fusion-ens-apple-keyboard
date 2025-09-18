@@ -1,0 +1,4 @@
+module FusionENSShared {
+    header "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/.build/arm64-apple-macosx/debug/FusionENSShared.build/FusionENSShared-Swift.h"
+    requires objc
+}

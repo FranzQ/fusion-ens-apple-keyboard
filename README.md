@@ -1,4 +1,4 @@
-# Fusion ENS Keyboard
+# Fusion ENS iOS Keyboard
 
 ## 🎯 **What We Built**
 

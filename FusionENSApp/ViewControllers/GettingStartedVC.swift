@@ -25,7 +25,7 @@ class GettingStartedVC: UIViewController {
     
     func setupUI() {
         // Title
-        titleLabel.text = "Fusion ENS Keyboard"
+        titleLabel.text = "Fusion ENS"
         titleLabel.font = UIFont.systemFont(ofSize: 32, weight: .bold)
         titleLabel.textColor = .label
         titleLabel.textAlignment = .center

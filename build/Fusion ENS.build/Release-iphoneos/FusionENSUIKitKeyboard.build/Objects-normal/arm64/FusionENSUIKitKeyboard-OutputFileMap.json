@@ -1,0 +1,30 @@
+{
+  "" : {
+    "const-values" : "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/build/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/FusionENSUIKitKeyboard-master.swiftconstvalues",
+    "dependencies" : "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/build/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/FusionENSUIKitKeyboard-master.d",
+    "diagnostics" : "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/build/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/FusionENSUIKitKeyboard-master.dia",
+    "emit-module-dependencies" : "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/build/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/FusionENSUIKitKeyboard-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/build/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/FusionENSUIKitKeyboard-master-emit-module.dia",
+    "swift-dependencies" : "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/build/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/FusionENSUIKitKeyboard-master.swiftdeps"
+  },
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/APICaller.swift" : {
+    "index-unit-output-path" : "/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/APICaller.o",
+    "llvm-bc" : "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/build/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/APICaller.bc",
+    "object" : "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/build/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/APICaller.o"
+  },
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSUIKitKeyboard/KeyboardViewController.swift" : {
+    "index-unit-output-path" : "/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/KeyboardViewController.o",
+    "llvm-bc" : "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/build/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/KeyboardViewController.bc",
+    "object" : "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/build/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/KeyboardViewController.o"
+  },
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/HelperClass.swift" : {
+    "index-unit-output-path" : "/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/HelperClass.o",
+    "llvm-bc" : "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/build/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/HelperClass.bc",
+    "object" : "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/build/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/HelperClass.o"
+  },
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/URLS.swift" : {
+    "index-unit-output-path" : "/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/URLS.o",
+    "llvm-bc" : "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/build/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/URLS.bc",
+    "object" : "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/build/Fusion ENS.build/Release-iphoneos/FusionENSUIKitKeyboard.build/Objects-normal/arm64/URLS.o"
+  }
+}

@@ -1,0 +1,15 @@
+version: "Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)"
+options: "2d4027033f5d9414f506b56c2cfdde7b5092d7fb7c3f3c4c3c27ac13b47ac37a"
+build_start_time: [1758195859, 283135000]
+build_end_time: [1758195859, 293851000]
+inputs:
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/APICaller.swift": !dirty [1758192181, 911882334]
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSKeyboard/FusionENSAutoCompleteProvider.swift": !dirty [1758192181, 863345201]
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSKeyboard/FusionENSKeyboardActionHandler.swift": !dirty [1757089475, 899221729]
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSKeyboard/FusionENSKeyboardAppearance.swift": !dirty [1757089647, 553655507]
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSKeyboard/FusionENSKeyboardLayoutProvider.swift": !dirty [1757497823, 156753630]
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSKeyboard/KeyboardType.swift": !dirty [1758096357, 130072915]
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSKeyboard/KeyboardView.swift": !dirty [1758195829, 725789904]
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSKeyboard/KeyboardViewController.swift": !dirty [1758195858, 191628028]
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/HelperClass.swift": !dirty [1758187669, 785436989]
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/URLS.swift": !dirty [1758187832, 180597545]

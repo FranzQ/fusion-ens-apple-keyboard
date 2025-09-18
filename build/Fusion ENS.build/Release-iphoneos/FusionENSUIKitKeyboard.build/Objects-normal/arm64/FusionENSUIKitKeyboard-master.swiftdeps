@@ -1,0 +1,9 @@
+version: "Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)"
+options: "3c0c64e3f2036adffdfd25645b9a56d3efc2aeabcf6b66a8fba04f25b4e129db"
+build_start_time: [1758193159, 106463000]
+build_end_time: [1758193159, 578525000]
+inputs:
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/APICaller.swift": !dirty [1758192181, 911882334]
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSUIKitKeyboard/KeyboardViewController.swift": !dirty [1758192685, 994854632]
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/HelperClass.swift": !dirty [1758187669, 785436989]
+  "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/URLS.swift": !dirty [1758187832, 180597545]
