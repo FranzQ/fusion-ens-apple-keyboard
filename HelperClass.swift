@@ -13,10 +13,10 @@ public class HelperClass {
     /// - Parameter text: The text to validate
     /// - Returns: True if the text is a valid ENS domain format
     public static func checkFormat(_ text: String) -> Bool {
-        // Check for ENS domains (.eth)
-        let ensRegex = #"^[a-zA-Z0-9-]+\.eth$"#
         let range = NSRange(location: 0, length: text.utf16.count)
         
+        // Check for ENS domains (.eth)
+        let ensRegex = #"^[a-zA-Z0-9-]+\.eth$"#
         if let regex = try? NSRegularExpression(pattern: ensRegex) {
             let matches = regex.matches(in: text, options: [], range: range)
             if matches.count > 0 {
@@ -24,9 +24,8 @@ public class HelperClass {
             }
         }
         
-        // Also check for multi-chain domains (.btc, .sol, .doge, etc.)
-        let multiChainRegex = #"^[a-zA-Z0-9-]+\.(btc|sol|doge|x|url|github|bio)$"#
-        
+        // Check for multi-chain domains (old format: name.chain)
+        let multiChainRegex = #"^[a-zA-Z0-9-]+\.(btc|sol|doge|xrp|ltc|ada|base|arbi|polygon|avax|bsc|op|zora|linea|scroll|mantle|celo|gnosis|fantom)$"#
         if let regex = try? NSRegularExpression(pattern: multiChainRegex) {
             let matches = regex.matches(in: text, options: [], range: range)
             if matches.count > 0 {
@@ -34,9 +33,17 @@ public class HelperClass {
             }
         }
         
-        // Check for new format like vitalik.eth:btc
-        let newFormatRegex = #"^[a-zA-Z0-9-]+\.eth:[a-zA-Z0-9-]+$"#
+        // Check for text record domains (old format: name.textrecord)
+        let textRecordRegex = #"^[a-zA-Z0-9-]+\.(x|url|github|name|bio|description|avatar|header)$"#
+        if let regex = try? NSRegularExpression(pattern: textRecordRegex) {
+            let matches = regex.matches(in: text, options: [], range: range)
+            if matches.count > 0 {
+                return true
+            }
+        }
         
+        // Check for new format (name.eth:chain or name.eth:textrecord)
+        let newFormatRegex = #"^[a-zA-Z0-9-]+\.eth:(btc|sol|doge|xrp|ltc|ada|base|arbi|polygon|avax|bsc|op|zora|linea|scroll|mantle|celo|gnosis|fantom|x|url|github|name|bio|description|avatar|header)$"#
         if let regex = try? NSRegularExpression(pattern: newFormatRegex) {
             let matches = regex.matches(in: text, options: [], range: range)
             if matches.count > 0 {

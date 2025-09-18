@@ -222,7 +222,6 @@
 			isa = PBXGroup;
 			children = (
 				1E9AA2152E7AD8B800FEA0D4 /* FusionENSKeyboard.entitlements */,
-				A13B1D3B2A4A259300463E17 /* Utilties */,
 				A1339004298ABB64007DC669 /* Info.plist */,
 				A1339002298ABB64007DC669 /* KeyboardViewController.swift */,
 				A1339014298ABF82007DC669 /* FusionENSAutoCompleteProvider.swift */,
@@ -239,29 +238,6 @@
 			children = (
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		A13B1D3B2A4A259300463E17 /* Utilties */ = {
-			isa = PBXGroup;
-			children = (
-				A173F3042A4A62D9006B0ACB /* HelperMethods */,
-				A13B1D3C2A4A25BB00463E17 /* WebRequests */,
-			);
-			path = Utilties;
-			sourceTree = "<group>";
-		};
-		A13B1D3C2A4A25BB00463E17 /* WebRequests */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = WebRequests;
-			sourceTree = "<group>";
-		};
-		A173F3042A4A62D9006B0ACB /* HelperMethods */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = HelperMethods;
 			sourceTree = "<group>";
 		};
 		A17DFA822A48F915003FB8B5 /* Packages */ = {
