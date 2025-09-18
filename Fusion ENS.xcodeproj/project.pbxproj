@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		1E7715832E6579B3005914E9 /* UIHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BB89972A59B85B0038A0E0 /* UIHelpers.swift */; };
-		1E9AA1F82E7AA4C900FEA0D4 /* KeyboardType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9AA1F72E7AA4C900FEA0D4 /* KeyboardType.swift */; };
 		1E9AA2042E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E9AA1FD2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1E9AA2172E7AFB0800FEA0D4 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 1E9AA2162E7AFB0800FEA0D4 /* Alamofire */; };
 		1E9AA22A2E7C0F1500FEA0D4 /* APICaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9AA2272E7C0F1500FEA0D4 /* APICaller.swift */; };
@@ -94,7 +93,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		1E9AA1F72E7AA4C900FEA0D4 /* KeyboardType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardType.swift; sourceTree = "<group>"; };
 		1E9AA1FD2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FusionENSUIKitKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E9AA2152E7AD8B800FEA0D4 /* FusionENSKeyboard.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FusionENSKeyboard.entitlements; sourceTree = "<group>"; };
 		1E9AA2272E7C0F1500FEA0D4 /* APICaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APICaller.swift; sourceTree = "<group>"; };
@@ -224,7 +222,6 @@
 			isa = PBXGroup;
 			children = (
 				1E9AA2152E7AD8B800FEA0D4 /* FusionENSKeyboard.entitlements */,
-				1E9AA1F72E7AA4C900FEA0D4 /* KeyboardType.swift */,
 				A13B1D3B2A4A259300463E17 /* Utilties */,
 				A1339004298ABB64007DC669 /* Info.plist */,
 				A1339002298ABB64007DC669 /* KeyboardViewController.swift */,
@@ -505,7 +502,6 @@
 				A1339015298ABF82007DC669 /* FusionENSAutoCompleteProvider.swift in Sources */,
 				A1339003298ABB64007DC669 /* KeyboardViewController.swift in Sources */,
 				A133901B298AC232007DC669 /* FusionENSKeyboardLayoutProvider.swift in Sources */,
-				1E9AA1F82E7AA4C900FEA0D4 /* KeyboardType.swift in Sources */,
 				1E9AA22A2E7C0F1500FEA0D4 /* APICaller.swift in Sources */,
 				1E9AA22B2E7C0F1500FEA0D4 /* HelperClass.swift in Sources */,
 				1E9AA22C2E7C0F1500FEA0D4 /* URLS.swift in Sources */,
