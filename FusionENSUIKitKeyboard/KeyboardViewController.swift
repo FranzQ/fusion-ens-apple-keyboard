@@ -246,14 +246,14 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                     ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="],
                     ["-", "\\", "|", "~", "<", ">", "€", "£", "¥", "•"],
                     ["123", ".", ",", "?", "!", "'", "⌫"],
-                    ["ABC", "🙂", "space", "return"]
+                    ["ABC", ".eth", "space", ":btc", "return"]
                 ]
             } else {
                 rows = [
                     ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
                     ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""],
                     ["#+=", ".", ",", "?", "!", "'", "⌫"],
-                    ["ABC", "space", "return"]
+                    ["ABC", ".eth", "space", ":btc", "return"]
                 ]
             }
         } else {
@@ -415,26 +415,28 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         button.addTarget(self, action: #selector(buttonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
         
         
-        button.addAction(UIAction { _ in
-            // Only handle tap if it's not the :btc key (which has long press)
-            if title != ":btc" {
-                self.handleKeyPress(title)
-            }
-        }, for: .touchUpInside)
-        
-        // Add long press gesture for crypto ticker key
+        // Handle button actions
         if title == ":btc" {
-            let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(showCryptoTickerOptions(_:)))
+            print("🔶 Setting up :btc button with special touch handling")
+            // Special handling for :btc key with long press
+            button.addTarget(self, action: #selector(btcButtonTouchDown), for: .touchDown)
+            button.addTarget(self, action: #selector(btcButtonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
+            print("🔶 :btc button targets added successfully")
+        } else {
+            // Standard button handling
+            button.addAction(UIAction { _ in
+                self.handleKeyPress(title)
+            }, for: .touchUpInside)
+        }
+        
+        // Add long press gesture for spacebar to resolve ENS
+        if title == "space" {
+            let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleSpacebarLongPress(_:)))
             longPressGesture.minimumPressDuration = 0.5
             longPressGesture.cancelsTouchesInView = true
             longPressGesture.delaysTouchesBegan = true
             longPressGesture.delaysTouchesEnded = true
             button.addGestureRecognizer(longPressGesture)
-            
-            // Add tap gesture for short taps
-            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleBtcTap(_:)))
-            tapGesture.require(toFail: longPressGesture)
-            button.addGestureRecognizer(tapGesture)
         }
         
         return button
@@ -456,6 +458,17 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         
         if let title = sender.title(for: .normal) {
             print("📝 Inserting suggestion: \(title)")
+            
+            // Get the current word being typed (last word in lastTypedWord)
+            let words = lastTypedWord.components(separatedBy: .whitespacesAndNewlines)
+            if let currentWord = words.last, !currentWord.isEmpty {
+                // Delete only the current word being typed
+                for _ in 0..<currentWord.count {
+                    textDocumentProxy.deleteBackward()
+                }
+            }
+            
+            // Insert the suggestion
             textDocumentProxy.insertText(title + " ")
             lastTypedWord = ""
             // Update suggestions after insertion
@@ -598,6 +611,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                 isKeyboardViewSetup = true
             }
         case ":btc":
+            print("🔶 handleKeyPress called for :btc - inserting :btc text")
             // Crypto ticker key - insert :btc at cursor position
             insertText(":btc")
             lastTypedWord += ":btc"
@@ -609,6 +623,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                 setupKeyboardView()
                 isKeyboardViewSetup = true
             }
+            print("🔶 :btc text inserted successfully")
         case "🙂":
             // Emoji key - insert smiley face
             insertText("🙂")
@@ -685,6 +700,102 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         }
     }
     
+    private func detectAndResolveENSAroundCursor() {
+        // Get text around the cursor
+        let beforeText = textDocumentProxy.documentContextBeforeInput ?? ""
+        let afterText = textDocumentProxy.documentContextAfterInput ?? ""
+        let fullText = beforeText + afterText
+        let cursorPosition = beforeText.count
+        
+        // Look for ENS domains in the text around the cursor
+        let words = fullText.components(separatedBy: .whitespacesAndNewlines)
+        
+        // Check each word to see if it's an ENS domain and if cursor is at the end
+        for word in words {
+            if HelperClass.checkFormat(word) {
+                // Find the position of this ENS domain in the full text
+                if let range = fullText.range(of: word) {
+                    let ensEndIndex = fullText.distance(from: fullText.startIndex, to: range.upperBound)
+                    
+                    // Only resolve if cursor is at the end of the ENS domain
+                    if cursorPosition == ensEndIndex {
+                        replaceENSInText(word)
+                        return
+                    }
+                }
+            }
+        }
+        
+        // If no ENS domain found or cursor not at the end, show error
+        triggerErrorHaptic()
+    }
+    
+    private func replaceENSInText(_ ensDomain: String) {
+        // Trigger haptic feedback when starting resolution
+        triggerHapticFeedback()
+        
+        APICaller.shared.resolveENSName(name: ensDomain) { mappedAddress in
+            DispatchQueue.main.async { [weak self] in
+                if !mappedAddress.isEmpty {
+                    // Smart approach: find the ENS domain position and replace it properly
+                    self?.smartReplaceENS(ensDomain, with: mappedAddress)
+                    
+                    // Trigger success haptic feedback
+                    self?.triggerSuccessHaptic()
+                } else {
+                    // Trigger error haptic feedback
+                    self?.triggerErrorHaptic()
+                }
+            }
+        }
+    }
+    
+    private func smartReplaceENS(_ ensDomain: String, with resolvedAddress: String) {
+        // Get the current document context
+        let beforeText = textDocumentProxy.documentContextBeforeInput ?? ""
+        let afterText = textDocumentProxy.documentContextAfterInput ?? ""
+        let fullText = beforeText + afterText
+        
+        // Find the ENS domain in the full text
+        if let range = fullText.range(of: ensDomain, options: .backwards) {
+            let ensStartIndex = range.lowerBound
+            let ensEndIndex = range.upperBound
+            
+            // Simple and reliable approach: reconstruct the text without the ENS domain
+            let textBeforeENS = String(fullText[..<ensStartIndex])
+            let textAfterENS = String(fullText[ensEndIndex...])
+            let newText = textBeforeENS + resolvedAddress + textAfterENS
+            
+            // Delete all text from cursor to the beginning
+            let charactersToDelete = beforeText.count
+            for _ in 0..<charactersToDelete {
+                textDocumentProxy.deleteBackward()
+            }
+            
+            // Delete all text after cursor
+            let charactersAfterToDelete = afterText.count
+            for _ in 0..<charactersAfterToDelete {
+                textDocumentProxy.deleteBackward()
+            }
+            
+            // Insert the reconstructed text
+            textDocumentProxy.insertText(newText)
+            
+            // Position cursor after the resolved address (where the ENS domain was)
+            let cursorPosition = textBeforeENS.count + resolvedAddress.count
+            let charactersToDeleteFromEnd = newText.count - cursorPosition
+            for _ in 0..<charactersToDeleteFromEnd {
+                textDocumentProxy.deleteBackward()
+            }
+        } else {
+            // Fallback: just delete the ENS domain length and insert
+            for _ in 0..<ensDomain.count {
+                textDocumentProxy.deleteBackward()
+            }
+            textDocumentProxy.insertText(resolvedAddress)
+        }
+    }
+    
     private func getCurrentWord() -> String? {
         // Try to get the last typed word
         if !lastTypedWord.isEmpty {
@@ -724,11 +835,8 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                             // The text document proxy will handle the replacement correctly
                             self?.textDocumentProxy.insertText(mappedAddress)
                         } else {
-                            // Fallback: delete the selected text length and insert
-                            for _ in 0..<selectedText.count {
-                                self?.textDocumentProxy.deleteBackward()
-                            }
-                            self?.textDocumentProxy.insertText(mappedAddress)
+                            // For spacebar long-press or other cases, we need to find and replace the text
+                            self?.replaceTextInDocument(selectedText, with: mappedAddress)
                         }
                         
                         // Trigger success haptic feedback
@@ -743,6 +851,15 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             // Trigger error haptic feedback for invalid format
             triggerErrorHaptic()
         }
+    }
+    
+    private func replaceTextInDocument(_ textToReplace: String, with replacementText: String) {
+        // Simple and safe approach: just delete the text length and insert
+        // This works regardless of cursor position and avoids complex calculations
+        for _ in 0..<textToReplace.count {
+            textDocumentProxy.deleteBackward()
+        }
+        textDocumentProxy.insertText(replacementText)
     }
     
     // MARK: - Haptic Feedback
@@ -886,23 +1003,11 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         suggestionButtons.removeAll()
         suggestionStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
         
-        // Add separators and suggestions
-        for (index, suggestion) in suggestions.enumerated() {
+        // Add suggestions
+        for suggestion in suggestions {
             let button = createSuggestionButton(title: suggestion)
             suggestionStackView.addArrangedSubview(button)
             suggestionButtons.append(button)
-            
-            // Add separator (except after last item)
-            if index < suggestions.count - 1 {
-                let separator = UIView()
-                separator.backgroundColor = traitCollection.userInterfaceStyle == .dark ? 
-                    UIColor.white.withAlphaComponent(0.3) : UIColor.black.withAlphaComponent(0.3)
-                separator.translatesAutoresizingMaskIntoConstraints = false
-                NSLayoutConstraint.activate([
-                    separator.widthAnchor.constraint(equalToConstant: 1)
-                ])
-                suggestionStackView.addArrangedSubview(separator)
-            }
         }
         
         print("📝 Updated suggestion bar with \(suggestions.count) suggestions")
@@ -992,34 +1097,147 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
     
     // MARK: - Crypto Ticker Options
     
-    @objc private func handleBtcTap(_ gesture: UITapGestureRecognizer) {
-        // Handle short tap on :btc key
-        handleKeyPress(":btc")
+    // MARK: - :btc Key Handling
+    
+    private var btcLongPressTimer: Timer?
+    private var btcButtonPressed = false
+    private var btcLongPressOccurred = false
+    
+    @objc private func btcButtonTouchDown(_ sender: UIButton) {
+        print("🔶 :btc button touch down - starting long press detection")
+        btcButtonPressed = true
+        btcLongPressOccurred = false
+        
+        // Start long press timer
+        btcLongPressTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            print("🔶 :btc long press timer fired - checking if button still pressed")
+            if self?.btcButtonPressed == true {
+                print("🔶 :btc long press detected - showing crypto options")
+                // Long press detected - show crypto options
+                self?.btcLongPressOccurred = true
+                self?.showCryptoTickerOptions()
+            } else {
+                print("🔶 :btc long press timer fired but button no longer pressed")
+            }
+        }
+        print("🔶 :btc long press timer started with 0.5 second delay")
     }
     
-    @objc private func showCryptoTickerOptions(_ gesture: UILongPressGestureRecognizer) {
-        guard gesture.state == .began else { return }
+    @objc private func btcButtonTouchUp(_ sender: UIButton) {
+        print("🔶 :btc button touch up - checking if long press occurred")
+        print("🔶 :btc btcLongPressOccurred: \(btcLongPressOccurred)")
         
-        // Prevent keyboard switching by consuming the gesture
-        gesture.cancelsTouchesInView = true
+        btcButtonPressed = false
+        btcLongPressTimer?.invalidate()
+        btcLongPressTimer = nil
+        
+        // If it was a short press (no long press occurred), handle as normal tap
+        if !btcLongPressOccurred {
+            print("🔶 :btc short press detected - inserting :btc")
+            handleKeyPress(":btc")
+        } else {
+            print("🔶 :btc long press occurred - not inserting :btc")
+        }
+        
+        // Reset the long press flag
+        btcLongPressOccurred = false
+    }
+    
+    private func showCryptoTickerOptions() {
+        print("🔶 showCryptoTickerOptions called - starting crypto options display")
         
         // Add haptic feedback
+        print("🔶 Triggering haptic feedback")
         triggerHapticFeedback()
         
         let cryptoOptions = [
             // Most popular blockchain networks
-            ":btc", ":eth", ":sol", ":doge", ":arbi", ":op",
+            ":btc", ":sol", ":doge",
             // Additional blockchain networks  
-            ":xrp", ":ltc", ":ada",
+            ":xrp", ":ltc", ":ada", ":dot",
             // Text records
             ":url", ":x", ":github", ":name", ":bio"
         ]
         
-        // Create alert controller
-        let alert = UIAlertController(title: "Crypto Ticker", message: "Select a cryptocurrency ticker", preferredStyle: .actionSheet)
+        print("🔶 Creating custom popup with \(cryptoOptions.count) crypto options")
         
-        for ticker in cryptoOptions {
-            let action = UIAlertAction(title: ticker, style: .default) { _ in
+        // Create custom popup view instead of UIAlertController
+        createCustomCryptoPopup(with: cryptoOptions)
+    }
+    
+    private func createCustomCryptoPopup(with options: [String]) {
+        // Remove any existing popup
+        view.subviews.forEach { subview in
+            if subview.tag == 999 { // Tag for our custom popup
+                subview.removeFromSuperview()
+            }
+        }
+        
+        // Create popup container
+        let popupContainer = UIView()
+        popupContainer.tag = 999
+        popupContainer.backgroundColor = UIColor.systemBackground.withAlphaComponent(0.95)
+        popupContainer.layer.cornerRadius = 12
+        popupContainer.layer.shadowColor = UIColor.black.cgColor
+        popupContainer.layer.shadowOffset = CGSize(width: 0, height: 2)
+        popupContainer.layer.shadowRadius = 8
+        popupContainer.layer.shadowOpacity = 0.3
+        popupContainer.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Create scroll view for options
+        let scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.showsVerticalScrollIndicator = true
+        popupContainer.addSubview(scrollView)
+        
+        // Create container view for centering content
+        let containerView = UIView()
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(containerView)
+        
+        // Create main vertical stack view for rows
+        let mainStackView = UIStackView()
+        mainStackView.axis = .vertical
+        mainStackView.spacing = 8
+        mainStackView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(mainStackView)
+        
+        // Add title label
+        let titleLabel = UILabel()
+        titleLabel.text = "Ticker Options"
+        titleLabel.font = UIFont.boldSystemFont(ofSize: 18)
+        titleLabel.textAlignment = .center
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        popupContainer.addSubview(titleLabel)
+        
+        // Create grid layout - 3 columns
+        let columnsPerRow = 3
+        var currentRowStackView: UIStackView?
+        
+        for (index, ticker) in options.enumerated() {
+            // Create new row every 3 items
+            if index % columnsPerRow == 0 {
+                currentRowStackView = UIStackView()
+                currentRowStackView?.axis = .horizontal
+                currentRowStackView?.distribution = .fillEqually
+                currentRowStackView?.spacing = 8
+                currentRowStackView?.translatesAutoresizingMaskIntoConstraints = false
+                mainStackView.addArrangedSubview(currentRowStackView!)
+            }
+            
+            let button = UIButton(type: .system)
+            button.setTitle(ticker, for: .normal)
+            button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
+            button.backgroundColor = UIColor.systemBlue
+            button.setTitleColor(.white, for: .normal)
+            button.layer.cornerRadius = 8
+            button.translatesAutoresizingMaskIntoConstraints = false
+            
+            // Set button height
+            button.heightAnchor.constraint(equalToConstant: 40).isActive = true
+            
+            button.addAction(UIAction { _ in
+                print("🔶 Crypto option selected: \(ticker)")
                 self.insertText(ticker)
                 self.lastTypedWord += ticker
                 // Turn off shift after key press (unless caps lock is on)
@@ -1030,15 +1248,81 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                     self.setupKeyboardView()
                     self.isKeyboardViewSetup = true
                 }
-            }
-            alert.addAction(action)
+                // Remove popup
+                popupContainer.removeFromSuperview()
+            }, for: .touchUpInside)
+            
+            currentRowStackView?.addArrangedSubview(button)
         }
         
-        // Add cancel action
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-        alert.addAction(cancelAction)
+        // Add close button
+        let closeButton = UIButton(type: .system)
+        closeButton.setTitle("Close", for: .normal)
+        closeButton.titleLabel?.font = UIFont.systemFont(ofSize: 16)
+        closeButton.backgroundColor = UIColor.systemGray
+        closeButton.setTitleColor(.white, for: .normal)
+        closeButton.layer.cornerRadius = 8
+        closeButton.translatesAutoresizingMaskIntoConstraints = false
         
-        // Present the alert
-        present(alert, animated: true)
+        closeButton.addAction(UIAction { _ in
+            print("🔶 Crypto options closed")
+            popupContainer.removeFromSuperview()
+        }, for: .touchUpInside)
+        
+        mainStackView.addArrangedSubview(closeButton)
+        
+        // Add to main view
+        view.addSubview(popupContainer)
+        
+        // Set up constraints
+        NSLayoutConstraint.activate([
+            // Popup container constraints
+            popupContainer.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            popupContainer.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            popupContainer.widthAnchor.constraint(equalToConstant: 280),
+            popupContainer.heightAnchor.constraint(equalToConstant: 400),
+            
+            // Title label constraints
+            titleLabel.topAnchor.constraint(equalTo: popupContainer.topAnchor, constant: 16),
+            titleLabel.leadingAnchor.constraint(equalTo: popupContainer.leadingAnchor, constant: 16),
+            titleLabel.trailingAnchor.constraint(equalTo: popupContainer.trailingAnchor, constant: -16),
+            
+            // Scroll view constraints
+            scrollView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16),
+            scrollView.leadingAnchor.constraint(equalTo: popupContainer.leadingAnchor, constant: 16),
+            scrollView.trailingAnchor.constraint(equalTo: popupContainer.trailingAnchor, constant: -16),
+            scrollView.bottomAnchor.constraint(equalTo: popupContainer.bottomAnchor, constant: -16),
+            
+            // Container view constraints (centers content in scroll view)
+            containerView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            containerView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            containerView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            containerView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            containerView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+            containerView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.heightAnchor),
+            
+            // Stack view constraints (centered in container)
+            mainStackView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            mainStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            mainStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            mainStackView.topAnchor.constraint(greaterThanOrEqualTo: containerView.topAnchor, constant: 8),
+            mainStackView.bottomAnchor.constraint(lessThanOrEqualTo: containerView.bottomAnchor, constant: -8)
+        ])
+        
+        print("🔶 Custom crypto popup created and displayed successfully")
     }
+    
+    @objc private func handleSpacebarLongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        
+        // Prevent keyboard switching by consuming the gesture
+        gesture.cancelsTouchesInView = true
+        
+        // Add haptic feedback
+        triggerHapticFeedback()
+        
+        // Detect and resolve ENS domain around cursor
+        detectAndResolveENSAroundCursor()
+    }
+    
 }

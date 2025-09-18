@@ -112,11 +112,15 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
             autoCompleteProvider.getSuggestions(for: selectedText) { [weak self] suggestions in
                 DispatchQueue.main.async {
                     if let resolvedAddress = suggestions.first, !resolvedAddress.isEmpty {
-                        // Delete the original text and insert the resolved address
-                        for _ in 0..<selectedText.count {
-                            self?.textDocumentProxy.deleteBackward()
+                        // Check if we have selected text (proper selection)
+                        if let currentSelectedText = self?.textDocumentProxy.selectedText, currentSelectedText == selectedText {
+                            // We have proper selected text, so we can replace it directly
+                            // The text document proxy will handle the replacement correctly
+                            self?.textDocumentProxy.insertText(resolvedAddress)
+                        } else {
+                            // For cases where text is not properly selected, use smart replacement
+                            self?.smartReplaceENS(selectedText, with: resolvedAddress)
                         }
-                        self?.textDocumentProxy.insertText(resolvedAddress)
                         
                         // Trigger success haptic feedback
                         self?.triggerSuccessHaptic()
@@ -129,6 +133,55 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         } else {
             // Trigger error haptic feedback for invalid format
             triggerErrorHaptic()
+        }
+    }
+    
+    private func smartReplaceENS(_ ensDomain: String, with resolvedAddress: String) {
+        // Get the current document context
+        let beforeText = textDocumentProxy.documentContextBeforeInput ?? ""
+        let afterText = textDocumentProxy.documentContextAfterInput ?? ""
+        let fullText = beforeText + afterText
+        
+        
+        // Find the ENS domain in the full text
+        if let range = fullText.range(of: ensDomain, options: .backwards) {
+            let ensStartIndex = range.lowerBound
+            let ensEndIndex = range.upperBound
+            
+            
+            // Simple and reliable approach: reconstruct the text without the ENS domain
+            let textBeforeENS = String(fullText[..<ensStartIndex])
+            let textAfterENS = String(fullText[ensEndIndex...])
+            let newText = textBeforeENS + resolvedAddress + textAfterENS
+            
+            
+            // Delete all text from cursor to the beginning
+            let charactersToDelete = beforeText.count
+            for _ in 0..<charactersToDelete {
+                textDocumentProxy.deleteBackward()
+            }
+            
+            // Delete all text after cursor
+            let charactersAfterToDelete = afterText.count
+            for _ in 0..<charactersAfterToDelete {
+                textDocumentProxy.deleteBackward()
+            }
+            
+            // Insert the reconstructed text
+            textDocumentProxy.insertText(newText)
+            
+            // Position cursor after the resolved address
+            let cursorPosition = textBeforeENS.count + resolvedAddress.count
+            for _ in 0..<(newText.count - cursorPosition) {
+                textDocumentProxy.deleteBackward()
+            }
+            
+        } else {
+            // Fallback: just delete the ENS domain length and insert
+            for _ in 0..<ensDomain.count {
+                textDocumentProxy.deleteBackward()
+            }
+            textDocumentProxy.insertText(resolvedAddress)
         }
     }
     
@@ -177,6 +230,7 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
             handleSelectedText(selectedText)
         }
     }
+    
    
 }
 
