@@ -6,7 +6,8 @@ class ENSNameTableViewCell: UITableViewCell {
     private let cardView = UIView()
     private let globeIconView = UIView()
     private let globeIcon = UIImageView()
-    private let nameLabel = UILabel()
+    private let ensNameLabel = UILabel()
+    private let fullNameLabel = UILabel()
     private let addressLabel = UILabel()
     private let qrCodeButton = UIButton(type: .system)
     
@@ -45,17 +46,21 @@ class ENSNameTableViewCell: UITableViewCell {
         globeIcon.translatesAutoresizingMaskIntoConstraints = false
         globeIconView.addSubview(globeIcon)
         
-        // Name Label
-        nameLabel.font = UIFont.systemFont(ofSize: 16, weight: .bold)
-        nameLabel.textColor = ColorTheme.primaryText
-        nameLabel.translatesAutoresizingMaskIntoConstraints = false
-        cardView.addSubview(nameLabel)
+        // ENS Name Label
+        ensNameLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        ensNameLabel.textColor = .white
+        ensNameLabel.translatesAutoresizingMaskIntoConstraints = false
+        cardView.addSubview(ensNameLabel)
+        
+        // Full Name Label
+        fullNameLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        fullNameLabel.textColor = ColorTheme.secondaryText
+        fullNameLabel.translatesAutoresizingMaskIntoConstraints = false
+        cardView.addSubview(fullNameLabel)
         
         // Address Label
-        addressLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        addressLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
         addressLabel.textColor = ColorTheme.secondaryText
-        addressLabel.numberOfLines = 0
-        addressLabel.lineBreakMode = .byCharWrapping
         addressLabel.translatesAutoresizingMaskIntoConstraints = false
         cardView.addSubview(addressLabel)
         
@@ -73,7 +78,6 @@ class ENSNameTableViewCell: UITableViewCell {
             cardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             cardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             cardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
-            cardView.heightAnchor.constraint(greaterThanOrEqualToConstant: 80),
             
             globeIconView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 16),
             globeIconView.centerYAnchor.constraint(equalTo: cardView.centerYAnchor),
@@ -85,14 +89,18 @@ class ENSNameTableViewCell: UITableViewCell {
             globeIcon.widthAnchor.constraint(equalToConstant: 20),
             globeIcon.heightAnchor.constraint(equalToConstant: 20),
             
-            nameLabel.leadingAnchor.constraint(equalTo: globeIconView.trailingAnchor, constant: 12),
-            nameLabel.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 16),
-            nameLabel.trailingAnchor.constraint(equalTo: qrCodeButton.leadingAnchor, constant: -12),
+            ensNameLabel.leadingAnchor.constraint(equalTo: globeIconView.trailingAnchor, constant: 12),
+            ensNameLabel.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 16),
+            ensNameLabel.trailingAnchor.constraint(equalTo: qrCodeButton.leadingAnchor, constant: -12),
             
-            addressLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
-            addressLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
-            addressLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
-            addressLabel.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -20),
+            fullNameLabel.leadingAnchor.constraint(equalTo: ensNameLabel.leadingAnchor),
+            fullNameLabel.topAnchor.constraint(equalTo: ensNameLabel.bottomAnchor, constant: 4),
+            fullNameLabel.trailingAnchor.constraint(equalTo: ensNameLabel.trailingAnchor),
+            
+            addressLabel.leadingAnchor.constraint(equalTo: ensNameLabel.leadingAnchor),
+            addressLabel.topAnchor.constraint(equalTo: fullNameLabel.bottomAnchor, constant: 4),
+            addressLabel.trailingAnchor.constraint(equalTo: ensNameLabel.trailingAnchor),
+            addressLabel.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -16),
             
             qrCodeButton.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16),
             qrCodeButton.centerYAnchor.constraint(equalTo: cardView.centerYAnchor),
@@ -103,13 +111,17 @@ class ENSNameTableViewCell: UITableViewCell {
     
     // MARK: - Configuration
     func configure(with ensName: ENSName) {
-        nameLabel.text = ensName.name
-        addressLabel.text = ensName.address
+        ensNameLabel.text = ensName.name
+        fullNameLabel.text = ensName.fullName ?? ""
+        
+        // Truncate address for display
+        let truncatedAddress = "\(ensName.address.prefix(6))...\(ensName.address.suffix(4))"
+        addressLabel.text = truncatedAddress
     }
     
     // MARK: - Actions
     @objc private func qrCodeButtonTapped() {
         // Handle QR code generation
-        print("QR Code tapped for: \(nameLabel.text ?? "")")
+        print("QR Code tapped for: \(ensNameLabel.text ?? "")")
     }
 }

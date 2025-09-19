@@ -171,7 +171,7 @@ class PaymentRequestViewController: UIViewController {
         // Crypto Icon
         cryptoIconImageView.contentMode = .scaleAspectFit
         cryptoIconImageView.image = selectedChain.systemIcon
-        cryptoIconImageView.tintColor = selectedChain.iconColor
+        cryptoIconImageView.tintColor = .white
         cryptoContainerView.addSubview(cryptoIconImageView)
         
         // Chain Selection Button
@@ -414,6 +414,11 @@ class PaymentRequestViewController: UIViewController {
         copyButton.isHidden = true
         shareButton.isHidden = true
         
+        // Set initial ENS display
+        ensNameLabel.text = ensName.name
+        fullNameLabel.text = ensName.fullName ?? "Loading..." // Use existing fullName or show loading
+        ensAddressLabel.text = "" // Will be loaded when address is resolved
+        
         // Load crypto prices
         loadCryptoPrices()
         
@@ -456,7 +461,7 @@ class PaymentRequestViewController: UIViewController {
                 self.selectedChain = chain
                 self.chainButton.setTitle(chain.displayName, for: .normal)
                 self.cryptoIconImageView.image = chain.systemIcon
-                self.cryptoIconImageView.tintColor = chain.iconColor
+                self.cryptoIconImageView.tintColor = .white
                 self.updateConversionDisplay()
             })
         }
@@ -615,20 +620,80 @@ class PaymentRequestViewController: UIViewController {
     
     // MARK: - ENS Details Loading
     private func loadENSDetails() {
+        // First resolve the Ethereum address to display in the ENS card
+        resolveEthereumAddress()
+        
         // Load full name and avatar from ENS metadata
         loadENSFullName()
         loadENSAvatar()
     }
     
-    private func loadENSFullName() {
-        // Try to get full name from ENS metadata
+    private func resolveEthereumAddress() {
+        // Resolve the base ENS name to get Ethereum address for display
         let baseDomain = extractBaseDomain(from: ensName.name)
-        let metadataURL = "https://metadata.ens.domains/mainnet/\(baseDomain)/name"
         
-        AF.request(metadataURL).responseString { [weak self] response in
-            guard let self = self,
-                  let fullName = response.value,
+        APICaller.shared.resolveENSName(name: baseDomain) { [weak self] resolvedAddress in
+            DispatchQueue.main.async {
+                if !resolvedAddress.isEmpty {
+                    self?.updateENSAddressDisplay(address: resolvedAddress)
+                }
+            }
+        }
+    }
+    
+    private func loadENSFullName() {
+        // Use Fusion ENS Server API like the Chrome extension does
+        let baseDomain = extractBaseDomain(from: ensName.name)
+        let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
+        
+        AF.request(fusionServerURL).responseData { [weak self] response in
+            guard let self = self else { return }
+            
+            guard let data = response.data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let success = json["success"] as? Bool,
+                  success,
+                  let dataDict = json["data"] as? [String: Any],
+                  let fullName = dataDict["address"] as? String,
                   !fullName.isEmpty else {
+                // Fallback: try ENS Ideas API for full name
+                self.loadENSFullNameFromENSIdeas()
+                return
+            }
+            
+            // Clean HTML tags if present
+            let cleanName = self.cleanHTMLTags(from: fullName)
+            
+            DispatchQueue.main.async {
+                if !cleanName.isEmpty {
+                    self.fullName = cleanName
+                    self.fullNameLabel.text = cleanName
+                } else {
+                    // If still empty, try fallback
+                    self.loadENSFullNameFromENSIdeas()
+                }
+            }
+        }
+    }
+    
+    private func loadENSFullNameFromENSIdeas() {
+        // Fallback: try ENS Ideas API
+        let baseDomain = extractBaseDomain(from: ensName.name)
+        let ensIdeasURL = "https://api.ensideas.com/ens/resolve/\(baseDomain)"
+        
+        AF.request(ensIdeasURL).responseData { [weak self] response in
+            guard let self = self else { return }
+            
+            guard let data = response.data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let fullName = json["name"] as? String,
+                  !fullName.isEmpty else {
+                // If both APIs fail, show a fallback message
+                DispatchQueue.main.async {
+                    if self.fullNameLabel.text == "Loading..." {
+                        self.fullNameLabel.text = "ENS Name"
+                    }
+                }
                 return
             }
             
@@ -640,22 +705,64 @@ class PaymentRequestViewController: UIViewController {
     }
     
     private func loadENSAvatar() {
-        // Try to get avatar from ENS metadata
+        // Use the same approach as Chrome extension: ENS metadata API with Ethereum address
         let baseDomain = extractBaseDomain(from: ensName.name)
-        let avatarURL = "https://metadata.ens.domains/mainnet/\(baseDomain)/avatar"
         
-        AF.request(avatarURL).responseString { [weak self] response in
+        // First get the Ethereum address for avatar lookup
+        APICaller.shared.resolveENSName(name: baseDomain) { [weak self] ethAddress in
+            guard let self = self, !ethAddress.isEmpty else { return }
+            
+            // Use ENS metadata API with Ethereum address (same as Chrome extension)
+            let metadataURL = "https://metadata.ens.domains/mainnet/\(ethAddress)/avatar"
+            
+            AF.request(metadataURL).responseString { [weak self] response in
+                guard let self = self,
+                      let avatarURLString = response.value,
+                      !avatarURLString.isEmpty,
+                      avatarURLString != "data:image/svg+xml;base64," else {
+                    // Fallback: try ENS Ideas API for avatar
+                    self?.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
+                    return
+                }
+                
+                // Clean HTML tags if present
+                let cleanURLString = self.cleanHTMLTags(from: avatarURLString)
+                
+                // Check if it's a valid URL
+                guard !cleanURLString.isEmpty,
+                      let url = URL(string: cleanURLString) else {
+                    return
+                }
+                
+                // Load avatar image
+                self.loadImage(from: url) { [weak self] image in
+                    DispatchQueue.main.async {
+                        self?.avatarImageView.image = image
+                    }
+                }
+            }
+        }
+    }
+    
+    private func loadENSAvatarFromENSIdeas(baseDomain: String) {
+        // Fallback: try ENS Ideas API for avatar (same as Chrome extension)
+        let ensIdeasURL = "https://api.ensideas.com/ens/resolve/\(baseDomain)"
+        
+        AF.request(ensIdeasURL).responseData { [weak self] response in
             guard let self = self,
-                  let avatarURLString = response.value,
-                  !avatarURLString.isEmpty,
-                  let url = URL(string: avatarURLString) else {
+                  let data = response.data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let avatarURLString = json["avatar"] as? String,
+                  !avatarURLString.isEmpty else {
                 return
             }
             
             // Load avatar image
-            self.loadImage(from: url) { [weak self] image in
-                DispatchQueue.main.async {
-                    self?.avatarImageView.image = image
+            if let url = URL(string: avatarURLString) {
+                self.loadImage(from: url) { [weak self] image in
+                    DispatchQueue.main.async {
+                        self?.avatarImageView.image = image
+                    }
                 }
             }
         }
@@ -690,12 +797,31 @@ class PaymentRequestViewController: UIViewController {
         ensAddressLabel.text = truncatedAddress
     }
     
+    private func cleanHTMLTags(from htmlString: String) -> String {
+        // Remove HTML tags and decode HTML entities
+        let cleanString = htmlString
+            .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+            .replacingOccurrences(of: "&lt;", with: "<")
+            .replacingOccurrences(of: "&gt;", with: ">")
+            .replacingOccurrences(of: "&amp;", with: "&")
+            .replacingOccurrences(of: "&quot;", with: "\"")
+            .replacingOccurrences(of: "&#39;", with: "'")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // If the result is empty or contains only HTML artifacts, return empty string
+        if cleanString.isEmpty || cleanString.contains("DOCTYPE") || cleanString.contains("html") {
+            return ""
+        }
+        
+        return cleanString
+    }
+    
     // MARK: - Price Conversion
     private func loadCryptoPrices() {
         let coinIds = PaymentChain.allCases.map { $0.coinGeckoId }.joined(separator: ",")
         let url = "https://api.coingecko.com/api/v3/simple/price?ids=\(coinIds)&vs_currencies=usd"
         
-        AF.request(url).responseJSON { [weak self] response in
+        AF.request(url).responseData { [weak self] response in
             guard let self = self,
                   let data = response.data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
@@ -837,9 +963,6 @@ extension PaymentRequestViewController: UITextFieldDelegate {
     }
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        // Allow the change first
-        let newText = (textField.text as NSString?)?.replacingCharacters(in: range, with: string) ?? string
-        
         // Update conversion display after a short delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.updateConversionDisplay()
@@ -897,13 +1020,13 @@ enum PaymentChain: CaseIterable {
     
     var systemIcon: UIImage? {
         switch self {
-        case .bitcoin: return UIImage(systemName: "bitcoinsign.circle.fill")
-        case .solana: return UIImage(systemName: "sun.max.fill")
-        case .dogecoin: return UIImage(systemName: "dog.fill")
-        case .xrp: return UIImage(systemName: "waveform")
-        case .litecoin: return UIImage(systemName: "l.circle.fill")
-        case .cardano: return UIImage(systemName: "a.circle.fill")
-        case .polkadot: return UIImage(systemName: "p.circle.fill")
+        case .bitcoin: return UIImage(named: "BitcoinLogo")
+        case .solana: return UIImage(named: "SolanaLogo")
+        case .dogecoin: return UIImage(named: "DogecoinLogo")
+        case .xrp: return UIImage(named: "XRPLogo")
+        case .litecoin: return UIImage(named: "LitecoinLogo")
+        case .cardano: return UIImage(named: "CardanoLogo")
+        case .polkadot: return UIImage(named: "PolkadotLogo")
         }
     }
     

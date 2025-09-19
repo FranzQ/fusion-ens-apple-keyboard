@@ -76,7 +76,7 @@ class FusionENSAutoCompleteProvider {
     
     private func convertToNewFormat(_ domainName: String) -> String {
         // Check for new format (name.eth:chain)
-        if let colonIndex = domainName.lastIndex(of: ":") {
+        if domainName.contains(":") {
             return domainName // Already in new format
         }
         
@@ -93,7 +93,7 @@ class FusionENSAutoCompleteProvider {
     }
     
     private func resolveMultiChain(domainName: String, network: String, completion: @escaping (String?) -> Void) {
-        guard let chainInfo = detectChain(domainName) else {
+        guard detectChain(domainName) != nil else {
             completion(nil)
             return
         }

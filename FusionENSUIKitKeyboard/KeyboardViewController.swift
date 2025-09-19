@@ -283,7 +283,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             
             var previousButton: UIButton?
             
-            for (keyIndex, key) in row.enumerated() {
+            for (_, key) in row.enumerated() {
                 let button = createKeyboardButton(title: key)
                 rowView.addSubview(button)
                 

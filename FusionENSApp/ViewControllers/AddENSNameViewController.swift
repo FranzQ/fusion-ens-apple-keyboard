@@ -168,7 +168,16 @@ class AddENSNameViewController: UIViewController {
                 if let address = resolvedAddress, !address.isEmpty {
                     // ENS name resolved successfully
                     let newENSName = ENSName(name: ensName, address: address, dateAdded: Date())
-                    self?.delegate?.didAddENSName(newENSName)
+                    
+                    // Load full name asynchronously
+                    self?.loadFullName(for: newENSName) { fullName in
+                        DispatchQueue.main.async {
+                            var updatedENSName = newENSName
+                            updatedENSName.fullName = fullName
+                            self?.delegate?.didAddENSName(updatedENSName)
+                        }
+                    }
+                    
                     self?.dismiss(animated: true)
                 } else {
                     // ENS name could not be resolved
@@ -226,6 +235,77 @@ class AddENSNameViewController: UIViewController {
         if let activityIndicator = saveButton.viewWithTag(999) {
             activityIndicator.removeFromSuperview()
         }
+    }
+    
+    // MARK: - Full Name Loading
+    private func loadFullName(for ensName: ENSName, completion: @escaping (String?) -> Void) {
+        let baseDomain = extractBaseDomain(from: ensName.name)
+        let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
+        
+        URLSession.shared.dataTask(with: URL(string: fusionServerURL)!) { data, response, error in
+            guard let data = data else {
+                completion(nil)
+                return
+            }
+            
+            do {
+                let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+                guard let success = json?["success"] as? Bool,
+                      success,
+                      let dataDict = json?["data"] as? [String: Any],
+                      let fullName = dataDict["address"] as? String,
+                      !fullName.isEmpty else {
+                    completion(nil)
+                    return
+                }
+                
+                // Clean HTML tags if present
+                let cleanName = self.cleanHTMLTags(from: fullName)
+                completion(cleanName.isEmpty ? nil : cleanName)
+            } catch {
+                completion(nil)
+            }
+        }.resume()
+    }
+    
+    private func extractBaseDomain(from ensName: String) -> String {
+        // Handle new format like vitalik.eth:btc
+        if ensName.contains(":") {
+            let parts = ensName.components(separatedBy: ":")
+            if parts.count == 2 {
+                return parts[0]
+            }
+        }
+        
+        // Handle shortcut format like vitalik:btc
+        if ensName.contains(":") && !ensName.contains(".eth") {
+            let parts = ensName.components(separatedBy: ":")
+            if parts.count == 2 {
+                return parts[0] + ".eth"
+            }
+        }
+        
+        // Return as is for standard .eth domains
+        return ensName
+    }
+    
+    private func cleanHTMLTags(from htmlString: String) -> String {
+        // Remove HTML tags and decode HTML entities
+        let cleanString = htmlString
+            .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+            .replacingOccurrences(of: "&lt;", with: "<")
+            .replacingOccurrences(of: "&gt;", with: ">")
+            .replacingOccurrences(of: "&amp;", with: "&")
+            .replacingOccurrences(of: "&quot;", with: "\"")
+            .replacingOccurrences(of: "&#39;", with: "'")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // If the result is empty or contains only HTML artifacts, return empty string
+        if cleanString.isEmpty || cleanString.contains("DOCTYPE") || cleanString.contains("html") {
+            return ""
+        }
+        
+        return cleanString
     }
     
     // MARK: - Helper

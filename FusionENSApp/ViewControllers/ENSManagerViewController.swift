@@ -102,7 +102,96 @@ class ENSManagerViewController: UIViewController {
             ensNames = []
         }
         filteredENSNames = ensNames
+        
+        // Load full names for ENS names that don't have them
+        loadFullNamesForENSNames()
+        
         tableView.reloadData()
+    }
+    
+    private func loadFullNamesForENSNames() {
+        for (index, ensName) in ensNames.enumerated() {
+            if ensName.fullName == nil {
+                loadFullName(for: ensName, at: index)
+            }
+        }
+    }
+    
+    private func loadFullName(for ensName: ENSName, at index: Int) {
+        let baseDomain = extractBaseDomain(from: ensName.name)
+        let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
+        
+        URLSession.shared.dataTask(with: URL(string: fusionServerURL)!) { [weak self] data, response, error in
+            guard let self = self,
+                  let data = data else {
+                return
+            }
+            
+            do {
+                let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+                guard let success = json?["success"] as? Bool,
+                      success,
+                      let dataDict = json?["data"] as? [String: Any],
+                      let fullName = dataDict["address"] as? String,
+                      !fullName.isEmpty else {
+                    return
+                }
+                
+                // Clean HTML tags if present
+                let cleanName = self.cleanHTMLTags(from: fullName)
+                
+                DispatchQueue.main.async {
+                    if !cleanName.isEmpty && index < self.ensNames.count {
+                        self.ensNames[index].fullName = cleanName
+                        self.saveENSNames()
+                        self.tableView.reloadData()
+                    }
+                }
+            } catch {
+                // JSON parsing failed, continue without error
+                return
+            }
+        }.resume()
+    }
+    
+    private func extractBaseDomain(from ensName: String) -> String {
+        // Handle new format like vitalik.eth:btc
+        if ensName.contains(":") {
+            let parts = ensName.components(separatedBy: ":")
+            if parts.count == 2 {
+                return parts[0]
+            }
+        }
+        
+        // Handle shortcut format like vitalik:btc
+        if ensName.contains(":") && !ensName.contains(".eth") {
+            let parts = ensName.components(separatedBy: ":")
+            if parts.count == 2 {
+                return parts[0] + ".eth"
+            }
+        }
+        
+        // Return as is for standard .eth domains
+        return ensName
+    }
+    
+    private func cleanHTMLTags(from htmlString: String) -> String {
+        // Remove HTML tags and decode HTML entities
+        let cleanString = htmlString
+            .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+            .replacingOccurrences(of: "&lt;", with: "<")
+            .replacingOccurrences(of: "&gt;", with: ">")
+            .replacingOccurrences(of: "&amp;", with: "&")
+            .replacingOccurrences(of: "&quot;", with: "\"")
+            .replacingOccurrences(of: "&#39;", with: "'")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // If the result is empty or contains only HTML artifacts, return empty string
+        if cleanString.isEmpty || cleanString.contains("DOCTYPE") || cleanString.contains("html") {
+            return ""
+        }
+        
+        return cleanString
     }
     
     private func saveENSNames() {
@@ -123,8 +212,8 @@ class ENSManagerViewController: UIViewController {
     private func showDeleteConfirmation(for ensName: ENSName, at indexPath: IndexPath) {
         // First confirmation alert
         let firstAlert = UIAlertController(
-            title: "Delete ENS Name",
-            message: "Are you sure you want to delete '\(ensName.name)'?",
+            title: "Remove ENS Name",
+            message: "Are you sure you want to remove it from your list of ENS names? '\(ensName.name)'?",
             preferredStyle: .alert
         )
         
@@ -140,13 +229,13 @@ class ENSManagerViewController: UIViewController {
     private func showSecondDeleteConfirmation(for ensName: ENSName, at indexPath: IndexPath) {
         // Second confirmation alert
         let secondAlert = UIAlertController(
-            title: "Final Confirmation",
-            message: "This action cannot be undone. Are you absolutely sure you want to delete '\(ensName.name)'?",
+            title: "Are you sure?",
+            message: "This action cannot be undone. '\(ensName.name)'?",
             preferredStyle: .alert
         )
         
         secondAlert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        secondAlert.addAction(UIAlertAction(title: "Delete Forever", style: .destructive) { [weak self] _ in
+        secondAlert.addAction(UIAlertAction(title: "Remove", style: .destructive) { [weak self] _ in
             self?.deleteENSName(ensName, at: indexPath)
         })
         
@@ -195,7 +284,7 @@ extension ENSManagerViewController: UITableViewDataSource {
 // MARK: - UITableViewDelegate
 extension ENSManagerViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 80
+        return 100
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -215,7 +304,7 @@ extension ENSManagerViewController: UITableViewDelegate {
         
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
             let deleteAction = UIAction(
-                title: "Delete ENS Name",
+                title: "Remove ENS Name",
                 image: UIImage(systemName: "trash"),
                 attributes: .destructive
             ) { [weak self] _ in
@@ -259,4 +348,12 @@ struct ENSName: Codable {
     let name: String
     let address: String
     let dateAdded: Date
+    var fullName: String?
+    
+    init(name: String, address: String, dateAdded: Date, fullName: String? = nil) {
+        self.name = name
+        self.address = address
+        self.dateAdded = dateAdded
+        self.fullName = fullName
+    }
 }
