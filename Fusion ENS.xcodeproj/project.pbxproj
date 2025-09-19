@@ -48,6 +48,9 @@
 		NEW0032A490A3600A0D0C4 /* AddENSNameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0031A490A3600A0D0C4 /* AddENSNameViewController.swift */; };
 		NEW0042A490A3600A0D0C4 /* PaymentRequestViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0041A490A3600A0D0C4 /* PaymentRequestViewController.swift */; };
 		NEW0062A490A3600A0D0C4 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0061A490A3600A0D0C4 /* SettingsViewController.swift */; };
+		NEW0072A490A3600A0D0C4 /* ContactsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0071A490A3600A0D0C4 /* ContactsViewController.swift */; };
+		NEW0082A490A3600A0D0C4 /* MainTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0081A490A3600A0D0C4 /* MainTabBarController.swift */; };
+		NEW0092A490A3600A0D0C4 /* ColorTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0091A490A3600A0D0C4 /* ColorTheme.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -128,6 +131,9 @@
 		NEW0031A490A3600A0D0C4 /* AddENSNameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddENSNameViewController.swift; sourceTree = "<group>"; };
 		NEW0041A490A3600A0D0C4 /* PaymentRequestViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentRequestViewController.swift; sourceTree = "<group>"; };
 		NEW0061A490A3600A0D0C4 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
+		NEW0071A490A3600A0D0C4 /* ContactsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsViewController.swift; sourceTree = "<group>"; };
+		NEW0081A490A3600A0D0C4 /* MainTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabBarController.swift; sourceTree = "<group>"; };
+		NEW0091A490A3600A0D0C4 /* ColorTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorTheme.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -203,7 +209,6 @@
 		A1338FE7298ABB02007DC669 /* FusionENSApp */ = {
 			isa = PBXGroup;
 			children = (
-				1EE787162E79896F000E62E3 /* SafeCopyViewController.swift */,
 				A1BB89A12A5AC2720038A0E0 /* FusionENSAppRelease.entitlements */,
 				A1BB899C2A5A09790038A0E0 /* ViewControllers */,
 				A1BB89962A59B8200038A0E0 /* UIComponents */,
@@ -270,6 +275,7 @@
 			isa = PBXGroup;
 			children = (
 				A1BB899A2A59C3AF0038A0E0 /* FusionENSButton.swift */,
+				NEW0091A490A3600A0D0C4 /* ColorTheme.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -285,6 +291,9 @@
 				NEW0031A490A3600A0D0C4 /* AddENSNameViewController.swift */,
 				NEW0041A490A3600A0D0C4 /* PaymentRequestViewController.swift */,
 				NEW0061A490A3600A0D0C4 /* SettingsViewController.swift */,
+				NEW0071A490A3600A0D0C4 /* ContactsViewController.swift */,
+				NEW0081A490A3600A0D0C4 /* MainTabBarController.swift */,
+				1EE787162E79896F000E62E3 /* SafeCopyViewController.swift */,
 			);
 			path = ViewControllers;
 			sourceTree = "<group>";
@@ -468,6 +477,9 @@
 				NEW0032A490A3600A0D0C4 /* AddENSNameViewController.swift in Sources */,
 				NEW0042A490A3600A0D0C4 /* PaymentRequestViewController.swift in Sources */,
 				NEW0062A490A3600A0D0C4 /* SettingsViewController.swift in Sources */,
+				NEW0072A490A3600A0D0C4 /* ContactsViewController.swift in Sources */,
+				NEW0082A490A3600A0D0C4 /* MainTabBarController.swift in Sources */,
+				NEW0092A490A3600A0D0C4 /* ColorTheme.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

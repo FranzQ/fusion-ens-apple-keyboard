@@ -14,8 +14,20 @@ class PaymentRequestViewController: UIViewController {
     private let contentView = UIView()
     private let titleLabel = UILabel()
     private let ensNameLabel = UILabel()
+    
+    // Amount Section
+    private let amountContainerView = UIView()
+    private let amountLabel = UILabel()
     private let amountTextField = UITextField()
+    private let currencyLabel = UILabel()
+    
+    // Cryptocurrency Section
+    private let cryptoContainerView = UIView()
+    private let cryptoLabel = UILabel()
     private let chainButton = UIButton(type: .system)
+    private let chevronImageView = UIImageView()
+    
+    // Generate Button
     private let generateButton = UIButton(type: .system)
     private let qrCodeImageView = UIImageView()
     private let addressLabel = UILabel()
@@ -43,7 +55,7 @@ class PaymentRequestViewController: UIViewController {
     
     // MARK: - UI Setup
     private func setupUI() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = ColorTheme.primaryBackground
         
         // Scroll View
         view.addSubview(scrollView)
@@ -52,14 +64,14 @@ class PaymentRequestViewController: UIViewController {
         // Title Label
         titleLabel.text = "Payment Request"
         titleLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        titleLabel.textColor = .label
+        titleLabel.textColor = ColorTheme.primaryText
         titleLabel.textAlignment = .center
         contentView.addSubview(titleLabel)
         
         // ENS Name Label
         ensNameLabel.text = ensName.name
         ensNameLabel.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
-        ensNameLabel.textColor = .systemBlue
+        ensNameLabel.textColor = ColorTheme.accent
         ensNameLabel.textAlignment = .center
         ensNameLabel.numberOfLines = 0
         contentView.addSubview(ensNameLabel)
@@ -74,18 +86,18 @@ class PaymentRequestViewController: UIViewController {
         // Chain Selection Button
         chainButton.setTitle("Select Chain: \(selectedChain.displayName)", for: .normal)
         chainButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        chainButton.backgroundColor = .systemGray6
-        chainButton.setTitleColor(.label, for: .normal)
+        chainButton.backgroundColor = ColorTheme.searchBarBackground
+        chainButton.setTitleColor(ColorTheme.primaryText, for: .normal)
         chainButton.layer.cornerRadius = 8
         chainButton.layer.borderWidth = 1
-        chainButton.layer.borderColor = UIColor.systemGray4.cgColor
+        chainButton.layer.borderColor = ColorTheme.border.cgColor
         chainButton.addTarget(self, action: #selector(chainButtonTapped), for: .touchUpInside)
         contentView.addSubview(chainButton)
         
         // Generate Button
         generateButton.setTitle("Generate Payment Request", for: .normal)
         generateButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
-        generateButton.backgroundColor = .systemBlue
+        generateButton.backgroundColor = ColorTheme.accent
         generateButton.setTitleColor(.white, for: .normal)
         generateButton.layer.cornerRadius = 8
         generateButton.addTarget(self, action: #selector(generateButtonTapped), for: .touchUpInside)
@@ -93,14 +105,14 @@ class PaymentRequestViewController: UIViewController {
         
         // QR Code Image View
         qrCodeImageView.contentMode = .scaleAspectFit
-        qrCodeImageView.backgroundColor = .systemGray6
+        qrCodeImageView.backgroundColor = ColorTheme.searchBarBackground
         qrCodeImageView.layer.cornerRadius = 8
         qrCodeImageView.isHidden = true
         contentView.addSubview(qrCodeImageView)
         
         // Address Label
         addressLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
-        addressLabel.textColor = .secondaryLabel
+        addressLabel.textColor = ColorTheme.secondaryText
         addressLabel.numberOfLines = 0
         addressLabel.textAlignment = .center
         addressLabel.isHidden = true
@@ -109,8 +121,8 @@ class PaymentRequestViewController: UIViewController {
         // Copy Button
         copyButton.setTitle("Copy Address", for: .normal)
         copyButton.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-        copyButton.setTitleColor(.systemBlue, for: .normal)
-        copyButton.layer.borderColor = UIColor.systemBlue.cgColor
+        copyButton.setTitleColor(ColorTheme.accent, for: .normal)
+        copyButton.layer.borderColor = ColorTheme.accent.cgColor
         copyButton.layer.borderWidth = 1
         copyButton.layer.cornerRadius = 6
         copyButton.addTarget(self, action: #selector(copyButtonTapped), for: .touchUpInside)
@@ -120,8 +132,8 @@ class PaymentRequestViewController: UIViewController {
         // Share Button
         shareButton.setTitle("Share QR Code", for: .normal)
         shareButton.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-        shareButton.setTitleColor(.systemBlue, for: .normal)
-        shareButton.layer.borderColor = UIColor.systemBlue.cgColor
+        shareButton.setTitleColor(ColorTheme.accent, for: .normal)
+        shareButton.layer.borderColor = ColorTheme.accent.cgColor
         shareButton.layer.borderWidth = 1
         shareButton.layer.cornerRadius = 6
         shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
@@ -306,8 +318,8 @@ class PaymentRequestViewController: UIViewController {
     private func resolveENSName(completion: @escaping (String?) -> Void) {
         // Create the full ENS name with chain suffix for multi-chain resolution
         let fullENSName: String
-        if selectedChain == .ethereum {
-            // For Ethereum, use the original name
+        if selectedChain == .bitcoin {
+            // For Bitcoin, use the original name (assuming ENS resolution works for Bitcoin)
             fullENSName = ensName.name
         } else {
             // For other chains, add the chain suffix
@@ -340,8 +352,6 @@ class PaymentRequestViewController: UIViewController {
         switch selectedChain {
         case .bitcoin:
             return "bitcoin:\(resolvedAddress)?amount=\(amount)"
-        case .ethereum:
-            return "ethereum:\(resolvedAddress)@1?value=\(amount)e18"
         case .solana:
             return "solana:\(resolvedAddress)?amount=\(amount)"
         case .dogecoin:
@@ -352,18 +362,8 @@ class PaymentRequestViewController: UIViewController {
             return "litecoin:\(resolvedAddress)?amount=\(amount)"
         case .cardano:
             return "cardano:\(resolvedAddress)?amount=\(amount)"
-        case .polygon:
-            return "ethereum:\(resolvedAddress)@137?value=\(amount)e18"
-        case .avalanche:
-            return "ethereum:\(resolvedAddress)@43114?value=\(amount)e18"
-        case .bsc:
-            return "ethereum:\(resolvedAddress)@56?value=\(amount)e18"
-        case .arbitrum:
-            return "ethereum:\(resolvedAddress)@42161?value=\(amount)e18"
-        case .optimism:
-            return "ethereum:\(resolvedAddress)@10?value=\(amount)e18"
-        case .base:
-            return "ethereum:\(resolvedAddress)@8453?value=\(amount)e18"
+        case .polkadot:
+            return "polkadot:\(resolvedAddress)?amount=\(amount)"
         }
     }
     
@@ -497,52 +497,34 @@ extension PaymentRequestViewController: UITextFieldDelegate {
 // MARK: - PaymentChain Enum
 enum PaymentChain: CaseIterable {
     case bitcoin
-    case ethereum
     case solana
     case dogecoin
     case xrp
     case litecoin
     case cardano
-    case polygon
-    case avalanche
-    case bsc
-    case arbitrum
-    case optimism
-    case base
+    case polkadot
     
     var displayName: String {
         switch self {
         case .bitcoin: return "Bitcoin"
-        case .ethereum: return "Ethereum"
         case .solana: return "Solana"
         case .dogecoin: return "Dogecoin"
         case .xrp: return "XRP"
         case .litecoin: return "Litecoin"
         case .cardano: return "Cardano"
-        case .polygon: return "Polygon"
-        case .avalanche: return "Avalanche"
-        case .bsc: return "BSC"
-        case .arbitrum: return "Arbitrum"
-        case .optimism: return "Optimism"
-        case .base: return "Base"
+        case .polkadot: return "Polkadot"
         }
     }
     
     var symbol: String {
         switch self {
         case .bitcoin: return "BTC"
-        case .ethereum: return "ETH"
         case .solana: return "SOL"
         case .dogecoin: return "DOGE"
         case .xrp: return "XRP"
         case .litecoin: return "LTC"
         case .cardano: return "ADA"
-        case .polygon: return "POLYGON"
-        case .avalanche: return "AVAX"
-        case .bsc: return "BSC"
-        case .arbitrum: return "ARBI"
-        case .optimism: return "OP"
-        case .base: return "BASE"
+        case .polkadot: return "DOT"
         }
     }
 }

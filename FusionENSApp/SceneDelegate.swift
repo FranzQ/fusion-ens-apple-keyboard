@@ -18,7 +18,19 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             guard let windowScene = (scene as? UIWindowScene) else { return }
 
             let window = UIWindow(windowScene: windowScene)
-            window.rootViewController = GettingStartedVC()
+            
+            // Check if this is first launch
+            let isFirstLaunch = !UserDefaults.standard.bool(forKey: "HasLaunchedBefore")
+            
+            if isFirstLaunch {
+                // Show onboarding for first-time users
+                window.rootViewController = GettingStartedVC()
+                UserDefaults.standard.set(true, forKey: "HasLaunchedBefore")
+            } else {
+                // Show main app for returning users
+                window.rootViewController = MainTabBarController()
+            }
+            
             self.window = window
             window.makeKeyAndVisible()
         }

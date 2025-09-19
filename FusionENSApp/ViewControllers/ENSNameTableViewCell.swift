@@ -1,19 +1,20 @@
 import UIKit
-import SnapKit
 
 class ENSNameTableViewCell: UITableViewCell {
     
     // MARK: - UI Elements
-    private let avatarImageView = UIImageView()
-    private let ensNameLabel = UILabel()
-    private let displayNameLabel = UILabel()
-    private let dateLabel = UILabel()
-    private let chevronImageView = UIImageView()
+    private let cardView = UIView()
+    private let globeIconView = UIView()
+    private let globeIcon = UIImageView()
+    private let nameLabel = UILabel()
+    private let addressLabel = UILabel()
+    private let qrCodeButton = UIButton(type: .system)
     
     // MARK: - Initialization
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
+        setupConstraints()
     }
     
     required init?(coder: NSCoder) {
@@ -22,161 +23,93 @@ class ENSNameTableViewCell: UITableViewCell {
     
     // MARK: - UI Setup
     private func setupUI() {
-        selectionStyle = .default
-        accessoryType = .disclosureIndicator
+        backgroundColor = ColorTheme.primaryBackground
+        selectionStyle = .none
         
-        // Avatar Image View
-        avatarImageView.contentMode = .scaleAspectFill
-        avatarImageView.layer.cornerRadius = 20
-        avatarImageView.layer.masksToBounds = true
-        avatarImageView.backgroundColor = .systemGray5
-        avatarImageView.image = UIImage(systemName: "person.circle.fill")
-        avatarImageView.tintColor = .systemGray3
-        contentView.addSubview(avatarImageView)
+        // Card View
+        cardView.backgroundColor = ColorTheme.cardBackground
+        cardView.layer.cornerRadius = 12
+        cardView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(cardView)
         
-        // ENS Name Label
-        ensNameLabel.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
-        ensNameLabel.textColor = .label
-        contentView.addSubview(ensNameLabel)
+        // Globe Icon Container
+        globeIconView.backgroundColor = ColorTheme.accentSecondary
+        globeIconView.layer.cornerRadius = 20
+        globeIconView.translatesAutoresizingMaskIntoConstraints = false
+        cardView.addSubview(globeIconView)
         
-        // Display Name Label
-        displayNameLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
-        displayNameLabel.textColor = .secondaryLabel
-        contentView.addSubview(displayNameLabel)
+        // Globe Icon
+        globeIcon.image = UIImage(systemName: "globe")
+        globeIcon.tintColor = ColorTheme.primaryText
+        globeIcon.contentMode = .scaleAspectFit
+        globeIcon.translatesAutoresizingMaskIntoConstraints = false
+        globeIconView.addSubview(globeIcon)
         
-        // Date Label
-        dateLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
-        dateLabel.textColor = .tertiaryLabel
-        contentView.addSubview(dateLabel)
+        // Name Label
+        nameLabel.font = UIFont.systemFont(ofSize: 16, weight: .bold)
+        nameLabel.textColor = ColorTheme.primaryText
+        nameLabel.translatesAutoresizingMaskIntoConstraints = false
+        cardView.addSubview(nameLabel)
         
-        // Layout
-        avatarImageView.snp.makeConstraints { make in
-            make.leading.equalToSuperview().offset(16)
-            make.centerY.equalToSuperview()
-            make.width.height.equalTo(40)
-        }
+        // Address Label
+        addressLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        addressLabel.textColor = ColorTheme.secondaryText
+        addressLabel.numberOfLines = 0
+        addressLabel.lineBreakMode = .byCharWrapping
+        addressLabel.translatesAutoresizingMaskIntoConstraints = false
+        cardView.addSubview(addressLabel)
         
-        ensNameLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(12)
-            make.leading.equalTo(avatarImageView.snp.trailing).offset(12)
-            make.trailing.equalToSuperview().offset(-40)
-        }
-        
-        displayNameLabel.snp.makeConstraints { make in
-            make.top.equalTo(ensNameLabel.snp.bottom).offset(4)
-            make.leading.equalTo(ensNameLabel)
-            make.trailing.equalTo(ensNameLabel)
-        }
-        
-        dateLabel.snp.makeConstraints { make in
-            make.top.equalTo(displayNameLabel.snp.bottom).offset(4)
-            make.leading.equalTo(ensNameLabel)
-            make.trailing.equalTo(ensNameLabel)
-            make.bottom.equalToSuperview().offset(-12)
-        }
+        // QR Code Button
+        qrCodeButton.setImage(UIImage(systemName: "qrcode"), for: .normal)
+        qrCodeButton.tintColor = ColorTheme.primaryText
+        qrCodeButton.translatesAutoresizingMaskIntoConstraints = false
+        qrCodeButton.addTarget(self, action: #selector(qrCodeButtonTapped), for: .touchUpInside)
+        cardView.addSubview(qrCodeButton)
+    }
+    
+    private func setupConstraints() {
+        NSLayoutConstraint.activate([
+            cardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            cardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            cardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            cardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
+            cardView.heightAnchor.constraint(greaterThanOrEqualToConstant: 80),
+            
+            globeIconView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 16),
+            globeIconView.centerYAnchor.constraint(equalTo: cardView.centerYAnchor),
+            globeIconView.widthAnchor.constraint(equalToConstant: 40),
+            globeIconView.heightAnchor.constraint(equalToConstant: 40),
+            
+            globeIcon.centerXAnchor.constraint(equalTo: globeIconView.centerXAnchor),
+            globeIcon.centerYAnchor.constraint(equalTo: globeIconView.centerYAnchor),
+            globeIcon.widthAnchor.constraint(equalToConstant: 20),
+            globeIcon.heightAnchor.constraint(equalToConstant: 20),
+            
+            nameLabel.leadingAnchor.constraint(equalTo: globeIconView.trailingAnchor, constant: 12),
+            nameLabel.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 16),
+            nameLabel.trailingAnchor.constraint(equalTo: qrCodeButton.leadingAnchor, constant: -12),
+            
+            addressLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
+            addressLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
+            addressLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
+            addressLabel.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -20),
+            
+            qrCodeButton.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16),
+            qrCodeButton.centerYAnchor.constraint(equalTo: cardView.centerYAnchor),
+            qrCodeButton.widthAnchor.constraint(equalToConstant: 24),
+            qrCodeButton.heightAnchor.constraint(equalToConstant: 24)
+        ])
     }
     
     // MARK: - Configuration
     func configure(with ensName: ENSName) {
-        ensNameLabel.text = ensName.name
-        displayNameLabel.text = ensName.displayName
-        
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        dateLabel.text = "Added: \(formatter.string(from: ensName.dateAdded))"
-        
-        // Load avatar
-        loadAvatar(for: ensName.name)
+        nameLabel.text = ensName.name
+        addressLabel.text = ensName.address
     }
     
-    // MARK: - Avatar Loading
-    private func loadAvatar(for ensName: String) {
-        // Reset to default avatar
-        avatarImageView.image = UIImage(systemName: "person.circle.fill")
-        avatarImageView.tintColor = .systemGray3
-        
-        // Extract base domain for avatar lookup
-        let baseDomain = extractBaseDomain(from: ensName)
-        
-        // First, get the Ethereum address for avatar lookup
-        APICaller.shared.resolveENSName(name: baseDomain) { [weak self] address in
-            guard let self = self, !address.isEmpty else { return }
-            
-            // Try to fetch avatar from ENS metadata
-            self.fetchAvatarFromENS(address: address)
-        }
-    }
-    
-    private func extractBaseDomain(from ensName: String) -> String {
-        // Handle new format like vitalik.eth:btc
-        if ensName.contains(":") {
-            let parts = ensName.components(separatedBy: ":")
-            if parts.count == 2 {
-                return parts[0]
-            }
-        }
-        
-        // Handle shortcut format like vitalik:btc
-        if ensName.contains(":") && !ensName.contains(".eth") {
-            let parts = ensName.components(separatedBy: ":")
-            if parts.count == 2 {
-                return parts[0] + ".eth"
-            }
-        }
-        
-        // Return as is for standard .eth domains
-        return ensName
-    }
-    
-    private func fetchAvatarFromENS(address: String) {
-        // Try ENS metadata first
-        let metadataURL = "https://metadata.ens.domains/mainnet/\(address)/avatar"
-        
-        guard let url = URL(string: metadataURL) else { return }
-        
-        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            guard let self = self,
-                  let data = data,
-                  let image = UIImage(data: data),
-                  !data.isEmpty else {
-                // Fallback to ENS Ideas API
-                self?.fetchAvatarFromENSIdeas(address: address)
-                return
-            }
-            
-            DispatchQueue.main.async {
-                self.avatarImageView.image = image
-                self.avatarImageView.tintColor = nil
-            }
-        }.resume()
-    }
-    
-    private func fetchAvatarFromENSIdeas(address: String) {
-        // Fallback: try ENS Ideas API for avatar
-        let ensIdeasURL = "https://api.ensideas.com/ens/resolve/\(address)"
-        
-        guard let url = URL(string: ensIdeasURL) else { return }
-        
-        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            guard let self = self,
-                  let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let avatarURL = json["avatar"] as? String,
-                  let avatarImageURL = URL(string: avatarURL) else {
-                return
-            }
-            
-            // Fetch the actual avatar image
-            URLSession.shared.dataTask(with: avatarImageURL) { data, response, error in
-                guard let data = data,
-                      let image = UIImage(data: data) else { return }
-                
-                DispatchQueue.main.async {
-                    self.avatarImageView.image = image
-                    self.avatarImageView.tintColor = nil
-                }
-            }.resume()
-        }.resume()
+    // MARK: - Actions
+    @objc private func qrCodeButtonTapped() {
+        // Handle QR code generation
+        print("QR Code tapped for: \(nameLabel.text ?? "")")
     }
 }

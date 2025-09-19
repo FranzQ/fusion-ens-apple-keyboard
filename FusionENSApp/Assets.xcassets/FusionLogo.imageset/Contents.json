@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "ens-logo-min@1x.png",
+      "filename" : "FusionLogo.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "ens-logo-min@2x.png",
+      "filename" : "FusionLogo@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "ens-logo-min@3x.png",
+      "filename" : "FusionLogo@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

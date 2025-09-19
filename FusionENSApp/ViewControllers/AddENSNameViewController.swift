@@ -11,127 +11,140 @@ class AddENSNameViewController: UIViewController {
     weak var delegate: AddENSNameDelegate?
     
     // MARK: - UI Elements
-    private let scrollView = UIScrollView()
-    private let contentView = UIView()
+    private let modalView = UIView()
+    private let handleView = UIView()
     private let titleLabel = UILabel()
+    private let ensNameLabel = UILabel()
     private let ensNameTextField = UITextField()
-    private let displayNameTextField = UITextField()
-    private let descriptionLabel = UILabel()
-    private let addButton = UIButton(type: .system)
+    private let saveButton = UIButton(type: .system)
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupNavigationBar()
+        setupConstraints()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        ensNameTextField.becomeFirstResponder()
     }
     
     // MARK: - UI Setup
     private func setupUI() {
-        view.backgroundColor = .systemBackground
+        // Full screen background
+        view.backgroundColor = ColorTheme.primaryBackground.withAlphaComponent(0.8)
         
-        // Scroll View
-        view.addSubview(scrollView)
-        scrollView.addSubview(contentView)
+        // Modal View - positioned to appear above keyboard
+        modalView.backgroundColor = ColorTheme.cardBackground
+        modalView.layer.cornerRadius = 16
+        modalView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        modalView.layer.shadowColor = ColorTheme.primaryText.cgColor
+        modalView.layer.shadowOffset = CGSize(width: 0, height: -2)
+        modalView.layer.shadowRadius = 10
+        modalView.layer.shadowOpacity = 0.3
+        view.addSubview(modalView)
+        
+        // Handle View
+        handleView.backgroundColor = ColorTheme.secondaryText
+        handleView.layer.cornerRadius = 2
+        modalView.addSubview(handleView)
         
         // Title Label
         titleLabel.text = "Add ENS Name"
-        titleLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        titleLabel.textColor = .label
+        titleLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
+        titleLabel.textColor = ColorTheme.primaryText
         titleLabel.textAlignment = .center
-        contentView.addSubview(titleLabel)
+        modalView.addSubview(titleLabel)
+        
+        // ENS Name Label
+        ensNameLabel.text = "ENS Name"
+        ensNameLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        ensNameLabel.textColor = ColorTheme.primaryText
+        modalView.addSubview(ensNameLabel)
         
         // ENS Name Text Field
-        ensNameTextField.placeholder = "Enter ENS name (e.g., vitalik.eth)"
-        ensNameTextField.borderStyle = .roundedRect
+        ensNameTextField.placeholder = "e.g. vitalik.eth"
+        ensNameTextField.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+        ensNameTextField.textColor = ColorTheme.primaryText
+        ensNameTextField.backgroundColor = ColorTheme.searchBarBackground
+        ensNameTextField.layer.cornerRadius = 8
+        ensNameTextField.layer.borderWidth = 0
         ensNameTextField.autocapitalizationType = .none
         ensNameTextField.autocorrectionType = .no
         ensNameTextField.keyboardType = .default
-        ensNameTextField.returnKeyType = .next
+        ensNameTextField.returnKeyType = .done
         ensNameTextField.delegate = self
-        contentView.addSubview(ensNameTextField)
         
-        // Display Name Text Field
-        displayNameTextField.placeholder = "Display name (optional)"
-        displayNameTextField.borderStyle = .roundedRect
-        displayNameTextField.autocapitalizationType = .words
-        displayNameTextField.autocorrectionType = .yes
-        displayNameTextField.returnKeyType = .done
-        displayNameTextField.delegate = self
-        contentView.addSubview(displayNameTextField)
+        // Add padding to text field
+        let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 44))
+        ensNameTextField.leftView = paddingView
+        ensNameTextField.leftViewMode = .always
+        ensNameTextField.rightView = paddingView
+        ensNameTextField.rightViewMode = .always
         
-        // Description Label
-        descriptionLabel.text = "Add ENS names to quickly generate payment requests. You can use any ENS name like 'vitalik.eth' or multi-chain formats like 'vitalik.eth:btc'."
-        descriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
-        descriptionLabel.textColor = .secondaryLabel
-        descriptionLabel.numberOfLines = 0
-        descriptionLabel.textAlignment = .center
-        contentView.addSubview(descriptionLabel)
+        modalView.addSubview(ensNameTextField)
         
-        // Add Button
-        addButton.setTitle("Add ENS Name", for: .normal)
-        addButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
-        addButton.backgroundColor = .systemBlue
-        addButton.setTitleColor(.white, for: .normal)
-        addButton.layer.cornerRadius = 8
-        addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
-        contentView.addSubview(addButton)
+        // Save Button
+        saveButton.setTitle("Save", for: .normal)
+        saveButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .bold)
+        saveButton.backgroundColor = ColorTheme.accent
+        saveButton.setTitleColor(.white, for: .normal)
+        saveButton.layer.cornerRadius = 8
+        saveButton.addTarget(self, action: #selector(saveButtonTapped), for: .touchUpInside)
+        modalView.addSubview(saveButton)
         
-        // Layout
-        scrollView.snp.makeConstraints { make in
-            make.edges.equalTo(view.safeAreaLayoutGuide)
+        // Add tap gesture to dismiss modal
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
+        tapGesture.delegate = self
+        view.addGestureRecognizer(tapGesture)
+    }
+    
+    private func setupConstraints() {
+        modalView.snp.makeConstraints { make in
+            make.centerX.equalToSuperview()
+            make.centerY.equalToSuperview()
+            make.leading.trailing.equalToSuperview().inset(20)
+            make.height.equalTo(280)
         }
         
-        contentView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
-            make.width.equalToSuperview()
+        handleView.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(8)
+            make.centerX.equalToSuperview()
+            make.width.equalTo(36)
+            make.height.equalTo(4)
         }
         
         titleLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(20)
+            make.top.equalTo(handleView.snp.bottom).offset(20)
+            make.leading.trailing.equalToSuperview().inset(20)
+        }
+        
+        ensNameLabel.snp.makeConstraints { make in
+            make.top.equalTo(titleLabel.snp.bottom).offset(24)
             make.leading.trailing.equalToSuperview().inset(20)
         }
         
         ensNameTextField.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(30)
+            make.top.equalTo(ensNameLabel.snp.bottom).offset(8)
             make.leading.trailing.equalToSuperview().inset(20)
             make.height.equalTo(44)
         }
         
-        displayNameTextField.snp.makeConstraints { make in
-            make.top.equalTo(ensNameTextField.snp.bottom).offset(16)
-            make.leading.trailing.equalToSuperview().inset(20)
-            make.height.equalTo(44)
-        }
-        
-        descriptionLabel.snp.makeConstraints { make in
-            make.top.equalTo(displayNameTextField.snp.bottom).offset(20)
-            make.leading.trailing.equalToSuperview().inset(20)
-        }
-        
-        addButton.snp.makeConstraints { make in
-            make.top.equalTo(descriptionLabel.snp.bottom).offset(30)
+        saveButton.snp.makeConstraints { make in
+            make.top.equalTo(ensNameTextField.snp.bottom).offset(32)
             make.leading.trailing.equalToSuperview().inset(20)
             make.height.equalTo(50)
-            make.bottom.equalToSuperview().offset(-20)
+            make.bottom.lessThanOrEqualToSuperview().offset(-20)
         }
-    }
-    
-    private func setupNavigationBar() {
-        navigationItem.title = "Add ENS Name"
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem: .cancel,
-            target: self,
-            action: #selector(cancelTapped)
-        )
     }
     
     // MARK: - Actions
-    @objc private func cancelTapped() {
+    @objc private func backgroundTapped() {
         dismiss(animated: true)
     }
     
-    @objc private func addButtonTapped() {
+    @objc private func saveButtonTapped() {
         guard let ensName = ensNameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
               !ensName.isEmpty else {
             showAlert(title: "Error", message: "Please enter an ENS name")
@@ -144,8 +157,9 @@ class AddENSNameViewController: UIViewController {
             return
         }
         
-        let displayName = displayNameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let newENSName = ENSName(name: ensName, displayName: displayName, dateAdded: Date())
+        // For now, use a placeholder address - this will be resolved when generating payment requests
+        let placeholderAddress = "0x0000000000000000000000000000000000000000"
+        let newENSName = ENSName(name: ensName, address: placeholderAddress, dateAdded: Date())
         
         delegate?.didAddENSName(newENSName)
         dismiss(animated: true)
@@ -171,12 +185,15 @@ class AddENSNameViewController: UIViewController {
 // MARK: - UITextFieldDelegate
 extension AddENSNameViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        if textField == ensNameTextField {
-            displayNameTextField.becomeFirstResponder()
-        } else {
-            textField.resignFirstResponder()
-            addButtonTapped()
-        }
+        textField.resignFirstResponder()
+        saveButtonTapped()
         return true
+    }
+}
+
+// MARK: - UIGestureRecognizerDelegate
+extension AddENSNameViewController: UIGestureRecognizerDelegate {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        return touch.view == view
     }
 }
