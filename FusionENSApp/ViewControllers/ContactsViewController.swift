@@ -443,11 +443,9 @@ class ContactTableViewCell: UITableViewCell {
     }
     
     @objc private func messageButtonTapped() {
-        print("Message button tapped for: \(nameLabel.text ?? "")")
     }
     
     @objc private func sendCryptoButtonTapped() {
-        print("Send Crypto button tapped for: \(nameLabel.text ?? "")")
     }
 }
 

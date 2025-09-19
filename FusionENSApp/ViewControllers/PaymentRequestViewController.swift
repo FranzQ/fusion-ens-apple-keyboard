@@ -77,7 +77,7 @@ class PaymentRequestViewController: UIViewController {
         scrollView.addSubview(contentView)
         
         // Title Label
-        titleLabel.text = "Payment Request"
+        titleLabel.text = "Make a Request"
         titleLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         titleLabel.textColor = ColorTheme.primaryText
         titleLabel.textAlignment = .center
@@ -259,7 +259,7 @@ class PaymentRequestViewController: UIViewController {
         ensCardView.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(20)
             make.leading.trailing.equalToSuperview().inset(20)
-            make.height.equalTo(80)
+            make.height.equalTo(100)
         }
         
         // Globe Icon (hidden when avatar is shown)
@@ -295,6 +295,7 @@ class PaymentRequestViewController: UIViewController {
             make.leading.equalTo(ensNameLabel)
             make.top.equalTo(fullNameLabel.snp.bottom).offset(4)
             make.trailing.equalTo(ensNameLabel)
+            make.bottom.equalToSuperview().offset(-16)
         }
         
         // Crypto Container
@@ -665,7 +666,6 @@ class PaymentRequestViewController: UIViewController {
         // Add a subtle indicator to show which chains are available
         // This could be enhanced with visual indicators on the segmented control
         let availableChains = PaymentChain.allCases
-        print("Available chains for \(ensName.name): \(availableChains.map { $0.displayName })")
         
         // You could add visual indicators here, like:
         // - Gray out unavailable chains
@@ -861,8 +861,12 @@ class PaymentRequestViewController: UIViewController {
     }
     
     private func showENSNameSelector() {
-        // Get all saved ENS names
-        let savedENSNames = UserDefaults.standard.stringArray(forKey: "savedENSNames") ?? []
+        // Get all saved ENS names from UserDefaults
+        guard let data = UserDefaults.standard.data(forKey: "SavedENSNames"),
+              let savedENSNames = try? JSONDecoder().decode([ENSName].self, from: data) else {
+            showAlert(title: "No ENS Names", message: "You don't have any saved ENS names yet.")
+            return
+        }
         
         guard !savedENSNames.isEmpty else {
             showAlert(title: "No ENS Names", message: "You don't have any saved ENS names yet.")
@@ -871,10 +875,16 @@ class PaymentRequestViewController: UIViewController {
         
         let alert = UIAlertController(title: "Select ENS Name", message: "Choose which ENS name to use for this payment request", preferredStyle: .actionSheet)
         
+        // Add "Show Setup Instructions" at the top
+        let setupAction = UIAlertAction(title: "Show Setup Instructions", style: .default) { _ in
+            self.showSetupInstructions()
+        }
+        alert.addAction(setupAction)
+        
         // Add action for each saved ENS name
-        for ensNameString in savedENSNames {
-            let action = UIAlertAction(title: ensNameString, style: .default) { _ in
-                self.switchToENSName(ensNameString)
+        for ensName in savedENSNames {
+            let action = UIAlertAction(title: ensName.name, style: .default) { _ in
+                self.switchToENSName(ensName)
             }
             alert.addAction(action)
         }
@@ -891,10 +901,7 @@ class PaymentRequestViewController: UIViewController {
         present(alert, animated: true)
     }
     
-    private func switchToENSName(_ newENSNameString: String) {
-        // Create new ENSName object
-        let newENSName = ENSName(name: newENSNameString, address: "", fullName: nil)
-        
+    private func switchToENSName(_ newENSName: ENSName) {
         // Update the current ENS name
         self.ensName = newENSName
         
@@ -909,6 +916,12 @@ class PaymentRequestViewController: UIViewController {
         
         // Reload ENS details for the new name
         loadENSDetails()
+    }
+    
+    private func showSetupInstructions() {
+        let setupVC = GettingStartedVC()
+        setupVC.modalPresentationStyle = .pageSheet
+        present(setupVC, animated: true)
     }
     
     private func updateENSAddressDisplay(address: String) {
@@ -1037,9 +1050,7 @@ class PaymentRequestViewController: UIViewController {
             if UIApplication.shared.canOpenURL(url) {
                 UIApplication.shared.open(url, options: [:]) { success in
                     if success {
-                        print("Successfully opened ENS app for \(baseDomain)")
                     } else {
-                        print("Failed to open ENS app")
                     }
                 }
             } else {
@@ -1090,7 +1101,6 @@ class PaymentRequestViewController: UIViewController {
     // MARK: - QR Success Popup
     private func showQRSuccessPopup() {
         guard let qrCodeImage = qrCodeImageView.image else {
-            print("No QR code image available")
             return
         }
         

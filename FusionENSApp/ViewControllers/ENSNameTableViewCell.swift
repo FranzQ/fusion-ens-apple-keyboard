@@ -159,7 +159,6 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
     
     // MARK: - Configuration
     func configure(with ensName: ENSName) {
-        print("🔧 Configuring cell for ENS name: \(ensName.name), address: \(ensName.address)")
         self.currentENSName = ensName
         ensNameLabel.text = ensName.name
         
@@ -189,11 +188,9 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
     // MARK: - Avatar Loading
     private func loadENSAvatar(for ensName: ENSName) {
         let baseDomain = extractBaseDomain(from: ensName.name)
-        print("🔍 Loading avatar for: \(baseDomain)")
         
         // Check cache first
         if let cachedImage = Self.avatarCache[baseDomain] {
-            print("✅ Using cached avatar for: \(baseDomain)")
             DispatchQueue.main.async {
                 self.avatarImageView.image = cachedImage
                 self.avatarImageView.isHidden = false
@@ -204,7 +201,6 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
         
         // Check if already loading
         if Self.loadingRequests.contains(baseDomain) {
-            print("⏳ Already loading avatar for: \(baseDomain)")
             return
         }
         
@@ -214,17 +210,14 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
         // First get the Ethereum address for avatar lookup
         APICaller.shared.resolveENSName(name: baseDomain) { [weak self] ethAddress in
             guard let self = self, !ethAddress.isEmpty else { 
-                print("❌ Failed to resolve address for: \(baseDomain)")
                 // Remove from loading requests
                 Self.loadingRequests.remove(baseDomain)
                 return 
             }
             
-            print("✅ Resolved address: \(ethAddress) for: \(baseDomain)")
             
             // Use ENS metadata API with Ethereum address (same as Chrome extension)
             let metadataURL = "https://metadata.ens.domains/mainnet/\(ethAddress)/avatar"
-            print("🌐 Trying metadata API: \(metadataURL)")
             
             AF.request(metadataURL).responseString { [weak self] response in
                 guard let self = self else { return }
@@ -232,17 +225,14 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
                 guard let avatarURLString = response.value,
                       !avatarURLString.isEmpty,
                       avatarURLString != "data:image/svg+xml;base64," else {
-                    print("❌ Metadata API failed, trying ENS Ideas API")
                     // Fallback: try ENS Ideas API for avatar
                     self.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
                     return
                 }
                 
-                print("✅ Metadata API returned: \(avatarURLString)")
                 
                 // Check if the response is a JSON error message
                 if avatarURLString.hasPrefix("{") && avatarURLString.contains("message") {
-                    print("❌ Metadata API returned error JSON, trying ENS Ideas API")
                     // Fallback: try ENS Ideas API for avatar
                     self.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
                     return
@@ -254,13 +244,11 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
                 // Check if it's a valid URL
                 guard !cleanURLString.isEmpty,
                       let url = URL(string: cleanURLString) else {
-                    print("❌ Invalid URL after cleaning: \(cleanURLString)")
                     // Fallback: try ENS Ideas API for avatar
                     self.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
                     return
                 }
                 
-                print("🖼️ Loading image from: \(url)")
                 
                 // Load avatar image
                 self.loadImage(from: url) { [weak self] image in
@@ -271,7 +259,6 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
                         Self.loadingRequests.remove(baseDomain)
                         
                         if let image = image {
-                            print("✅ Avatar loaded successfully for: \(baseDomain)")
                             
                             // Cache the image
                             Self.avatarCache[baseDomain] = image
@@ -280,7 +267,6 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
                             self.avatarImageView.isHidden = false
                             self.globeIcon.isHidden = true
                         } else {
-                            print("❌ Failed to load image from: \(url)")
                         }
                     }
                 }
@@ -291,7 +277,6 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
     private func loadENSAvatarFromENSIdeas(baseDomain: String) {
         // Fallback: try ENS Ideas API for avatar (same as Chrome extension)
         let ensIdeasURL = "https://api.ensideas.com/ens/resolve/\(baseDomain)"
-        print("🌐 Trying ENS Ideas API: \(ensIdeasURL)")
         
         AF.request(ensIdeasURL).responseData { [weak self] response in
             guard let self = self,
@@ -299,17 +284,14 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let avatarURLString = json["avatar"] as? String,
                   !avatarURLString.isEmpty else {
-                print("❌ ENS Ideas API failed for: \(baseDomain)")
                 // Remove from loading requests
                 Self.loadingRequests.remove(baseDomain)
                 return
             }
             
-            print("✅ ENS Ideas API returned avatar: \(avatarURLString)")
             
             // Load avatar image
             if let url = URL(string: avatarURLString) {
-                print("🖼️ Loading image from ENS Ideas: \(url)")
                 self.loadImage(from: url) { [weak self] image in
                     DispatchQueue.main.async {
                         guard let self = self else { return }
@@ -318,7 +300,6 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
                         Self.loadingRequests.remove(baseDomain)
                         
                         if let image = image {
-                            print("✅ Avatar loaded successfully from ENS Ideas for: \(baseDomain)")
                             
                             // Cache the image
                             Self.avatarCache[baseDomain] = image
@@ -327,12 +308,10 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
                             self.avatarImageView.isHidden = false
                             self.globeIcon.isHidden = true
                         } else {
-                            print("❌ Failed to load image from ENS Ideas: \(url)")
                         }
                     }
                 }
             } else {
-                print("❌ Invalid URL from ENS Ideas: \(avatarURLString)")
                 // Remove from loading requests
                 Self.loadingRequests.remove(baseDomain)
             }
@@ -340,36 +319,28 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
     }
     
     private func loadImage(from url: URL, completion: @escaping (UIImage?) -> Void) {
-        print("📥 Downloading image from: \(url)")
         AF.request(url).responseData { response in
             if let error = response.error {
-                print("❌ Network error loading image: \(error.localizedDescription)")
                 completion(nil)
                 return
             }
             
             guard let data = response.data else {
-                print("❌ No data received, response size: \(response.data?.count ?? 0) bytes")
                 completion(nil)
                 return
             }
             
-            print("📊 Received \(data.count) bytes of image data")
             
             // Check the content type
             if let contentType = response.response?.allHeaderFields["Content-Type"] as? String {
-                print("📋 Content-Type: \(contentType)")
             }
             
             // Try to create UIImage from data
             guard let image = UIImage(data: data) else {
-                print("❌ Failed to create UIImage from data")
-                print("📋 First 20 bytes: \(data.prefix(20).map { String(format: "%02x", $0) }.joined(separator: " "))")
                 completion(nil)
                 return
             }
             
-            print("✅ Successfully created UIImage from \(data.count) bytes, size: \(image.size)")
             completion(image)
         }
     }
@@ -416,7 +387,6 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
         }
         
         let removeAction = UIAction(title: "Remove", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
-            print("🗑️ Remove action triggered for: \(ensName.name)")
             self?.delegate?.didTapDelete(for: ensName)
         }
         
@@ -438,7 +408,6 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
             }
             
             let removeAction = UIAction(title: "Remove", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
-                print("🗑️ Remove action triggered (long press) for: \(ensName.name)")
                 self?.delegate?.didTapDelete(for: ensName)
             }
             

@@ -256,7 +256,8 @@ class QRSuccessPopupViewController: UIViewController {
     
     // MARK: - Actions
     @objc private func shareButtonTapped() {
-        let activityViewController = UIActivityViewController(activityItems: [qrCodeImage, paymentURL], applicationActivities: nil)
+        let shareText = "Scan this QR code to send payment"
+        let activityViewController = UIActivityViewController(activityItems: [shareText, qrCodeImage], applicationActivities: nil)
         
         // For iPad
         if let popover = activityViewController.popoverPresentationController {

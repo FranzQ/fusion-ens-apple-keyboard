@@ -333,7 +333,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             // Row constraints
             rowView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 3).isActive = true
             rowView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -3).isActive = true
-            rowView.heightAnchor.constraint(equalToConstant: 50).isActive = true
+            rowView.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
             
             // Last row
             if rowIndex == rows.count - 1 {
@@ -545,7 +545,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
     
     
     func triggerENSResolution() {
-        print("🔍 ENS Resolution triggered (Lite Version)")
         
         // Only resolve if there's selected text
         if let selectedText = textDocumentProxy.selectedText, !selectedText.isEmpty {
@@ -583,9 +582,19 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         case "space":
             handleSpaceKeyPress()
         case "return":
-            insertText("\n")
-            // Clear last typed word when return is pressed
-            lastTypedWord = ""
+            // Check if we're in a browser address bar and handle auto-resolve
+            print("🔍 Return key pressed - checking browser context...")
+            if isInBrowserAddressBar() {
+                print("🔍 Browser context detected - handling auto-resolve")
+                // Show loading indicator on return key
+                updateReturnKeyToLoading()
+                handleReturnKeyInAddressBar()
+            } else {
+                print("🔍 No browser context - normal return")
+                insertText("\n")
+                // Clear last typed word when return is pressed
+                lastTypedWord = ""
+            }
         case "123":
             // Switch to numbers layout
             print("🔢 123 key pressed - switching to numbers layout")
@@ -1323,6 +1332,488 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         
         // Detect and resolve ENS domain around cursor
         detectAndResolveENSAroundCursor()
+    }
+    
+    // MARK: - Browser Address Bar Auto-Resolve
+    
+    private func isInBrowserAddressBar() -> Bool {
+        // Get the current text context
+        let beforeText = textDocumentProxy.documentContextBeforeInput ?? ""
+        let afterText = textDocumentProxy.documentContextAfterInput ?? ""
+        let fullText = beforeText + afterText
+        
+        print("🔍 isInBrowserAddressBar: beforeText = '\(beforeText)'")
+        print("🔍 isInBrowserAddressBar: afterText = '\(afterText)'")
+        print("🔍 isInBrowserAddressBar: fullText = '\(fullText)'")
+        
+        // Check return key type for browser-like behavior
+        if let textInputTraits = textDocumentProxy as? UITextInputTraits {
+            if let keyboardType = textInputTraits.keyboardType {
+                print("🔍 isInBrowserAddressBar: keyboardType = \(keyboardType.rawValue)")
+            }
+            if let returnKeyType = textInputTraits.returnKeyType {
+                print("🔍 isInBrowserAddressBar: returnKeyType = \(returnKeyType.rawValue)")
+                // Look for browser-like return key types
+                if returnKeyType == .go || returnKeyType == .search || returnKeyType == .done {
+                    print("🔍 isInBrowserAddressBar: Browser-like return key type detected")
+                    return true
+                }
+            }
+        }
+        
+        // Check for clear browser indicators in the text context
+        if beforeText.contains("http://") || beforeText.contains("https://") || 
+           beforeText.contains("www.") || 
+           beforeText.contains("google.com") || beforeText.contains("search") ||
+           fullText.contains("q=") || fullText.contains("&q=") ||
+           afterText.contains(".com") || afterText.contains(".org") || afterText.contains(".net") {
+            print("🔍 isInBrowserAddressBar: Browser context detected from URL patterns")
+            return true
+        }
+        
+        // Check if we're in a search context (like Google search with parameters)
+        if fullText.contains("search") && (fullText.contains("q=") || fullText.contains("&q=")) {
+            print("🔍 isInBrowserAddressBar: Search context detected")
+            return true
+        }
+        
+        // Get the current input
+        let currentInput = extractInputFromAddressBar(fullText)
+        print("🔍 isInBrowserAddressBar: currentInput = '\(currentInput)'")
+        
+        // Only auto-resolve ENS text records (like name.eth:x) in browser context
+        // Regular ENS names should not trigger auto-resolve unless we have strong browser indicators
+        if currentInput.contains(":") && isENSName(currentInput.components(separatedBy: ":").first ?? "") {
+            // This is an ENS text record (like name.eth:x) - only resolve in browser context
+            // Require strong browser indicators: returnKeyType OR URL patterns in context
+            let textInputTraits = textDocumentProxy as? UITextInputTraits
+            let hasStrongBrowserIndicators = (textInputTraits?.returnKeyType == .go || 
+                                            textInputTraits?.returnKeyType == .search || 
+                                            textInputTraits?.returnKeyType == .done) ||
+                                           beforeText.contains("http://") || 
+                                           beforeText.contains("https://") || 
+                                           beforeText.contains("www.")
+            
+            if hasStrongBrowserIndicators {
+                print("🔍 isInBrowserAddressBar: ENS text record with strong browser indicators - assuming browser")
+                return true
+            }
+        }
+        
+        print("🔍 isInBrowserAddressBar: No browser context detected")
+        return false
+    }
+    
+    private func handleReturnKeyInAddressBar() {
+        // Get the current text in the address bar
+        let beforeText = textDocumentProxy.documentContextBeforeInput ?? ""
+        let afterText = textDocumentProxy.documentContextAfterInput ?? ""
+        let fullText = beforeText + afterText
+        
+        print("🔍 handleReturnKeyInAddressBar: beforeText = '\(beforeText)'")
+        print("🔍 handleReturnKeyInAddressBar: afterText = '\(afterText)'")
+        print("🔍 handleReturnKeyInAddressBar: fullText = '\(fullText)'")
+        
+        // Extract the input (everything after the last space or from the beginning)
+        let input = extractInputFromAddressBar(fullText)
+        print("🔍 handleReturnKeyInAddressBar: extracted input = '\(input)'")
+        
+        if !input.isEmpty {
+            // Check if this is an ENS text record first (e.g., name.eth:x, name.eth:url)
+            if input.contains(":") && isENSName(input.components(separatedBy: ":").first ?? "") {
+                print("🔍 handleReturnKeyInAddressBar: ENS text record detected - calling autoResolveInput")
+                // For ENS text records, try to auto-resolve with timeout
+                autoResolveInput(input) { resolvedURL in
+                    DispatchQueue.main.async {
+                        print("🔍 handleReturnKeyInAddressBar: autoResolveInput completed with result: '\(resolvedURL ?? "nil")'")
+                        
+                        if let resolvedURL = resolvedURL {
+                            // Clear the address bar and insert the resolved URL
+                            print("🔍 handleReturnKeyInAddressBar: Clearing address bar and inserting '\(resolvedURL)'")
+                            self.clearAddressBarAndInsertURL(resolvedURL)
+                            self.triggerSuccessHaptic()
+                            
+                            // Restore return key and trigger navigation
+                            self.updateReturnKeyToNormal()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                print("🔍 handleReturnKeyInAddressBar: Triggering return key after resolution")
+                                self.textDocumentProxy.insertText("\n")
+                            }
+                        } else {
+                            // If no resolution, proceed with normal return key
+                            print("🔍 handleReturnKeyInAddressBar: No resolution - proceeding with normal return")
+                            self.updateReturnKeyToNormal()
+                            self.textDocumentProxy.insertText("\n")
+                            self.triggerErrorHaptic()
+                        }
+                    }
+                }
+                return
+            }
+            
+            // Check if this is a simple case that can be resolved immediately
+            if isCryptoAddress(input) || isURL(input) {
+                print("🔍 handleReturnKeyInAddressBar: Simple case detected")
+                // Handle simple cases immediately
+                let resolvedURL = isCryptoAddress(input) ? getExplorerURL(for: input) : ensureProperURL(input)
+                if let resolvedURL = resolvedURL {
+                    print("🔍 handleReturnKeyInAddressBar: Resolved to '\(resolvedURL)'")
+                    clearAddressBarAndInsertURL(resolvedURL)
+                    triggerSuccessHaptic()
+                    
+                    // Trigger the return key to navigate
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        print("🔍 handleReturnKeyInAddressBar: Triggering return key")
+                        self.textDocumentProxy.insertText("\n")
+                    }
+                    return
+                }
+            }
+            
+            print("🔍 handleReturnKeyInAddressBar: Complex case - calling autoResolveInput")
+            // For ENS names or complex cases, try to auto-resolve with timeout
+            autoResolveInput(input) { resolvedURL in
+                DispatchQueue.main.async {
+                    print("🔍 handleReturnKeyInAddressBar: autoResolveInput completed with result: '\(resolvedURL ?? "nil")'")
+                    
+                    if let resolvedURL = resolvedURL {
+                        // Clear the address bar and insert the resolved URL
+                        print("🔍 handleReturnKeyInAddressBar: Clearing address bar and inserting '\(resolvedURL)'")
+                        self.clearAddressBarAndInsertURL(resolvedURL)
+                        self.triggerSuccessHaptic()
+                        
+                        // Restore return key and trigger navigation
+                        self.updateReturnKeyToNormal()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            print("🔍 handleReturnKeyInAddressBar: Triggering return key after resolution")
+                            self.textDocumentProxy.insertText("\n")
+                        }
+                    } else {
+                        // If no resolution, proceed with normal return key
+                        print("🔍 handleReturnKeyInAddressBar: No resolution - proceeding with normal return")
+                        self.updateReturnKeyToNormal()
+                        self.textDocumentProxy.insertText("\n")
+                        self.triggerErrorHaptic()
+                    }
+                }
+            }
+        } else {
+            // No input, proceed with normal return key
+            print("🔍 handleReturnKeyInAddressBar: No input - proceeding with normal return")
+            textDocumentProxy.insertText("\n")
+        }
+    }
+    
+    private func extractInputFromAddressBar(_ fullText: String) -> String {
+        // Extract the last word or phrase that looks like an input
+        let components = fullText.components(separatedBy: .whitespacesAndNewlines)
+        
+        // Look for the last component that could be an address/domain
+        for component in components.reversed() {
+            let trimmed = component.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty && (isCryptoAddress(trimmed) || isENSName(trimmed) || isURL(trimmed)) {
+                return trimmed
+            }
+        }
+        
+        // If no specific pattern found, return the last non-empty component
+        return components.last?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+    
+    private func isCryptoAddress(_ input: String) -> Bool {
+        // Check for Ethereum address (0x followed by 40 hex characters)
+        if input.hasPrefix("0x") && input.count == 42 && input.dropFirst(2).allSatisfy({ $0.isHexDigit }) {
+            return true
+        }
+        
+        // Check for Bitcoin address (starts with 1, 3, or bc1)
+        if input.hasPrefix("1") || input.hasPrefix("3") || input.hasPrefix("bc1") {
+            return true
+        }
+        
+        // Add more crypto address patterns as needed
+        return false
+    }
+    
+    private func isENSName(_ input: String) -> Bool {
+        return HelperClass.checkFormat(input)
+    }
+    
+    private func isURL(_ input: String) -> Bool {
+        // Check if it looks like a URL
+        return input.contains(".") && (input.hasPrefix("http://") || input.hasPrefix("https://") || 
+                input.hasPrefix("www.") || input.contains(".com") || input.contains(".org") || 
+                input.contains(".net") || input.contains(".eth"))
+    }
+    
+    private func autoResolveInput(_ input: String, completion: @escaping (String?) -> Void) {
+        // Check for ENS text records first (e.g., name.eth:x, name.eth:url)
+        if input.contains(":") && isENSName(input.components(separatedBy: ":").first ?? "") {
+            print("🔍 autoResolveInput: ENS text record detected - calling resolveENSToExplorer")
+            resolveENSToExplorer(input, completion: completion)
+        } else if isCryptoAddress(input) {
+            // For crypto addresses, append the appropriate explorer URL (immediate)
+            print("🔍 autoResolveInput: Crypto address detected")
+            let explorerURL = getExplorerURL(for: input)
+            completion(explorerURL)
+        } else if isURL(input) {
+            // For URLs, ensure proper protocol (immediate)
+            print("🔍 autoResolveInput: URL detected")
+            let properURL = ensureProperURL(input)
+            completion(properURL)
+        } else if isENSName(input) {
+            // For ENS names, resolve to address and then to explorer (with timeout)
+            print("🔍 autoResolveInput: ENS name detected")
+            resolveENSToExplorer(input, completion: completion)
+        } else {
+            // Try to resolve as ENS name anyway (with timeout)
+            print("🔍 autoResolveInput: Unknown input - trying ENS resolution")
+            resolveENSToExplorer(input, completion: completion)
+        }
+    }
+    
+    private func getExplorerURL(for address: String) -> String? {
+        if address.hasPrefix("0x") && address.count == 42 {
+            // Ethereum address
+            return "https://etherscan.io/address/\(address)"
+        } else if address.hasPrefix("1") || address.hasPrefix("3") || address.hasPrefix("bc1") {
+            // Bitcoin address
+            return "https://blockstream.info/address/\(address)"
+        } else if address.hasPrefix("D") && address.count >= 32 && address.count <= 44 {
+            // Solana address
+            return "https://solscan.io/account/\(address)"
+        } else if address.hasPrefix("r") && address.count == 34 {
+            // XRP address
+            return "https://xrpscan.com/account/\(address)"
+        }
+        return nil
+    }
+    
+    private func resolveENSToExplorer(_ ensName: String, completion: @escaping (String?) -> Void) {
+        // Check if this is a text record request (e.g., name.eth:x, name.eth:url)
+        if ensName.contains(":") {
+            let components = ensName.components(separatedBy: ":")
+            if components.count == 2 {
+                let baseName = components[0]
+                let recordType = components[1]
+                
+                // Handle text records
+                if ["x", "url", "github", "name", "bio"].contains(recordType) {
+                    resolveTextRecord(baseName: baseName, recordType: recordType, completion: completion)
+                    return
+                }
+            }
+        }
+        
+        // Add timeout mechanism for ENS resolution
+        let timeoutWorkItem = DispatchWorkItem {
+            completion(nil)
+        }
+        
+        // Schedule timeout after 4 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0, execute: timeoutWorkItem)
+        
+        // Regular ENS resolution to address
+        APICaller.shared.resolveENSName(name: ensName) { resolvedAddress in
+            // Cancel timeout if we got a response
+            timeoutWorkItem.cancel()
+            
+            DispatchQueue.main.async {
+                if !resolvedAddress.isEmpty {
+                    // Resolve the address to an explorer URL
+                    let explorerURL = self.getExplorerURL(for: resolvedAddress)
+                    completion(explorerURL)
+                } else {
+                    completion(nil)
+                }
+            }
+        }
+    }
+    
+    private func resolveTextRecord(baseName: String, recordType: String, completion: @escaping (String?) -> Void) {
+        // Use the Fusion ENS Server API to resolve text records
+        let apiURL = "https://api.fusionens.com/resolve/\(baseName):\(recordType)?network=mainnet"
+        
+        print("🔍 resolveTextRecord: Calling API: \(apiURL)")
+        
+        // Create URLSession with timeout
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 3.0 // 3 second timeout
+        config.timeoutIntervalForResource = 5.0 // 5 second total timeout
+        let session = URLSession(configuration: config)
+        
+        // Make API call to resolve text record
+        session.dataTask(with: URL(string: apiURL)!) { data, response, error in
+            // Check for timeout or network error
+            if let error = error {
+                print("🔍 resolveTextRecord: API error: \(error)")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+            
+            guard let data = data else {
+                print("🔍 resolveTextRecord: No data received")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+            
+            // Debug: Print raw response
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("🔍 resolveTextRecord: Raw API response: \(responseString)")
+            }
+            
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                print("🔍 resolveTextRecord: Failed to parse JSON")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+            
+            print("🔍 resolveTextRecord: Parsed JSON: \(json)")
+            
+            guard let success = json["success"] as? Bool, success else {
+                print("🔍 resolveTextRecord: API returned success=false")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+            
+            guard let dataDict = json["data"] as? [String: Any] else {
+                print("🔍 resolveTextRecord: No data dict in response")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+            
+            print("🔍 resolveTextRecord: Data dict: \(dataDict)")
+            
+            // Try different possible keys for the text record value
+            let recordValue: String?
+            if let value = dataDict["value"] as? String, !value.isEmpty {
+                recordValue = value
+                print("🔍 resolveTextRecord: Found value in 'value' key: \(value)")
+            } else if let address = dataDict["address"] as? String, !address.isEmpty {
+                recordValue = address
+                print("🔍 resolveTextRecord: Found value in 'address' key: \(address)")
+            } else if let result = dataDict["result"] as? String, !result.isEmpty {
+                recordValue = result
+                print("🔍 resolveTextRecord: Found value in 'result' key: \(result)")
+            } else {
+                print("🔍 resolveTextRecord: No valid text record value found")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+            
+            // Convert text record to appropriate URL
+            let resolvedURL = self.convertTextRecordToURL(recordType: recordType, value: recordValue!)
+            print("🔍 resolveTextRecord: Converted to URL: \(resolvedURL)")
+            DispatchQueue.main.async {
+                completion(resolvedURL)
+            }
+        }.resume()
+    }
+    
+    private func convertTextRecordToURL(recordType: String, value: String) -> String {
+        switch recordType {
+        case "url":
+            return ensureProperURL(value)
+        case "x":
+            return "https://x.com/\(value)"
+        case "github":
+            return "https://github.com/\(value)"
+        case "name", "bio":
+            // For name/bio, just return the value as is (could be copied to clipboard)
+            return value
+        default:
+            return value
+        }
+    }
+    
+    private func ensureProperURL(_ url: String) -> String {
+        if url.hasPrefix("http://") || url.hasPrefix("https://") {
+            return url
+        } else if url.hasPrefix("www.") {
+            return "https://\(url)"
+        } else {
+            return "https://\(url)"
+        }
+    }
+    
+    private func clearAddressBarAndInsertURL(_ resolvedURL: String) {
+        // Get the current document context
+        let beforeText = textDocumentProxy.documentContextBeforeInput ?? ""
+        let afterText = textDocumentProxy.documentContextAfterInput ?? ""
+        let totalCharacters = beforeText.count + afterText.count
+        
+        // Delete all text in the address bar (with safety limit)
+        let maxDeletions = min(totalCharacters, 1000) // Safety limit to prevent infinite loops
+        for _ in 0..<maxDeletions {
+            textDocumentProxy.deleteBackward()
+        }
+        
+        // Insert the resolved URL
+        textDocumentProxy.insertText(resolvedURL)
+    }
+    
+    private func updateReturnKeyToLoading() {
+        // Find the return key button and update its title to show loading
+        DispatchQueue.main.async {
+            if let returnButton = self.findReturnKeyButton() {
+                returnButton.setTitle("...", for: .normal)
+                returnButton.isEnabled = false
+                print("🔍 Return key updated to loading state")
+            }
+        }
+    }
+    
+    private func updateReturnKeyToNormal() {
+        // Find the return key button and restore its normal title
+        DispatchQueue.main.async {
+            if let returnButton = self.findReturnKeyButton() {
+                returnButton.setTitle("return", for: .normal)
+                returnButton.isEnabled = true
+                print("🔍 Return key restored to normal state")
+            }
+        }
+    }
+    
+    private func findReturnKeyButton() -> UIButton? {
+        // Search through all subviews to find the return key button
+        return findButtonWithTitle("return") ?? findButtonWithTitle("...")
+    }
+    
+    private func findButtonWithTitle(_ title: String) -> UIButton? {
+        // Recursively search for a button with the specified title
+        for subview in containerView.subviews {
+            if let button = subview as? UIButton, button.titleLabel?.text == title {
+                return button
+            }
+            if let foundButton = findButtonInSubviews(subview, title: title) {
+                return foundButton
+            }
+        }
+        return nil
+    }
+    
+    private func findButtonInSubviews(_ view: UIView, title: String) -> UIButton? {
+        for subview in view.subviews {
+            if let button = subview as? UIButton, button.titleLabel?.text == title {
+                return button
+            }
+            if let foundButton = findButtonInSubviews(subview, title: title) {
+                return foundButton
+            }
+        }
+        return nil
     }
     
 }

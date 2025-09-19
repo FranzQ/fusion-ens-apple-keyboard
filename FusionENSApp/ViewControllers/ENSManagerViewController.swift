@@ -384,13 +384,11 @@ extension ENSManagerViewController: ENSNameTableViewCellDelegate {
     }
     
     func didTapDelete(for ensName: ENSName) {
-        print("🗑️ didTapDelete called for: \(ensName.name)")
         // Show remove confirmation alert
         let alert = UIAlertController(title: "Remove ENS Name", message: "Are you sure you want to remove \(ensName.name)? This action cannot be undone.", preferredStyle: .alert)
         
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         alert.addAction(UIAlertAction(title: "Remove", style: .destructive) { [weak self] _ in
-            print("🗑️ User confirmed removal of: \(ensName.name)")
             self?.deleteENSName(ensName)
         })
         

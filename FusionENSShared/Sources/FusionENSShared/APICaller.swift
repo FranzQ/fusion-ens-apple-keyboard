@@ -58,6 +58,11 @@ public class APICaller {
             return
         }
         
+        // Add timeout configuration
+        let session = AF.session
+        session.configuration.timeoutIntervalForRequest = 3.0
+        session.configuration.timeoutIntervalForResource = 5.0
+        
         AF.request(url).response { response in
             guard let data = response.data,
                   let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
@@ -85,6 +90,11 @@ public class APICaller {
             completion("")
             return
         }
+        
+        // Add timeout configuration
+        let session = AF.session
+        session.configuration.timeoutIntervalForRequest = 3.0
+        session.configuration.timeoutIntervalForResource = 5.0
         
         AF.request(url).response { response in
             guard let data = response.data,
