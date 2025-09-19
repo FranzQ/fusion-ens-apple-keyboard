@@ -5,7 +5,7 @@ import Alamofire
 class PaymentRequestViewController: UIViewController {
     
     // MARK: - Properties
-    private let ensName: ENSName
+    private var ensName: ENSName
     private var selectedChain: PaymentChain = .ethereum
     private var amount: String = ""
     private var resolvedAddress: String = ""
@@ -101,19 +101,19 @@ class PaymentRequestViewController: UIViewController {
         // ENS Name Label
         ensNameLabel.text = ensName.name
         ensNameLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-        ensNameLabel.textColor = .white
+        ensNameLabel.textColor = UIColor.label
         ensNameLabel.numberOfLines = 1
         ensCardView.addSubview(ensNameLabel)
         
         // Full Name Label
         fullNameLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
-        fullNameLabel.textColor = ColorTheme.secondaryText
+        fullNameLabel.textColor = UIColor.secondaryLabel
         fullNameLabel.numberOfLines = 1
         ensCardView.addSubview(fullNameLabel)
         
         // Address Label
         ensAddressLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
-        ensAddressLabel.textColor = ColorTheme.secondaryText
+        ensAddressLabel.textColor = UIColor.secondaryLabel
         ensAddressLabel.numberOfLines = 1
         ensCardView.addSubview(ensAddressLabel)
         
@@ -561,8 +561,13 @@ class PaymentRequestViewController: UIViewController {
                   let dataDict = json["data"] as? [String: Any],
                   let address = dataDict["address"] as? String,
                   !address.isEmpty else {
-                // Fallback to Ethereum address if multi-chain resolution fails
-                self.resolveEthereumAddressFallback(completion: completion)
+                // Multi-chain resolution failed - show error instead of falling back
+                DispatchQueue.main.async {
+                    let chainName = self.selectedChain.displayName
+                    let ensName = self.ensName.name
+                    self.showMissingAddressAlert(ensName: ensName, chainName: chainName)
+                }
+                completion(nil)
                 return
             }
             
@@ -570,17 +575,6 @@ class PaymentRequestViewController: UIViewController {
         }
     }
     
-    private func resolveEthereumAddressFallback(completion: @escaping (String?) -> Void) {
-        // Fallback to Ethereum address if multi-chain resolution fails
-        let baseDomain = extractBaseDomain(from: ensName.name)
-        APICaller.shared.resolveENSName(name: baseDomain) { resolvedAddress in
-            if !resolvedAddress.isEmpty {
-                completion(resolvedAddress)
-            } else {
-                completion(nil)
-            }
-        }
-    }
     
     private func getChainSuffix(for chain: PaymentChain) -> String {
         switch chain {
@@ -862,15 +856,59 @@ class PaymentRequestViewController: UIViewController {
     }
     
     private func copyENSAddress() {
-        // Copy the resolved address to clipboard
-        if !resolvedAddress.isEmpty {
-            UIPasteboard.general.string = resolvedAddress
-            showAlert(title: "Copied", message: "Address copied to clipboard")
-        } else {
-            // If no address resolved yet, copy the ENS name
-            UIPasteboard.general.string = ensName.name
-            showAlert(title: "Copied", message: "ENS name copied to clipboard")
+        // Show list of saved ENS names to choose from
+        showENSNameSelector()
+    }
+    
+    private func showENSNameSelector() {
+        // Get all saved ENS names
+        let savedENSNames = UserDefaults.standard.stringArray(forKey: "savedENSNames") ?? []
+        
+        guard !savedENSNames.isEmpty else {
+            showAlert(title: "No ENS Names", message: "You don't have any saved ENS names yet.")
+            return
         }
+        
+        let alert = UIAlertController(title: "Select ENS Name", message: "Choose which ENS name to use for this payment request", preferredStyle: .actionSheet)
+        
+        // Add action for each saved ENS name
+        for ensNameString in savedENSNames {
+            let action = UIAlertAction(title: ensNameString, style: .default) { _ in
+                self.switchToENSName(ensNameString)
+            }
+            alert.addAction(action)
+        }
+        
+        // Add cancel action
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        // For iPad, set the popover source
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = ensCardView
+            popover.sourceRect = ensCardView.bounds
+        }
+        
+        present(alert, animated: true)
+    }
+    
+    private func switchToENSName(_ newENSNameString: String) {
+        // Create new ENSName object
+        let newENSName = ENSName(name: newENSNameString, address: "", fullName: nil)
+        
+        // Update the current ENS name
+        self.ensName = newENSName
+        
+        // Update the UI
+        ensNameLabel.text = newENSName.name
+        fullNameLabel.text = newENSName.fullName ?? "Loading..."
+        ensAddressLabel.text = ""
+        
+        // Reset avatar state
+        avatarImageView.isHidden = true
+        globeIconImageView.isHidden = false
+        
+        // Reload ENS details for the new name
+        loadENSDetails()
     }
     
     private func updateENSAddressDisplay(address: String) {
@@ -961,13 +999,26 @@ class PaymentRequestViewController: UIViewController {
             preferredStyle: .alert
         )
         
+        // Add Try Ethereum button (if not already selected)
+        if chainName.lowercased() != "ethereum" {
+            alert.addAction(UIAlertAction(title: "Try Ethereum", style: .default) { _ in
+                self.selectedChain = .ethereum
+                self.chainButton.setTitle(self.selectedChain.displayName, for: .normal)
+                self.cryptoIconImageView.image = self.selectedChain.systemIcon
+                // Retry with Ethereum
+                self.resolveENSName { address in
+                    if let address = address {
+                        self.resolvedAddress = address
+                        self.createPaymentRequest()
+                    }
+                }
+            })
+        }
+        
         // Add ENS App button
         alert.addAction(UIAlertAction(title: "Add \(chainName.capitalized) Address", style: .default) { _ in
             self.openENSApp(for: ensName)
         })
-        
-        // Add Try Different Chain button
-        alert.addAction(UIAlertAction(title: "Try Different Chain", style: .default))
         
         // Add Cancel button
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
