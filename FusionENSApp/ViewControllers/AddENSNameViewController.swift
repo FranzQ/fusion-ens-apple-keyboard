@@ -16,6 +16,7 @@ class AddENSNameViewController: UIViewController {
     private let titleLabel = UILabel()
     private let ensNameLabel = UILabel()
     private let ensNameTextField = UITextField()
+    private let ensPreviewLabel = UILabel()
     private let saveButton = UIButton(type: .system)
     
     // MARK: - Lifecycle
@@ -32,14 +33,14 @@ class AddENSNameViewController: UIViewController {
     
     // MARK: - UI Setup
     private func setupUI() {
-        // Full screen background
-        view.backgroundColor = ColorTheme.primaryBackground.withAlphaComponent(0.8)
+        // Full screen background with better blur effect
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         
         // Modal View - positioned to appear above keyboard
-        modalView.backgroundColor = ColorTheme.cardBackground
+        modalView.backgroundColor = UIColor.systemBackground
         modalView.layer.cornerRadius = 16
         modalView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner]
-        modalView.layer.shadowColor = ColorTheme.primaryText.cgColor
+        modalView.layer.shadowColor = UIColor.black.cgColor
         modalView.layer.shadowOffset = CGSize(width: 0, height: -2)
         modalView.layer.shadowRadius = 10
         modalView.layer.shadowOpacity = 0.3
@@ -53,28 +54,32 @@ class AddENSNameViewController: UIViewController {
         // Title Label
         titleLabel.text = "Add ENS Name"
         titleLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
-        titleLabel.textColor = ColorTheme.primaryText
+        titleLabel.textColor = UIColor.label
         titleLabel.textAlignment = .center
         modalView.addSubview(titleLabel)
         
         // ENS Name Label
         ensNameLabel.text = "ENS Name"
         ensNameLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        ensNameLabel.textColor = ColorTheme.primaryText
+        ensNameLabel.textColor = UIColor.label
         modalView.addSubview(ensNameLabel)
         
         // ENS Name Text Field
-        ensNameTextField.placeholder = "e.g. vitalik.eth"
+        ensNameTextField.placeholder = "e.g. vitalik"
         ensNameTextField.font = UIFont.systemFont(ofSize: 16, weight: .regular)
-        ensNameTextField.textColor = ColorTheme.primaryText
-        ensNameTextField.backgroundColor = ColorTheme.searchBarBackground
+        ensNameTextField.textColor = UIColor.label
+        ensNameTextField.backgroundColor = UIColor.secondarySystemBackground
         ensNameTextField.layer.cornerRadius = 8
-        ensNameTextField.layer.borderWidth = 0
+        ensNameTextField.layer.borderWidth = 1
+        ensNameTextField.layer.borderColor = UIColor.separator.cgColor
         ensNameTextField.autocapitalizationType = .none
         ensNameTextField.autocorrectionType = .no
         ensNameTextField.keyboardType = .default
         ensNameTextField.returnKeyType = .done
         ensNameTextField.delegate = self
+        
+        // Add target for text changes to show .eth suffix
+        ensNameTextField.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
         
         // Add padding to text field
         let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 44))
@@ -84,6 +89,12 @@ class AddENSNameViewController: UIViewController {
         ensNameTextField.rightViewMode = .always
         
         modalView.addSubview(ensNameTextField)
+        
+        // ENS Preview Label
+        ensPreviewLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        ensPreviewLabel.textColor = UIColor.secondaryLabel
+        ensPreviewLabel.text = ""
+        modalView.addSubview(ensPreviewLabel)
         
         // Save Button
         saveButton.setTitle("Save", for: .normal)
@@ -105,7 +116,7 @@ class AddENSNameViewController: UIViewController {
             make.centerX.equalToSuperview()
             make.centerY.equalToSuperview()
             make.leading.trailing.equalToSuperview().inset(20)
-            make.height.equalTo(280)
+            make.height.equalTo(320)
         }
         
         handleView.snp.makeConstraints { make in
@@ -131,8 +142,13 @@ class AddENSNameViewController: UIViewController {
             make.height.equalTo(44)
         }
         
+        ensPreviewLabel.snp.makeConstraints { make in
+            make.top.equalTo(ensNameTextField.snp.bottom).offset(4)
+            make.leading.trailing.equalToSuperview().inset(20)
+        }
+        
         saveButton.snp.makeConstraints { make in
-            make.top.equalTo(ensNameTextField.snp.bottom).offset(32)
+            make.top.equalTo(ensPreviewLabel.snp.bottom).offset(24)
             make.leading.trailing.equalToSuperview().inset(20)
             make.height.equalTo(50)
             make.bottom.lessThanOrEqualToSuperview().offset(-20)
@@ -144,16 +160,34 @@ class AddENSNameViewController: UIViewController {
         dismiss(animated: true)
     }
     
+    @objc private func textFieldDidChange() {
+        guard let inputText = ensNameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+            ensPreviewLabel.text = ""
+            return
+        }
+        
+        if inputText.isEmpty {
+            ensPreviewLabel.text = ""
+        } else {
+            // Show the full ENS name with .eth suffix
+            let fullENSName = inputText.hasSuffix(".eth") ? inputText : inputText + ".eth"
+            ensPreviewLabel.text = "Will save as: \(fullENSName)"
+        }
+    }
+    
     @objc private func saveButtonTapped() {
-        guard let ensName = ensNameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !ensName.isEmpty else {
+        guard let inputText = ensNameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !inputText.isEmpty else {
             showAlert(title: "Error", message: "Please enter an ENS name")
             return
         }
         
+        // Automatically append .eth if not already present
+        let ensName = inputText.hasSuffix(".eth") ? inputText : inputText + ".eth"
+        
         // Validate ENS name format
         if !isValidENSName(ensName) {
-            showAlert(title: "Invalid ENS Name", message: "Please enter a valid ENS name (e.g., vitalik.eth)")
+            showAlert(title: "Invalid ENS Name", message: "Please enter a valid ENS name (e.g., vitalik)")
             return
         }
         

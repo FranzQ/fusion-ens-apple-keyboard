@@ -51,7 +51,7 @@ class ENSManagerViewController: UIViewController {
         // Search Controller
         searchController.searchResultsUpdater = self
         searchController.obscuresBackgroundDuringPresentation = false
-        searchController.searchBar.placeholder = "Search ENS names..."
+        searchController.searchBar.placeholder = "Search..."
         searchController.searchBar.barTintColor = ColorTheme.secondaryBackground
         searchController.searchBar.searchTextField.backgroundColor = ColorTheme.searchBarBackground
         searchController.searchBar.searchTextField.textColor = ColorTheme.primaryText
@@ -204,8 +204,8 @@ class ENSManagerViewController: UIViewController {
     @objc private func addButtonTapped() {
         let vc = AddENSNameViewController()
         vc.delegate = self
-        vc.modalPresentationStyle = .overFullScreen
-        vc.modalTransitionStyle = .crossDissolve
+        vc.modalPresentationStyle = .pageSheet
+        vc.modalTransitionStyle = .coverVertical
         present(vc, animated: true)
     }
     
@@ -276,6 +276,7 @@ extension ENSManagerViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "ENSNameCell", for: indexPath) as! ENSNameTableViewCell
+        cell.delegate = self
         cell.configure(with: filteredENSNames[indexPath.row])
         return cell
     }
@@ -325,7 +326,16 @@ extension ENSManagerViewController: UISearchResultsUpdating {
             filteredENSNames = ensNames
         } else {
             filteredENSNames = ensNames.filter { ensName in
-                ensName.name.lowercased().contains(searchText.lowercased())
+                // Search by ENS name
+                let ensNameMatch = ensName.name.lowercased().contains(searchText.lowercased())
+                
+                // Search by full name (if available)
+                let fullNameMatch = ensName.fullName?.lowercased().contains(searchText.lowercased()) ?? false
+                
+                // Search by address (partial match)
+                let addressMatch = ensName.address.lowercased().contains(searchText.lowercased())
+                
+                return ensNameMatch || fullNameMatch || addressMatch
             }
         }
         
@@ -355,5 +365,53 @@ struct ENSName: Codable {
         self.address = address
         self.dateAdded = dateAdded
         self.fullName = fullName
+    }
+}
+
+// MARK: - ENSNameTableViewCellDelegate
+extension ENSManagerViewController: ENSNameTableViewCellDelegate {
+    func didTapQRCode(for ensName: ENSName) {
+        // Navigate to payment request
+        let paymentVC = PaymentRequestViewController(ensName: ensName)
+        let navController = UINavigationController(rootViewController: paymentVC)
+        navController.modalPresentationStyle = UIModalPresentationStyle.pageSheet
+        navController.modalTransitionStyle = UIModalTransitionStyle.coverVertical
+        present(navController, animated: true)
+    }
+    
+    func didTapSettings(for ensName: ENSName) {
+        // This method is no longer used since we show context menu instead
+    }
+    
+    func didTapDelete(for ensName: ENSName) {
+        print("🗑️ didTapDelete called for: \(ensName.name)")
+        // Show remove confirmation alert
+        let alert = UIAlertController(title: "Remove ENS Name", message: "Are you sure you want to remove \(ensName.name)? This action cannot be undone.", preferredStyle: .alert)
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Remove", style: .destructive) { [weak self] _ in
+            print("🗑️ User confirmed removal of: \(ensName.name)")
+            self?.deleteENSName(ensName)
+        })
+        
+        present(alert, animated: true)
+    }
+    
+    func didTapManage(for ensName: ENSName) {
+        // Open app.ens.domains for the specific ENS name
+        let ensURL = "https://app.ens.domains/name/\(ensName.name)"
+        if let url = URL(string: ensURL) {
+            UIApplication.shared.open(url)
+        }
+    }
+    
+    private func deleteENSName(_ ensName: ENSName) {
+        // Remove from UserDefaults
+        var savedENSNames = UserDefaults.standard.stringArray(forKey: "savedENSNames") ?? []
+        savedENSNames.removeAll { $0 == ensName.name }
+        UserDefaults.standard.set(savedENSNames, forKey: "savedENSNames")
+        
+        // Reload data
+        loadENSNames()
     }
 }

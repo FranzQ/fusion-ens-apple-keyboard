@@ -33,14 +33,8 @@ class GettingStartedVC: UIViewController {
     private let step2TitleLabel = UILabel()
     
     
-    // Action Button
-    private let settingsButton = UIButton(type: .system)
-    
-    // Bottom Navigation
-    private let bottomNavView = UIView()
-    private let myENSButton = UIButton(type: .system)
-    private let contactsButton = UIButton(type: .system)
-    private let settingsNavButton = UIButton(type: .system)
+    // Done Button
+    private let doneButton = UIButton(type: .system)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -54,22 +48,16 @@ class GettingStartedVC: UIViewController {
         navigationController?.setNavigationBarHidden(true, animated: animated)
     }
     
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        // Ensure icons are properly configured after layout
-        configureButtonLayouts()
-    }
     
     private func setupUI() {
-        // Dark theme background
-        view.backgroundColor = UIColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
+        // Use system background color for proper light/dark mode support
+        view.backgroundColor = UIColor.systemBackground
         
         setupScrollView()
         setupHeader()
         setupWelcomeSection()
         setupSteps()
-        setupActionButton()
-        setupBottomNavigation()
+        setupDoneButton()
     }
     
     private func setupScrollView() {
@@ -88,7 +76,7 @@ class GettingStartedVC: UIViewController {
         // Title
         titleLabel.text = "Fusion ENS"
         titleLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        titleLabel.textColor = .white
+        titleLabel.textColor = UIColor.label
         titleLabel.textAlignment = .center
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         headerView.addSubview(titleLabel)
@@ -96,8 +84,8 @@ class GettingStartedVC: UIViewController {
         // Help Button
         helpButton.setTitle("?", for: .normal)
         helpButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-        helpButton.setTitleColor(.white, for: .normal)
-        helpButton.backgroundColor = .white
+        helpButton.setTitleColor(UIColor.label, for: .normal)
+        helpButton.backgroundColor = UIColor.secondarySystemBackground
         helpButton.layer.cornerRadius = 15
         helpButton.translatesAutoresizingMaskIntoConstraints = false
         helpButton.addTarget(self, action: #selector(helpButtonTapped), for: .touchUpInside)
@@ -109,7 +97,7 @@ class GettingStartedVC: UIViewController {
         contentView.addSubview(welcomeView)
         
         // Keyboard Icon Container
-        keyboardIconView.backgroundColor = UIColor(red: 0.0, green: 0.3, blue: 0.6, alpha: 1.0)
+        keyboardIconView.backgroundColor = UIColor.systemBlue
         keyboardIconView.layer.cornerRadius = 50
         keyboardIconView.translatesAutoresizingMaskIntoConstraints = false
         welcomeView.addSubview(keyboardIconView)
@@ -124,7 +112,7 @@ class GettingStartedVC: UIViewController {
         // Welcome Title
         welcomeTitleLabel.text = "Welcome to Fusion ENS"
         welcomeTitleLabel.font = UIFont.systemFont(ofSize: 28, weight: .bold)
-        welcomeTitleLabel.textColor = .white
+        welcomeTitleLabel.textColor = UIColor.label
         welcomeTitleLabel.textAlignment = .center
         welcomeTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         welcomeView.addSubview(welcomeTitleLabel)
@@ -132,7 +120,7 @@ class GettingStartedVC: UIViewController {
         // Welcome Description
         welcomeDescriptionLabel.text = "A custom keyboard to seamlessly resolve ENS names across iOS. Follow the steps to get started."
         welcomeDescriptionLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
-        welcomeDescriptionLabel.textColor = UIColor(red: 0.7, green: 0.7, blue: 0.7, alpha: 1.0)
+        welcomeDescriptionLabel.textColor = UIColor.secondaryLabel
         welcomeDescriptionLabel.textAlignment = .center
         welcomeDescriptionLabel.numberOfLines = 0
         welcomeDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -151,7 +139,7 @@ class GettingStartedVC: UIViewController {
         // Step 1 Title
         step1TitleLabel.text = "Step 1: Add the Keyboard"
         step1TitleLabel.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
-        step1TitleLabel.textColor = .white
+        step1TitleLabel.textColor = UIColor.label
         step1TitleLabel.translatesAutoresizingMaskIntoConstraints = false
         step1View.addSubview(step1TitleLabel)
         
@@ -191,7 +179,7 @@ class GettingStartedVC: UIViewController {
         // Step 2 Title
         step2TitleLabel.text = "Step 2: Allow Full Access"
         step2TitleLabel.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
-        step2TitleLabel.textColor = .white
+        step2TitleLabel.textColor = UIColor.label
         step2TitleLabel.translatesAutoresizingMaskIntoConstraints = false
         step2View.addSubview(step2TitleLabel)
         
@@ -226,14 +214,14 @@ class GettingStartedVC: UIViewController {
     
     private func createStepCard(icon: String, title: String, description: String, parentView: UIView) -> UIView {
         let cardView = UIView()
-        cardView.backgroundColor = UIColor(red: 0.15, green: 0.15, blue: 0.15, alpha: 1.0)
+        cardView.backgroundColor = UIColor.secondarySystemBackground
         cardView.layer.cornerRadius = 12
         cardView.translatesAutoresizingMaskIntoConstraints = false
         parentView.addSubview(cardView)
         
         // Icon container
         let iconContainer = UIView()
-        iconContainer.backgroundColor = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 1.0)
+        iconContainer.backgroundColor = UIColor.tertiarySystemBackground
         iconContainer.layer.cornerRadius = 20
         iconContainer.translatesAutoresizingMaskIntoConstraints = false
         cardView.addSubview(iconContainer)
@@ -241,7 +229,7 @@ class GettingStartedVC: UIViewController {
         // Icon
         let iconView = UIImageView()
         iconView.image = UIImage(systemName: icon)
-        iconView.tintColor = .white
+        iconView.tintColor = UIColor.label
         iconView.contentMode = .scaleAspectFit
         iconView.translatesAutoresizingMaskIntoConstraints = false
         iconContainer.addSubview(iconView)
@@ -250,7 +238,7 @@ class GettingStartedVC: UIViewController {
         let titleLabel = UILabel()
         titleLabel.text = title
         titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .bold)
-        titleLabel.textColor = .white
+        titleLabel.textColor = UIColor.label
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         cardView.addSubview(titleLabel)
         
@@ -258,7 +246,7 @@ class GettingStartedVC: UIViewController {
         let descriptionLabel = UILabel()
         descriptionLabel.text = description
         descriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
-        descriptionLabel.textColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0)
+        descriptionLabel.textColor = UIColor.secondaryLabel
         descriptionLabel.numberOfLines = 0
         descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
         cardView.addSubview(descriptionLabel)
@@ -290,51 +278,16 @@ class GettingStartedVC: UIViewController {
         return cardView
     }
     
-    private func setupActionButton() {
-        settingsButton.setTitle("Continue", for: .normal)
-        settingsButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
-        settingsButton.backgroundColor = UIColor(red: 0.0, green: 0.5, blue: 1.0, alpha: 1.0)
-        settingsButton.setTitleColor(.white, for: .normal)
-        settingsButton.layer.cornerRadius = 12
-        settingsButton.translatesAutoresizingMaskIntoConstraints = false
-        settingsButton.addTarget(self, action: #selector(settingsButtonTapped), for: .touchUpInside)
-        contentView.addSubview(settingsButton)
-    }
     
-    private func setupBottomNavigation() {
-        bottomNavView.backgroundColor = UIColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1.0)
-        bottomNavView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(bottomNavView)
-        
-        // My ENS Button
-        myENSButton.setTitle("My ENS", for: .normal)
-        myENSButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .medium)
-        myENSButton.setTitleColor(UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0), for: .normal)
-        myENSButton.setImage(UIImage(systemName: "person.crop.rectangle"), for: .normal)
-        myENSButton.tintColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0)
-        myENSButton.translatesAutoresizingMaskIntoConstraints = false
-        myENSButton.addTarget(self, action: #selector(myENSButtonTapped), for: .touchUpInside)
-        bottomNavView.addSubview(myENSButton)
-        
-        // Contacts Button
-        contactsButton.setTitle("Contacts", for: .normal)
-        contactsButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .medium)
-        contactsButton.setTitleColor(UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0), for: .normal)
-        contactsButton.setImage(UIImage(systemName: "person.2"), for: .normal)
-        contactsButton.tintColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0)
-        contactsButton.translatesAutoresizingMaskIntoConstraints = false
-        contactsButton.addTarget(self, action: #selector(contactsButtonTapped), for: .touchUpInside)
-        bottomNavView.addSubview(contactsButton)
-        
-        // Settings Nav Button
-        settingsNavButton.setTitle("Settings", for: .normal)
-        settingsNavButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .medium)
-        settingsNavButton.setTitleColor(UIColor(red: 0.0, green: 0.5, blue: 1.0, alpha: 1.0), for: .normal)
-        settingsNavButton.setImage(UIImage(systemName: "gearshape"), for: .normal)
-        settingsNavButton.tintColor = UIColor(red: 0.0, green: 0.5, blue: 1.0, alpha: 1.0)
-        settingsNavButton.translatesAutoresizingMaskIntoConstraints = false
-        settingsNavButton.addTarget(self, action: #selector(settingsNavButtonTapped), for: .touchUpInside)
-        bottomNavView.addSubview(settingsNavButton)
+    private func setupDoneButton() {
+        doneButton.setTitle("Done", for: .normal)
+        doneButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        doneButton.backgroundColor = UIColor.systemBlue
+        doneButton.setTitleColor(.white, for: .normal)
+        doneButton.layer.cornerRadius = 12
+        doneButton.translatesAutoresizingMaskIntoConstraints = false
+        doneButton.addTarget(self, action: #selector(doneButtonTapped), for: .touchUpInside)
+        view.addSubview(doneButton)
     }
     
     private func setupConstraints() {
@@ -343,7 +296,7 @@ class GettingStartedVC: UIViewController {
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: bottomNavView.topAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: doneButton.topAnchor, constant: -20),
             
             contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
@@ -418,67 +371,20 @@ class GettingStartedVC: UIViewController {
             step2TitleLabel.trailingAnchor.constraint(equalTo: step2View.trailingAnchor)
         ])
         
-        // Settings Button Constraints
+        // Content bottom constraint
         NSLayoutConstraint.activate([
-            settingsButton.topAnchor.constraint(equalTo: step2View.bottomAnchor, constant: 40),
-            settingsButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            settingsButton.widthAnchor.constraint(equalToConstant: 250),
-            settingsButton.heightAnchor.constraint(equalToConstant: 50),
-            settingsButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
+            step2View.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
         ])
         
-        // Bottom Navigation Constraints
+        // Done Button Constraints
         NSLayoutConstraint.activate([
-            bottomNavView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            bottomNavView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            bottomNavView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            bottomNavView.heightAnchor.constraint(equalToConstant: 80),
-            
-            myENSButton.leadingAnchor.constraint(equalTo: bottomNavView.leadingAnchor, constant: 20),
-            myENSButton.centerYAnchor.constraint(equalTo: bottomNavView.centerYAnchor),
-            myENSButton.widthAnchor.constraint(equalToConstant: 80),
-            myENSButton.heightAnchor.constraint(equalToConstant: 60),
-            
-            contactsButton.centerXAnchor.constraint(equalTo: bottomNavView.centerXAnchor),
-            contactsButton.centerYAnchor.constraint(equalTo: bottomNavView.centerYAnchor),
-            contactsButton.widthAnchor.constraint(equalToConstant: 80),
-            contactsButton.heightAnchor.constraint(equalToConstant: 60),
-            
-            settingsNavButton.trailingAnchor.constraint(equalTo: bottomNavView.trailingAnchor, constant: -20),
-            settingsNavButton.centerYAnchor.constraint(equalTo: bottomNavView.centerYAnchor),
-            settingsNavButton.widthAnchor.constraint(equalToConstant: 80),
-            settingsNavButton.heightAnchor.constraint(equalToConstant: 60)
+            doneButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            doneButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            doneButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            doneButton.heightAnchor.constraint(equalToConstant: 50)
         ])
-        
-        // Configure button layouts
-        configureButtonLayouts()
     }
     
-    private func configureButtonLayouts() {
-        // Configure bottom navigation buttons with image and title
-        [myENSButton, contactsButton, settingsNavButton].forEach { button in
-            // Set content mode to ensure proper icon rendering
-            button.imageView?.contentMode = .scaleAspectFit
-            button.imageView?.tintColor = button.tintColor
-            
-            // Reset edge insets first
-            button.titleEdgeInsets = UIEdgeInsets.zero
-            button.imageEdgeInsets = UIEdgeInsets.zero
-            
-            // Configure edge insets for proper icon and text positioning
-            // Move text down and center it horizontally
-            button.titleEdgeInsets = UIEdgeInsets(top: 25, left: -button.imageView!.frame.width, bottom: 0, right: 0)
-            // Move image up and center it horizontally
-            button.imageEdgeInsets = UIEdgeInsets(top: -15, left: 0, bottom: 0, right: -button.titleLabel!.frame.width)
-            
-            // Ensure the button content is properly aligned
-            button.contentVerticalAlignment = .center
-            button.contentHorizontalAlignment = .center
-            
-            // Force layout update
-            button.layoutIfNeeded()
-        }
-    }
     
     // MARK: - Actions
     
@@ -489,10 +395,6 @@ class GettingStartedVC: UIViewController {
         present(alert, animated: true)
     }
     
-    @objc private func settingsButtonTapped() {
-        // Complete onboarding and transition to main app
-        transitionToMainApp()
-    }
     
     private func transitionToMainApp() {
         // Create the main tab bar controller
@@ -527,18 +429,8 @@ class GettingStartedVC: UIViewController {
         }
     }
     
-    @objc private func myENSButtonTapped() {
-        // Transition to main app with My ENS tab selected
-        transitionToMainAppWithTab(0)
-    }
-    
-    @objc private func contactsButtonTapped() {
-        // Transition to main app with Contacts tab selected
-        transitionToMainAppWithTab(1)
-    }
-    
-    @objc private func settingsNavButtonTapped() {
-        // Transition to main app with Settings tab selected
-        transitionToMainAppWithTab(2)
+    @objc private func doneButtonTapped() {
+        // Close the popover/modal
+        dismiss(animated: true, completion: nil)
     }
 }

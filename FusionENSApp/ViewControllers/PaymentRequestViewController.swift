@@ -6,7 +6,7 @@ class PaymentRequestViewController: UIViewController {
     
     // MARK: - Properties
     private let ensName: ENSName
-    private var selectedChain: PaymentChain = .bitcoin
+    private var selectedChain: PaymentChain = .ethereum
     private var amount: String = ""
     private var resolvedAddress: String = ""
     private var isUSDInput: Bool = true
@@ -90,8 +90,8 @@ class PaymentRequestViewController: UIViewController {
         ensCardView.layer.borderColor = ColorTheme.border.cgColor
         contentView.addSubview(ensCardView)
         
-        // Globe Icon
-        globeIconImageView.image = UIImage(systemName: "globe")
+        // Default ENS Icon (same as bottom menu)
+        globeIconImageView.image = UIImage(systemName: "person.crop.rectangle")
         globeIconImageView.tintColor = .white
         globeIconImageView.contentMode = .scaleAspectFit
         globeIconImageView.backgroundColor = ColorTheme.accent
@@ -117,11 +117,11 @@ class PaymentRequestViewController: UIViewController {
         ensAddressLabel.numberOfLines = 1
         ensCardView.addSubview(ensAddressLabel)
         
-        // Avatar Image View
+        // Avatar Image View (hidden by default, shown when avatar loads)
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.layer.cornerRadius = 20
         avatarImageView.clipsToBounds = true
-        avatarImageView.backgroundColor = ColorTheme.searchBarBackground
+        avatarImageView.isHidden = true
         ensCardView.addSubview(avatarImageView)
         
         // Add tap gesture to ENS card
@@ -148,7 +148,7 @@ class PaymentRequestViewController: UIViewController {
         // Currency Toggle Button
         currencyToggleButton.setTitle("USD", for: .normal)
         currencyToggleButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        currencyToggleButton.setTitleColor(ColorTheme.primaryText, for: .normal)
+        currencyToggleButton.setTitleColor(.white, for: .normal)
         currencyToggleButton.backgroundColor = ColorTheme.accent
         currencyToggleButton.layer.cornerRadius = 6
         currencyToggleButton.addTarget(self, action: #selector(currencyToggleTapped), for: .touchUpInside)
@@ -262,8 +262,15 @@ class PaymentRequestViewController: UIViewController {
             make.height.equalTo(80)
         }
         
-        // Globe Icon
+        // Globe Icon (hidden when avatar is shown)
         globeIconImageView.snp.makeConstraints { make in
+            make.leading.equalToSuperview().offset(16)
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(40)
+        }
+        
+        // Avatar Image View (moved to left side)
+        avatarImageView.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(16)
             make.centerY.equalToSuperview()
             make.width.height.equalTo(40)
@@ -271,9 +278,9 @@ class PaymentRequestViewController: UIViewController {
         
         // ENS Name Label
         ensNameLabel.snp.makeConstraints { make in
-            make.leading.equalTo(globeIconImageView.snp.trailing).offset(12)
+            make.leading.equalTo(avatarImageView.snp.trailing).offset(12)
             make.top.equalToSuperview().offset(16)
-            make.trailing.equalTo(avatarImageView.snp.leading).offset(-8)
+            make.trailing.equalToSuperview().offset(-16)
         }
         
         // Full Name Label
@@ -288,13 +295,6 @@ class PaymentRequestViewController: UIViewController {
             make.leading.equalTo(ensNameLabel)
             make.top.equalTo(fullNameLabel.snp.bottom).offset(4)
             make.trailing.equalTo(ensNameLabel)
-        }
-        
-        // Avatar Image View
-        avatarImageView.snp.makeConstraints { make in
-            make.trailing.equalToSuperview().offset(-16)
-            make.centerY.equalToSuperview()
-            make.width.height.equalTo(40)
         }
         
         // Crypto Container
@@ -414,9 +414,13 @@ class PaymentRequestViewController: UIViewController {
         copyButton.isHidden = true
         shareButton.isHidden = true
         
+        // Set initial avatar state
+        avatarImageView.isHidden = true
+        globeIconImageView.isHidden = false
+        
         // Set initial ENS display
         ensNameLabel.text = ensName.name
-        fullNameLabel.text = ensName.fullName ?? "Loading..." // Use existing fullName or show loading
+        fullNameLabel.text = ensName.fullName ?? ensName.name // Use existing fullName or show ENS name
         ensAddressLabel.text = "" // Will be loaded when address is resolved
         
         // Load crypto prices
@@ -521,35 +525,55 @@ class PaymentRequestViewController: UIViewController {
         // Resolve ENS name to address
         resolveENSName { [weak self] address in
             DispatchQueue.main.async {
-                self?.generateButton.setTitle("Generate Payment Request", for: .normal)
-                self?.generateButton.isEnabled = true
+                guard let self = self else { return }
+                self.generateButton.setTitle("Generate Payment Request", for: .normal)
+                self.generateButton.isEnabled = true
                 
                 if let address = address {
-                    self?.resolvedAddress = address
-                    self?.updateENSAddressDisplay(address: address)
-                    self?.createPaymentRequest()
+                    self.resolvedAddress = address
+                    self.updateENSAddressDisplay(address: address)
+                    self.createPaymentRequest()
                 } else {
-                    let chainName = self?.selectedChain.displayName.lowercased() ?? "crypto"
-                    let ensName = self?.ensName.name ?? ""
-                    self?.showMissingAddressAlert(ensName: ensName, chainName: chainName)
+                    let chainName = self.selectedChain.displayName.lowercased()
+                    let ensName = self.ensName.name
+                    self.showMissingAddressAlert(ensName: ensName, chainName: chainName)
                 }
             }
         }
     }
     
     private func resolveENSName(completion: @escaping (String?) -> Void) {
-        // Create the full ENS name with chain suffix for multi-chain resolution
-        let fullENSName: String
-        if selectedChain == .bitcoin {
-            // For Bitcoin, use the original name (assuming ENS resolution works for Bitcoin)
-            fullENSName = ensName.name
-        } else {
-            // For other chains, add the chain suffix
-            fullENSName = "\(ensName.name):\(selectedChain.symbol.lowercased())"
-        }
+        // Extract base domain from ENS name (remove .eth if present)
+        let baseDomain = extractBaseDomain(from: ensName.name)
         
-        // Use the same API caller as the keyboard extension
-        APICaller.shared.resolveENSName(name: fullENSName) { resolvedAddress in
+        // Create multi-chain ENS name based on selected chain
+        let chainSuffix = getChainSuffix(for: selectedChain)
+        let multiChainENSName = "\(baseDomain):\(chainSuffix)"
+        
+        // Use Fusion ENS Server API for multi-chain resolution
+        let apiURL = "https://api.fusionens.com/resolve/\(multiChainENSName)?network=mainnet"
+        
+        AF.request(apiURL).responseData { response in
+            guard let data = response.data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let success = json["success"] as? Bool,
+                  success,
+                  let dataDict = json["data"] as? [String: Any],
+                  let address = dataDict["address"] as? String,
+                  !address.isEmpty else {
+                // Fallback to Ethereum address if multi-chain resolution fails
+                self.resolveEthereumAddressFallback(completion: completion)
+                return
+            }
+            
+            completion(address)
+        }
+    }
+    
+    private func resolveEthereumAddressFallback(completion: @escaping (String?) -> Void) {
+        // Fallback to Ethereum address if multi-chain resolution fails
+        let baseDomain = extractBaseDomain(from: ensName.name)
+        APICaller.shared.resolveENSName(name: baseDomain) { resolvedAddress in
             if !resolvedAddress.isEmpty {
                 completion(resolvedAddress)
             } else {
@@ -558,34 +582,71 @@ class PaymentRequestViewController: UIViewController {
         }
     }
     
+    private func getChainSuffix(for chain: PaymentChain) -> String {
+        switch chain {
+        case .bitcoin: return "btc"
+        case .ethereum: return "eth"
+        case .solana: return "sol"
+        case .dogecoin: return "doge"
+        case .xrp: return "xrp"
+        case .litecoin: return "ltc"
+        case .cardano: return "ada"
+        case .polkadot: return "dot"
+        }
+    }
+    
     private func createPaymentRequest() {
         let paymentURL = createPaymentURL()
         generateQRCode(from: paymentURL)
-        addressLabel.text = "Payment Address:\n\(resolvedAddress)"
         
-        // Show QR code and related elements
-        qrCodeImageView.isHidden = false
-        addressLabel.isHidden = false
-        copyButton.isHidden = false
-        shareButton.isHidden = false
+        // Show success popup with QR code
+        showQRSuccessPopup()
     }
     
     private func createPaymentURL() -> String {
-        switch selectedChain {
-        case .bitcoin:
-            return "bitcoin:\(resolvedAddress)?amount=\(amount)"
-        case .solana:
-            return "solana:\(resolvedAddress)?amount=\(amount)"
-        case .dogecoin:
-            return "dogecoin:\(resolvedAddress)?amount=\(amount)"
-        case .xrp:
-            return "xrp:\(resolvedAddress)?amount=\(amount)"
-        case .litecoin:
-            return "litecoin:\(resolvedAddress)?amount=\(amount)"
-        case .cardano:
-            return "cardano:\(resolvedAddress)?amount=\(amount)"
-        case .polkadot:
-            return "polkadot:\(resolvedAddress)?amount=\(amount)"
+        // Check wallet preference setting
+        let useTrustWallet = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.bool(forKey: "useTrustWalletScheme") ?? true
+        
+        if useTrustWallet {
+            // Use Trust Wallet scheme for all cryptocurrencies
+            switch selectedChain {
+            case .bitcoin:
+                return "trust://send?coin=0&address=\(resolvedAddress)&amount=\(amount)"
+            case .ethereum:
+                return "trust://send?coin=60&address=\(resolvedAddress)&amount=\(amount)"
+            case .solana:
+                return "trust://send?coin=501&address=\(resolvedAddress)&amount=\(amount)"
+            case .dogecoin:
+                return "trust://send?coin=3&address=\(resolvedAddress)&amount=\(amount)"
+            case .xrp:
+                return "trust://send?coin=144&address=\(resolvedAddress)&amount=\(amount)"
+            case .litecoin:
+                return "trust://send?coin=2&address=\(resolvedAddress)&amount=\(amount)"
+            case .cardano:
+                return "trust://send?coin=1815&address=\(resolvedAddress)&amount=\(amount)"
+            case .polkadot:
+                return "trust://send?coin=354&address=\(resolvedAddress)&amount=\(amount)"
+            }
+        } else {
+            // Use standard schemes for broader wallet compatibility
+            switch selectedChain {
+            case .bitcoin:
+                return "bitcoin:\(resolvedAddress)?amount=\(amount)"
+            case .ethereum:
+                return "ethereum:\(resolvedAddress)?amount=\(amount)"
+            case .solana:
+                return "solana:\(resolvedAddress)?amount=\(amount)"
+            case .dogecoin:
+                return "dogecoin:\(resolvedAddress)?amount=\(amount)"
+            case .xrp:
+                return "xrp:\(resolvedAddress)?amount=\(amount)"
+            case .litecoin:
+                return "litecoin:\(resolvedAddress)?amount=\(amount)"
+            case .cardano:
+                return "cardano:\(resolvedAddress)?amount=\(amount)"
+            case .polkadot:
+                return "polkadot:\(resolvedAddress)?amount=\(amount)"
+            }
         }
     }
     
@@ -634,8 +695,9 @@ class PaymentRequestViewController: UIViewController {
         
         APICaller.shared.resolveENSName(name: baseDomain) { [weak self] resolvedAddress in
             DispatchQueue.main.async {
+                guard let self = self else { return }
                 if !resolvedAddress.isEmpty {
-                    self?.updateENSAddressDisplay(address: resolvedAddress)
+                    self.updateENSAddressDisplay(address: resolvedAddress)
                 }
             }
         }
@@ -688,10 +750,10 @@ class PaymentRequestViewController: UIViewController {
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let fullName = json["name"] as? String,
                   !fullName.isEmpty else {
-                // If both APIs fail, show a fallback message
+                // If both APIs fail, show the ENS name as fallback
                 DispatchQueue.main.async {
                     if self.fullNameLabel.text == "Loading..." {
-                        self.fullNameLabel.text = "ENS Name"
+                        self.fullNameLabel.text = self.ensName.name
                     }
                 }
                 return
@@ -716,12 +778,20 @@ class PaymentRequestViewController: UIViewController {
             let metadataURL = "https://metadata.ens.domains/mainnet/\(ethAddress)/avatar"
             
             AF.request(metadataURL).responseString { [weak self] response in
-                guard let self = self,
-                      let avatarURLString = response.value,
+                guard let self = self else { return }
+                
+                guard let avatarURLString = response.value,
                       !avatarURLString.isEmpty,
                       avatarURLString != "data:image/svg+xml;base64," else {
                     // Fallback: try ENS Ideas API for avatar
-                    self?.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
+                    self.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
+                    return
+                }
+                
+                // Check if the response is a JSON error message
+                if avatarURLString.hasPrefix("{") && avatarURLString.contains("message") {
+                    // Fallback: try ENS Ideas API for avatar
+                    self.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
                     return
                 }
                 
@@ -731,13 +801,20 @@ class PaymentRequestViewController: UIViewController {
                 // Check if it's a valid URL
                 guard !cleanURLString.isEmpty,
                       let url = URL(string: cleanURLString) else {
+                    // Fallback: try ENS Ideas API for avatar
+                    self.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
                     return
                 }
                 
                 // Load avatar image
                 self.loadImage(from: url) { [weak self] image in
                     DispatchQueue.main.async {
-                        self?.avatarImageView.image = image
+                        guard let self = self else { return }
+                        if let image = image {
+                            self.avatarImageView.image = image
+                            self.avatarImageView.isHidden = false
+                            self.globeIconImageView.isHidden = true
+                        }
                     }
                 }
             }
@@ -761,7 +838,12 @@ class PaymentRequestViewController: UIViewController {
             if let url = URL(string: avatarURLString) {
                 self.loadImage(from: url) { [weak self] image in
                     DispatchQueue.main.async {
-                        self?.avatarImageView.image = image
+                        guard let self = self else { return }
+                        if let image = image {
+                            self.avatarImageView.image = image
+                            self.avatarImageView.isHidden = false
+                            self.globeIconImageView.isHidden = true
+                        }
                     }
                 }
             }
@@ -953,6 +1035,24 @@ class PaymentRequestViewController: UIViewController {
         // Return as is for standard .eth domains
         return ensName
     }
+    
+    // MARK: - QR Success Popup
+    private func showQRSuccessPopup() {
+        guard let qrCodeImage = qrCodeImageView.image else {
+            print("No QR code image available")
+            return
+        }
+        
+        let paymentURL = createPaymentURL()
+        let successPopup = QRSuccessPopupViewController(
+            ensName: ensName.name,
+            qrCodeImage: qrCodeImage,
+            paymentURL: paymentURL
+        ) {
+            // Optional: Add any additional actions after popup dismissal
+        }
+        successPopup.show(from: self)
+    }
 }
 
 // MARK: - UITextFieldDelegate
@@ -975,6 +1075,7 @@ extension PaymentRequestViewController: UITextFieldDelegate {
 // MARK: - PaymentChain Enum
 enum PaymentChain: CaseIterable {
     case bitcoin
+    case ethereum
     case solana
     case dogecoin
     case xrp
@@ -985,6 +1086,7 @@ enum PaymentChain: CaseIterable {
     var displayName: String {
         switch self {
         case .bitcoin: return "Bitcoin"
+        case .ethereum: return "Ethereum"
         case .solana: return "Solana"
         case .dogecoin: return "Dogecoin"
         case .xrp: return "XRP"
@@ -997,6 +1099,7 @@ enum PaymentChain: CaseIterable {
     var symbol: String {
         switch self {
         case .bitcoin: return "BTC"
+        case .ethereum: return "ETH"
         case .solana: return "SOL"
         case .dogecoin: return "DOGE"
         case .xrp: return "XRP"
@@ -1009,6 +1112,7 @@ enum PaymentChain: CaseIterable {
     var coinGeckoId: String {
         switch self {
         case .bitcoin: return "bitcoin"
+        case .ethereum: return "ethereum"
         case .solana: return "solana"
         case .dogecoin: return "dogecoin"
         case .xrp: return "ripple"
@@ -1021,6 +1125,7 @@ enum PaymentChain: CaseIterable {
     var systemIcon: UIImage? {
         switch self {
         case .bitcoin: return UIImage(named: "BitcoinLogo")
+        case .ethereum: return UIImage(named: "EthereumLogo")
         case .solana: return UIImage(named: "SolanaLogo")
         case .dogecoin: return UIImage(named: "DogecoinLogo")
         case .xrp: return UIImage(named: "XRPLogo")
@@ -1033,6 +1138,7 @@ enum PaymentChain: CaseIterable {
     var iconColor: UIColor {
         switch self {
         case .bitcoin: return UIColor(red: 1.0, green: 0.6, blue: 0.0, alpha: 1.0) // Orange
+        case .ethereum: return UIColor(red: 0.4, green: 0.4, blue: 0.8, alpha: 1.0) // Purple-Blue
         case .solana: return UIColor(red: 0.0, green: 0.8, blue: 1.0, alpha: 1.0) // Cyan
         case .dogecoin: return UIColor(red: 1.0, green: 0.8, blue: 0.0, alpha: 1.0) // Yellow
         case .xrp: return UIColor(red: 0.0, green: 0.0, blue: 0.8, alpha: 1.0) // Blue
