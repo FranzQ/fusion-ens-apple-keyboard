@@ -1,5 +1,6 @@
 import UIKit
 import SnapKit
+import Alamofire
 
 class PaymentRequestViewController: UIViewController {
     
@@ -8,27 +9,41 @@ class PaymentRequestViewController: UIViewController {
     private var selectedChain: PaymentChain = .bitcoin
     private var amount: String = ""
     private var resolvedAddress: String = ""
+    private var isUSDInput: Bool = true
+    private var cryptoPrices: [String: Double] = [:]
+    private var usdAmount: Double = 0.0
+    private var cryptoAmount: Double = 0.0
+    private var fullName: String = ""
+    private var avatarURL: String? = nil
     
     // MARK: - UI Elements
     private let scrollView = UIScrollView()
     private let contentView = UIView()
     private let titleLabel = UILabel()
+    private let ensCardView = UIView()
+    private let globeIconImageView = UIImageView()
     private let ensNameLabel = UILabel()
+    private let fullNameLabel = UILabel()
+    private let ensAddressLabel = UILabel()
+    private let avatarImageView = UIImageView()
     
     // Amount Section
     private let amountContainerView = UIView()
     private let amountLabel = UILabel()
     private let amountTextField = UITextField()
-    private let currencyLabel = UILabel()
+    private let currencyToggleButton = UIButton(type: .system)
+    private let conversionLabel = UILabel()
     
     // Cryptocurrency Section
     private let cryptoContainerView = UIView()
     private let cryptoLabel = UILabel()
     private let chainButton = UIButton(type: .system)
     private let chevronImageView = UIImageView()
+    private let cryptoIconImageView = UIImageView()
     
     // Generate Button
     private let generateButton = UIButton(type: .system)
+    private let qrIconImageView = UIImageView()
     private let qrCodeImageView = UIImageView()
     private let addressLabel = UILabel()
     private let copyButton = UIButton(type: .system)
@@ -68,40 +83,125 @@ class PaymentRequestViewController: UIViewController {
         titleLabel.textAlignment = .center
         contentView.addSubview(titleLabel)
         
+        // ENS Card View
+        ensCardView.backgroundColor = ColorTheme.cardBackground
+        ensCardView.layer.cornerRadius = 12
+        ensCardView.layer.borderWidth = 1
+        ensCardView.layer.borderColor = ColorTheme.border.cgColor
+        contentView.addSubview(ensCardView)
+        
+        // Globe Icon
+        globeIconImageView.image = UIImage(systemName: "globe")
+        globeIconImageView.tintColor = .white
+        globeIconImageView.contentMode = .scaleAspectFit
+        globeIconImageView.backgroundColor = ColorTheme.accent
+        globeIconImageView.layer.cornerRadius = 8
+        ensCardView.addSubview(globeIconImageView)
+        
         // ENS Name Label
         ensNameLabel.text = ensName.name
-        ensNameLabel.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
-        ensNameLabel.textColor = ColorTheme.accent
-        ensNameLabel.textAlignment = .center
-        ensNameLabel.numberOfLines = 0
-        contentView.addSubview(ensNameLabel)
+        ensNameLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        ensNameLabel.textColor = .white
+        ensNameLabel.numberOfLines = 1
+        ensCardView.addSubview(ensNameLabel)
+        
+        // Full Name Label
+        fullNameLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        fullNameLabel.textColor = ColorTheme.secondaryText
+        fullNameLabel.numberOfLines = 1
+        ensCardView.addSubview(fullNameLabel)
+        
+        // Address Label
+        ensAddressLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
+        ensAddressLabel.textColor = ColorTheme.secondaryText
+        ensAddressLabel.numberOfLines = 1
+        ensCardView.addSubview(ensAddressLabel)
+        
+        // Avatar Image View
+        avatarImageView.contentMode = .scaleAspectFill
+        avatarImageView.layer.cornerRadius = 20
+        avatarImageView.clipsToBounds = true
+        avatarImageView.backgroundColor = ColorTheme.searchBarBackground
+        ensCardView.addSubview(avatarImageView)
+        
+        // Add tap gesture to ENS card
+        let ensCardTapGesture = UITapGestureRecognizer(target: self, action: #selector(ensCardTapped))
+        ensCardView.addGestureRecognizer(ensCardTapGesture)
+        ensCardView.isUserInteractionEnabled = true
+        
+        // Amount Container
+        amountContainerView.backgroundColor = ColorTheme.searchBarBackground
+        amountContainerView.layer.cornerRadius = 8
+        amountContainerView.layer.borderWidth = 1
+        amountContainerView.layer.borderColor = ColorTheme.border.cgColor
+        contentView.addSubview(amountContainerView)
         
         // Amount Text Field
-        amountTextField.placeholder = "Enter amount (e.g., 0.01)"
-        amountTextField.borderStyle = .roundedRect
+        amountTextField.placeholder = "0.00"
+        amountTextField.borderStyle = .none
         amountTextField.keyboardType = .decimalPad
         amountTextField.delegate = self
-        contentView.addSubview(amountTextField)
+        amountTextField.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+        amountTextField.textColor = ColorTheme.primaryText
+        amountContainerView.addSubview(amountTextField)
+        
+        // Currency Toggle Button
+        currencyToggleButton.setTitle("USD", for: .normal)
+        currencyToggleButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        currencyToggleButton.setTitleColor(ColorTheme.primaryText, for: .normal)
+        currencyToggleButton.backgroundColor = ColorTheme.accent
+        currencyToggleButton.layer.cornerRadius = 6
+        currencyToggleButton.addTarget(self, action: #selector(currencyToggleTapped), for: .touchUpInside)
+        amountContainerView.addSubview(currencyToggleButton)
+        
+        // Conversion Label
+        conversionLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
+        conversionLabel.textColor = ColorTheme.secondaryText
+        conversionLabel.textAlignment = .center
+        conversionLabel.numberOfLines = 0
+        contentView.addSubview(conversionLabel)
+        
+        // Crypto Container
+        cryptoContainerView.backgroundColor = ColorTheme.searchBarBackground
+        cryptoContainerView.layer.cornerRadius = 8
+        cryptoContainerView.layer.borderWidth = 1
+        cryptoContainerView.layer.borderColor = ColorTheme.border.cgColor
+        contentView.addSubview(cryptoContainerView)
+        
+        // Crypto Icon
+        cryptoIconImageView.contentMode = .scaleAspectFit
+        cryptoIconImageView.image = selectedChain.systemIcon
+        cryptoIconImageView.tintColor = selectedChain.iconColor
+        cryptoContainerView.addSubview(cryptoIconImageView)
         
         // Chain Selection Button
-        chainButton.setTitle("Select Chain: \(selectedChain.displayName)", for: .normal)
+        chainButton.setTitle("\(selectedChain.displayName)", for: .normal)
         chainButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        chainButton.backgroundColor = ColorTheme.searchBarBackground
         chainButton.setTitleColor(ColorTheme.primaryText, for: .normal)
-        chainButton.layer.cornerRadius = 8
-        chainButton.layer.borderWidth = 1
-        chainButton.layer.borderColor = ColorTheme.border.cgColor
+        chainButton.contentHorizontalAlignment = .left
         chainButton.addTarget(self, action: #selector(chainButtonTapped), for: .touchUpInside)
-        contentView.addSubview(chainButton)
+        cryptoContainerView.addSubview(chainButton)
+        
+        // Chevron Image
+        chevronImageView.image = UIImage(systemName: "chevron.up.chevron.down")
+        chevronImageView.tintColor = ColorTheme.secondaryText
+        chevronImageView.contentMode = .scaleAspectFit
+        cryptoContainerView.addSubview(chevronImageView)
         
         // Generate Button
-        generateButton.setTitle("Generate Payment Request", for: .normal)
+        generateButton.setTitle("Generate QR", for: .normal)
         generateButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
         generateButton.backgroundColor = ColorTheme.accent
         generateButton.setTitleColor(.white, for: .normal)
         generateButton.layer.cornerRadius = 8
         generateButton.addTarget(self, action: #selector(generateButtonTapped), for: .touchUpInside)
         contentView.addSubview(generateButton)
+        
+        // QR Icon
+        qrIconImageView.image = UIImage(systemName: "qrcode")
+        qrIconImageView.tintColor = .white
+        qrIconImageView.contentMode = .scaleAspectFit
+        generateButton.addSubview(qrIconImageView)
         
         // QR Code Image View
         qrCodeImageView.contentMode = .scaleAspectFit
@@ -155,27 +255,115 @@ class PaymentRequestViewController: UIViewController {
             make.leading.trailing.equalToSuperview().inset(20)
         }
         
-        ensNameLabel.snp.makeConstraints { make in
+        // ENS Card View
+        ensCardView.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(20)
             make.leading.trailing.equalToSuperview().inset(20)
+            make.height.equalTo(80)
         }
         
+        // Globe Icon
+        globeIconImageView.snp.makeConstraints { make in
+            make.leading.equalToSuperview().offset(16)
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(40)
+        }
+        
+        // ENS Name Label
+        ensNameLabel.snp.makeConstraints { make in
+            make.leading.equalTo(globeIconImageView.snp.trailing).offset(12)
+            make.top.equalToSuperview().offset(16)
+            make.trailing.equalTo(avatarImageView.snp.leading).offset(-8)
+        }
+        
+        // Full Name Label
+        fullNameLabel.snp.makeConstraints { make in
+            make.leading.equalTo(ensNameLabel)
+            make.top.equalTo(ensNameLabel.snp.bottom).offset(4)
+            make.trailing.equalTo(ensNameLabel)
+        }
+        
+        // Address Label
+        ensAddressLabel.snp.makeConstraints { make in
+            make.leading.equalTo(ensNameLabel)
+            make.top.equalTo(fullNameLabel.snp.bottom).offset(4)
+            make.trailing.equalTo(ensNameLabel)
+        }
+        
+        // Avatar Image View
+        avatarImageView.snp.makeConstraints { make in
+            make.trailing.equalToSuperview().offset(-16)
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(40)
+        }
+        
+        // Crypto Container
+        cryptoContainerView.snp.makeConstraints { make in
+            make.top.equalTo(ensCardView.snp.bottom).offset(30)
+            make.leading.trailing.equalToSuperview().inset(20)
+            make.height.equalTo(44)
+        }
+        
+        // Amount Container
+        amountContainerView.snp.makeConstraints { make in
+            make.top.equalTo(cryptoContainerView.snp.bottom).offset(20)
+            make.leading.trailing.equalToSuperview().inset(20)
+            make.height.equalTo(44)
+        }
+        
+        // Amount Text Field
         amountTextField.snp.makeConstraints { make in
-            make.top.equalTo(ensNameLabel.snp.bottom).offset(30)
-            make.leading.trailing.equalToSuperview().inset(20)
-            make.height.equalTo(44)
+            make.leading.equalToSuperview().offset(16)
+            make.centerY.equalToSuperview()
+            make.trailing.equalTo(currencyToggleButton.snp.leading).offset(-8)
         }
         
-        chainButton.snp.makeConstraints { make in
-            make.top.equalTo(amountTextField.snp.bottom).offset(20)
+        // Currency Toggle Button
+        currencyToggleButton.snp.makeConstraints { make in
+            make.trailing.equalToSuperview().offset(-8)
+            make.centerY.equalToSuperview()
+            make.width.equalTo(60)
+            make.height.equalTo(28)
+        }
+        
+        // Conversion Label
+        conversionLabel.snp.makeConstraints { make in
+            make.top.equalTo(amountContainerView.snp.bottom).offset(8)
             make.leading.trailing.equalToSuperview().inset(20)
-            make.height.equalTo(44)
+        }
+        
+        // Crypto Icon
+        cryptoIconImageView.snp.makeConstraints { make in
+            make.leading.equalToSuperview().offset(12)
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(24)
+        }
+        
+        // Chain Button
+        chainButton.snp.makeConstraints { make in
+            make.leading.equalTo(cryptoIconImageView.snp.trailing).offset(12)
+            make.centerY.equalToSuperview()
+            make.trailing.equalTo(chevronImageView.snp.leading).offset(-8)
+        }
+        
+        // Chevron
+        chevronImageView.snp.makeConstraints { make in
+            make.trailing.equalToSuperview().offset(-12)
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(16)
         }
         
         generateButton.snp.makeConstraints { make in
-            make.top.equalTo(chainButton.snp.bottom).offset(30)
+            make.top.equalTo(conversionLabel.snp.bottom).offset(30)
             make.leading.trailing.equalToSuperview().inset(20)
             make.height.equalTo(50)
+        }
+        
+        // QR Icon
+        qrIconImageView.snp.makeConstraints { make in
+            make.trailing.equalToSuperview().offset(-16)
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(20)
         }
         
         qrCodeImageView.snp.makeConstraints { make in
@@ -223,9 +411,17 @@ class PaymentRequestViewController: UIViewController {
     private func setupInitialState() {
         // Hide QR code and related elements initially
         qrCodeImageView.isHidden = true
-        addressLabel.isHidden = true
         copyButton.isHidden = true
         shareButton.isHidden = true
+        
+        // Load crypto prices
+        loadCryptoPrices()
+        
+        // Set initial conversion display
+        updateConversionDisplay()
+        
+        // Load ENS details
+        loadENSDetails()
     }
     
     // MARK: - Actions
@@ -235,6 +431,17 @@ class PaymentRequestViewController: UIViewController {
     
     @objc private func doneTapped() {
         dismiss(animated: true)
+    }
+    
+    @objc private func ensCardTapped() {
+        // Same action as tapping ENS name - could open ENS profile or copy address
+        copyENSAddress()
+    }
+    
+    @objc private func currencyToggleTapped() {
+        isUSDInput.toggle()
+        updateCurrencyToggle()
+        updateConversionDisplay()
     }
     
     @objc private func chainButtonTapped() {
@@ -247,7 +454,10 @@ class PaymentRequestViewController: UIViewController {
         for chain in PaymentChain.allCases {
             alert.addAction(UIAlertAction(title: chain.displayName, style: .default) { _ in
                 self.selectedChain = chain
-                self.chainButton.setTitle("Select Chain: \(chain.displayName)", for: .normal)
+                self.chainButton.setTitle(chain.displayName, for: .normal)
+                self.cryptoIconImageView.image = chain.systemIcon
+                self.cryptoIconImageView.tintColor = chain.iconColor
+                self.updateConversionDisplay()
             })
         }
         
@@ -271,7 +481,13 @@ class PaymentRequestViewController: UIViewController {
             return
         }
         
-        amount = amountText
+        // Use the appropriate amount based on input type
+        if isUSDInput {
+            amount = String(cryptoAmount)
+        } else {
+            amount = amountText
+        }
+        
         generatePaymentRequest()
     }
     
@@ -305,6 +521,7 @@ class PaymentRequestViewController: UIViewController {
                 
                 if let address = address {
                     self?.resolvedAddress = address
+                    self?.updateENSAddressDisplay(address: address)
                     self?.createPaymentRequest()
                 } else {
                     let chainName = self?.selectedChain.displayName.lowercased() ?? "crypto"
@@ -394,6 +611,132 @@ class PaymentRequestViewController: UIViewController {
         // - Gray out unavailable chains
         // - Add checkmarks to available chains
         // - Show a small info icon with available chains
+    }
+    
+    // MARK: - ENS Details Loading
+    private func loadENSDetails() {
+        // Load full name and avatar from ENS metadata
+        loadENSFullName()
+        loadENSAvatar()
+    }
+    
+    private func loadENSFullName() {
+        // Try to get full name from ENS metadata
+        let baseDomain = extractBaseDomain(from: ensName.name)
+        let metadataURL = "https://metadata.ens.domains/mainnet/\(baseDomain)/name"
+        
+        AF.request(metadataURL).responseString { [weak self] response in
+            guard let self = self,
+                  let fullName = response.value,
+                  !fullName.isEmpty else {
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self.fullName = fullName
+                self.fullNameLabel.text = fullName
+            }
+        }
+    }
+    
+    private func loadENSAvatar() {
+        // Try to get avatar from ENS metadata
+        let baseDomain = extractBaseDomain(from: ensName.name)
+        let avatarURL = "https://metadata.ens.domains/mainnet/\(baseDomain)/avatar"
+        
+        AF.request(avatarURL).responseString { [weak self] response in
+            guard let self = self,
+                  let avatarURLString = response.value,
+                  !avatarURLString.isEmpty,
+                  let url = URL(string: avatarURLString) else {
+                return
+            }
+            
+            // Load avatar image
+            self.loadImage(from: url) { [weak self] image in
+                DispatchQueue.main.async {
+                    self?.avatarImageView.image = image
+                }
+            }
+        }
+    }
+    
+    private func loadImage(from url: URL, completion: @escaping (UIImage?) -> Void) {
+        AF.request(url).responseData { response in
+            guard let data = response.data,
+                  let image = UIImage(data: data) else {
+                completion(nil)
+                return
+            }
+            completion(image)
+        }
+    }
+    
+    private func copyENSAddress() {
+        // Copy the resolved address to clipboard
+        if !resolvedAddress.isEmpty {
+            UIPasteboard.general.string = resolvedAddress
+            showAlert(title: "Copied", message: "Address copied to clipboard")
+        } else {
+            // If no address resolved yet, copy the ENS name
+            UIPasteboard.general.string = ensName.name
+            showAlert(title: "Copied", message: "ENS name copied to clipboard")
+        }
+    }
+    
+    private func updateENSAddressDisplay(address: String) {
+        // Update the ENS card with the resolved address
+        let truncatedAddress = "\(address.prefix(6))...\(address.suffix(4))"
+        ensAddressLabel.text = truncatedAddress
+    }
+    
+    // MARK: - Price Conversion
+    private func loadCryptoPrices() {
+        let coinIds = PaymentChain.allCases.map { $0.coinGeckoId }.joined(separator: ",")
+        let url = "https://api.coingecko.com/api/v3/simple/price?ids=\(coinIds)&vs_currencies=usd"
+        
+        AF.request(url).responseJSON { [weak self] response in
+            guard let self = self,
+                  let data = response.data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                return
+            }
+            
+            DispatchQueue.main.async {
+                for chain in PaymentChain.allCases {
+                    if let priceData = json[chain.coinGeckoId] as? [String: Any],
+                       let price = priceData["usd"] as? Double {
+                        self.cryptoPrices[chain.symbol] = price
+                    }
+                }
+                self.updateConversionDisplay()
+            }
+        }
+    }
+    
+    private func updateCurrencyToggle() {
+        let title = isUSDInput ? "USD" : selectedChain.symbol
+        currencyToggleButton.setTitle(title, for: .normal)
+    }
+    
+    private func updateConversionDisplay() {
+        guard let amountText = amountTextField.text,
+              !amountText.isEmpty,
+              let amountValue = Double(amountText),
+              let cryptoPrice = cryptoPrices[selectedChain.symbol] else {
+            conversionLabel.text = ""
+            return
+        }
+        
+        if isUSDInput {
+            // Convert USD to crypto
+            cryptoAmount = amountValue / cryptoPrice
+            conversionLabel.text = "≈ \(String(format: "%.6f", cryptoAmount)) \(selectedChain.symbol)"
+        } else {
+            // Convert crypto to USD
+            usdAmount = amountValue * cryptoPrice
+            conversionLabel.text = "≈ $\(String(format: "%.2f", usdAmount)) USD"
+        }
     }
     
     // MARK: - Helper
@@ -492,6 +835,18 @@ extension PaymentRequestViewController: UITextFieldDelegate {
         textField.resignFirstResponder()
         return true
     }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        // Allow the change first
+        let newText = (textField.text as NSString?)?.replacingCharacters(in: range, with: string) ?? string
+        
+        // Update conversion display after a short delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.updateConversionDisplay()
+        }
+        
+        return true
+    }
 }
 
 // MARK: - PaymentChain Enum
@@ -525,6 +880,42 @@ enum PaymentChain: CaseIterable {
         case .litecoin: return "LTC"
         case .cardano: return "ADA"
         case .polkadot: return "DOT"
+        }
+    }
+    
+    var coinGeckoId: String {
+        switch self {
+        case .bitcoin: return "bitcoin"
+        case .solana: return "solana"
+        case .dogecoin: return "dogecoin"
+        case .xrp: return "ripple"
+        case .litecoin: return "litecoin"
+        case .cardano: return "cardano"
+        case .polkadot: return "polkadot"
+        }
+    }
+    
+    var systemIcon: UIImage? {
+        switch self {
+        case .bitcoin: return UIImage(systemName: "bitcoinsign.circle.fill")
+        case .solana: return UIImage(systemName: "sun.max.fill")
+        case .dogecoin: return UIImage(systemName: "dog.fill")
+        case .xrp: return UIImage(systemName: "waveform")
+        case .litecoin: return UIImage(systemName: "l.circle.fill")
+        case .cardano: return UIImage(systemName: "a.circle.fill")
+        case .polkadot: return UIImage(systemName: "p.circle.fill")
+        }
+    }
+    
+    var iconColor: UIColor {
+        switch self {
+        case .bitcoin: return UIColor(red: 1.0, green: 0.6, blue: 0.0, alpha: 1.0) // Orange
+        case .solana: return UIColor(red: 0.0, green: 0.8, blue: 1.0, alpha: 1.0) // Cyan
+        case .dogecoin: return UIColor(red: 1.0, green: 0.8, blue: 0.0, alpha: 1.0) // Yellow
+        case .xrp: return UIColor(red: 0.0, green: 0.0, blue: 0.8, alpha: 1.0) // Blue
+        case .litecoin: return UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0) // Gray
+        case .cardano: return UIColor(red: 0.0, green: 0.6, blue: 0.8, alpha: 1.0) // Teal
+        case .polkadot: return UIColor(red: 0.8, green: 0.0, blue: 0.8, alpha: 1.0) // Purple
         }
     }
 }

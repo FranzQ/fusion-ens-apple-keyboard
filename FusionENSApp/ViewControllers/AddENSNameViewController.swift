@@ -38,7 +38,7 @@ class AddENSNameViewController: UIViewController {
         // Modal View - positioned to appear above keyboard
         modalView.backgroundColor = ColorTheme.cardBackground
         modalView.layer.cornerRadius = 16
-        modalView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        modalView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner]
         modalView.layer.shadowColor = ColorTheme.primaryText.cgColor
         modalView.layer.shadowOffset = CGSize(width: 0, height: -2)
         modalView.layer.shadowRadius = 10
@@ -157,12 +157,25 @@ class AddENSNameViewController: UIViewController {
             return
         }
         
-        // For now, use a placeholder address - this will be resolved when generating payment requests
-        let placeholderAddress = "0x0000000000000000000000000000000000000000"
-        let newENSName = ENSName(name: ensName, address: placeholderAddress, dateAdded: Date())
+        // Show loading state
+        showLoadingState()
         
-        delegate?.didAddENSName(newENSName)
-        dismiss(animated: true)
+        // Resolve ENS name to get the actual address
+        resolveENSName(ensName) { [weak self] resolvedAddress in
+            DispatchQueue.main.async {
+                self?.hideLoadingState()
+                
+                if let address = resolvedAddress, !address.isEmpty {
+                    // ENS name resolved successfully
+                    let newENSName = ENSName(name: ensName, address: address, dateAdded: Date())
+                    self?.delegate?.didAddENSName(newENSName)
+                    self?.dismiss(animated: true)
+                } else {
+                    // ENS name could not be resolved
+                    self?.showAlert(title: "ENS Name Not Found", message: "The ENS name '\(ensName)' could not be resolved. Please check the name and try again.")
+                }
+            }
+        }
     }
     
     // MARK: - Validation
@@ -172,6 +185,47 @@ class AddENSNameViewController: UIViewController {
         let regex = try? NSRegularExpression(pattern: ensPattern)
         let range = NSRange(location: 0, length: name.utf16.count)
         return regex?.firstMatch(in: name, options: [], range: range) != nil
+    }
+    
+    // MARK: - ENS Resolution
+    private func resolveENSName(_ name: String, completion: @escaping (String?) -> Void) {
+        // Use the same API caller as the keyboard extension
+        APICaller.shared.resolveENSName(name: name) { resolvedAddress in
+            if !resolvedAddress.isEmpty {
+                completion(resolvedAddress)
+            } else {
+                completion(nil)
+            }
+        }
+    }
+    
+    // MARK: - Loading State
+    private func showLoadingState() {
+        saveButton.setTitle("Resolving...", for: .normal)
+        saveButton.isEnabled = false
+        saveButton.alpha = 0.7
+        
+        // Add loading indicator
+        let activityIndicator = UIActivityIndicatorView(style: .medium)
+        activityIndicator.color = .white
+        activityIndicator.startAnimating()
+        activityIndicator.tag = 999 // For easy removal
+        
+        saveButton.addSubview(activityIndicator)
+        activityIndicator.snp.makeConstraints { make in
+            make.center.equalToSuperview()
+        }
+    }
+    
+    private func hideLoadingState() {
+        saveButton.setTitle("Save", for: .normal)
+        saveButton.isEnabled = true
+        saveButton.alpha = 1.0
+        
+        // Remove loading indicator
+        if let activityIndicator = saveButton.viewWithTag(999) {
+            activityIndicator.removeFromSuperview()
+        }
     }
     
     // MARK: - Helper
