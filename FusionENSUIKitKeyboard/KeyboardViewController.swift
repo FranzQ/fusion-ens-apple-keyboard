@@ -246,14 +246,14 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                     ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="],
                     ["-", "\\", "|", "~", "<", ">", "€", "£", "¥", "•"],
                     ["123", ".", ",", "?", "!", "'", "⌫"],
-                    ["ABC", ".eth", "space", ":btc", "return"]
+                    ["123", ".eth", "space", ":btc", "return"]
                 ]
             } else {
                 rows = [
                     ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
                     ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""],
                     ["#+=", ".", ",", "?", "!", "'", "⌫"],
-                    ["ABC", ".eth", "space", ":btc", "return"]
+                    ["123", ".eth", "space", ":btc", "return"]
                 ]
             }
         } else {
@@ -439,6 +439,16 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             button.addGestureRecognizer(longPressGesture)
         }
         
+        // Add long press gesture for 123 button to switch keyboards
+        if title == "123" {
+            let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handle123LongPress(_:)))
+            longPressGesture.minimumPressDuration = 0.5
+            longPressGesture.cancelsTouchesInView = true
+            longPressGesture.delaysTouchesBegan = true
+            longPressGesture.delaysTouchesEnded = true
+            button.addGestureRecognizer(longPressGesture)
+        }
+        
         return button
     }
     
@@ -584,7 +594,9 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         case "return":
             // Check if we're in a browser address bar and handle auto-resolve
             print("🔍 Return key pressed - checking browser context...")
-            if isInBrowserAddressBar() {
+            let isBrowser = isInBrowserAddressBar()
+            print("🔍 Browser context result: \(isBrowser)")
+            if isBrowser {
                 print("🔍 Browser context detected - handling auto-resolve")
                 // Show loading indicator on return key
                 updateReturnKeyToLoading()
@@ -596,7 +608,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                 lastTypedWord = ""
             }
         case "123":
-            // Switch to numbers layout
+            // Switch to numbers layout OR next keyboard (long press)
             print("🔢 123 key pressed - switching to numbers layout")
             switchToNumbersLayout()
         case "ABC":
@@ -1334,6 +1346,19 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         detectAndResolveENSAroundCursor()
     }
     
+    @objc private func handle123LongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        
+        // Prevent normal 123 key action by consuming the gesture
+        gesture.cancelsTouchesInView = true
+        
+        // Add haptic feedback
+        triggerHapticFeedback()
+        
+        // Switch to next keyboard - required by Apple
+        advanceToNextInputMode()
+    }
+    
     // MARK: - Browser Address Bar Auto-Resolve
     
     private func isInBrowserAddressBar() -> Bool {
@@ -1381,21 +1406,24 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         let currentInput = extractInputFromAddressBar(fullText)
         print("🔍 isInBrowserAddressBar: currentInput = '\(currentInput)'")
         
-        // Only auto-resolve ENS text records (like name.eth:x) in browser context
-        // Regular ENS names should not trigger auto-resolve unless we have strong browser indicators
-        if currentInput.contains(":") && isENSName(currentInput.components(separatedBy: ":").first ?? "") {
-            // This is an ENS text record (like name.eth:x) - only resolve in browser context
-            // Require strong browser indicators: returnKeyType OR URL patterns in context
-            let textInputTraits = textDocumentProxy as? UITextInputTraits
-            let hasStrongBrowserIndicators = (textInputTraits?.returnKeyType == .go || 
-                                            textInputTraits?.returnKeyType == .search || 
-                                            textInputTraits?.returnKeyType == .done) ||
-                                           beforeText.contains("http://") || 
-                                           beforeText.contains("https://") || 
-                                           beforeText.contains("www.")
-            
-            if hasStrongBrowserIndicators {
+        // Check for ENS names (both plain ENS names and text records) in browser context
+        let textInputTraits = textDocumentProxy as? UITextInputTraits
+        let hasStrongBrowserIndicators = (textInputTraits?.returnKeyType == .go || 
+                                        textInputTraits?.returnKeyType == .search || 
+                                        textInputTraits?.returnKeyType == .done) ||
+                                       beforeText.contains("http://") || 
+                                       beforeText.contains("https://") || 
+                                       beforeText.contains("www.")
+        
+        if hasStrongBrowserIndicators {
+            // Check if it's an ENS text record (like name.eth:x)
+            if currentInput.contains(":") && isENSName(currentInput.components(separatedBy: ":").first ?? "") {
                 print("🔍 isInBrowserAddressBar: ENS text record with strong browser indicators - assuming browser")
+                return true
+            }
+            // Check if it's a plain ENS name (like name.eth)
+            else if isENSName(currentInput) {
+                print("🔍 isInBrowserAddressBar: Plain ENS name with strong browser indicators - assuming browser")
                 return true
             }
         }
