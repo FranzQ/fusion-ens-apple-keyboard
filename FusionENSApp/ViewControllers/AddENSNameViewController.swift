@@ -223,8 +223,9 @@ class AddENSNameViewController: UIViewController {
     
     // MARK: - Validation
     private func isValidENSName(_ name: String) -> Bool {
-        // Basic ENS name validation
-        let ensPattern = "^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](\\.eth)?(:[a-zA-Z0-9]+)?$"
+        // Enhanced ENS name validation supporting subdomains
+        // Supports: jessie.base.eth, uni.eth, name.eth:chain, etc.
+        let ensPattern = "^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](\\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*(\\.eth)?(:[a-zA-Z0-9]+)?$"
         let regex = try? NSRegularExpression(pattern: ensPattern)
         let range = NSRange(location: 0, length: name.utf16.count)
         return regex?.firstMatch(in: name, options: [], range: range) != nil

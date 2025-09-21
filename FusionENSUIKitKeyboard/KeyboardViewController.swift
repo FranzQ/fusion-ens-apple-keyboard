@@ -14,6 +14,21 @@ protocol KeyboardController {
     func triggerENSResolution()
 }
 
+// Contact model for keyboard suggestions
+struct Contact: Codable {
+    let name: String
+    let ensName: String
+    let address: String?
+    let avatarURL: String?
+    
+    init(name: String, ensName: String, profileImage: UIImage? = nil, address: String?, avatarURL: String? = nil) {
+        self.name = name
+        self.ensName = ensName
+        self.address = address
+        self.avatarURL = avatarURL
+    }
+}
+
 class KeyboardViewController: UIInputViewController, KeyboardController {
     
     // MARK: - Properties
@@ -73,10 +88,16 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
+        // Refresh ENS data to get latest contacts and saved names
+        loadENSUsageData()
+        
         // Only refresh if not already set up
         if !isKeyboardViewSetup {
             setupKeyboardView()
             isKeyboardViewSetup = true
+        } else {
+            // Update suggestions with latest data
+            updateSuggestionBar(with: getDefaultSuggestions())
         }
     }
     
@@ -246,14 +267,14 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                     ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="],
                     ["-", "\\", "|", "~", "<", ">", "€", "£", "¥", "•"],
                     ["123", ".", ",", "?", "!", "'", "⌫"],
-                    ["123", ".eth", "space", ":btc", "return"]
+                    ["ABC", ".eth", "space", ":btc", "return"]
                 ]
             } else {
                 rows = [
                     ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
                     ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""],
                     ["#+=", ".", ",", "?", "!", "'", "⌫"],
-                    ["123", ".eth", "space", ":btc", "return"]
+                    ["ABC", ".eth", "space", ":btc", "return"]
                 ]
             }
         } else {
@@ -298,8 +319,8 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                 widthConstraint.priority = UILayoutPriority(999) // High priority to ensure proper sizing
                 
                 // Use flexible constraints for vertical positioning
-                let topConstraint = button.topAnchor.constraint(greaterThanOrEqualTo: rowView.topAnchor, constant: 4)
-                let bottomConstraint = button.bottomAnchor.constraint(lessThanOrEqualTo: rowView.bottomAnchor, constant: -4)
+                let topConstraint = button.topAnchor.constraint(greaterThanOrEqualTo: rowView.topAnchor, constant: 6)
+                let bottomConstraint = button.bottomAnchor.constraint(lessThanOrEqualTo: rowView.bottomAnchor, constant: -6)
                 topConstraint.priority = UILayoutPriority(999)
                 bottomConstraint.priority = UILayoutPriority(999)
                 
@@ -324,16 +345,16 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             
             // Position the row
             if let previousRowView = previousRowView {
-                rowView.topAnchor.constraint(equalTo: previousRowView.bottomAnchor, constant: 8).isActive = true
+                rowView.topAnchor.constraint(equalTo: previousRowView.bottomAnchor, constant: 4).isActive = true
             } else {
                 // First row - position below suggestion bar
-                rowView.topAnchor.constraint(equalTo: suggestionBar!.bottomAnchor, constant: 8).isActive = true
+                rowView.topAnchor.constraint(equalTo: suggestionBar!.bottomAnchor, constant: 4).isActive = true
             }
             
             // Row constraints
             rowView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 3).isActive = true
             rowView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -3).isActive = true
-            rowView.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
+            rowView.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
             
             // Last row
             if rowIndex == rows.count - 1 {
@@ -410,9 +431,11 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         button.layer.shadowRadius = 0
         button.layer.masksToBounds = false
         
-        // Add touch feedback
-        button.addTarget(self, action: #selector(buttonTouchDown), for: .touchDown)
-        button.addTarget(self, action: #selector(buttonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
+        // Add touch feedback (except for special buttons that handle their own feedback)
+        if title != ":btc" && title != "space" {
+            button.addTarget(self, action: #selector(buttonTouchDown), for: .touchDown)
+            button.addTarget(self, action: #selector(buttonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
+        }
         
         
         // Handle button actions
@@ -422,6 +445,10 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             button.addTarget(self, action: #selector(btcButtonTouchDown), for: .touchDown)
             button.addTarget(self, action: #selector(btcButtonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
             print("🔶 :btc button targets added successfully")
+        } else if title == "space" {
+            // Special handling for space bar with long press
+            button.addTarget(self, action: #selector(spaceButtonTouchDown), for: .touchDown)
+            button.addTarget(self, action: #selector(spaceButtonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
         } else {
             // Standard button handling
             button.addAction(UIAction { _ in
@@ -491,7 +518,29 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
     }
     
     @objc private func handleReturnPress() {
-        textDocumentProxy.insertText("\n")
+textDocumentProxy.insertText("\n")
+    }
+    
+    // MARK: - Space Bar Touch Handling
+    @objc private func spaceButtonTouchDown(_ sender: UIButton) {
+        // Visual feedback for space bar press
+        if traitCollection.userInterfaceStyle == .dark {
+            sender.backgroundColor = UIColor(red: 0.30, green: 0.30, blue: 0.32, alpha: 1.0) // Lighter dark mode
+        } else {
+            sender.backgroundColor = UIColor(red: 0.90, green: 0.90, blue: 0.90, alpha: 1.0) // Darker light mode
+        }
+    }
+    
+    @objc private func spaceButtonTouchUp(_ sender: UIButton) {
+        // Restore original appearance
+        if traitCollection.userInterfaceStyle == .dark {
+            sender.backgroundColor = UIColor(red: 0.20, green: 0.20, blue: 0.22, alpha: 1.0) // Dark mode
+        } else {
+            sender.backgroundColor = UIColor.white // Light mode
+        }
+        
+        // Handle space key press
+        handleKeyPress("space")
     }
     
     @objc private func buttonTouchDown(_ sender: UIButton) {
@@ -564,11 +613,9 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                 handleSelectedText(selectedText)
             } else {
                 print("❌ Not a valid ENS format")
-                triggerErrorHaptic()
             }
         } else {
             print("❌ No text selected")
-            triggerErrorHaptic()
         }
     }
     
@@ -748,12 +795,10 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         }
         
         // If no ENS domain found or cursor not at the end, show error
-        triggerErrorHaptic()
     }
     
     private func replaceENSInText(_ ensDomain: String) {
         // Trigger haptic feedback when starting resolution
-        triggerHapticFeedback()
         
         APICaller.shared.resolveENSName(name: ensDomain) { mappedAddress in
             DispatchQueue.main.async { [weak self] in
@@ -761,11 +806,12 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                     // Smart approach: find the ENS domain position and replace it properly
                     self?.smartReplaceENS(ensDomain, with: mappedAddress)
                     
+                    // Add ENS name to suggestions for future use
+                    self?.addENSNameToSuggestions(ensDomain)
+                    
                     // Trigger success haptic feedback
-                    self?.triggerSuccessHaptic()
                 } else {
                     // Trigger error haptic feedback
-                    self?.triggerErrorHaptic()
                 }
             }
         }
@@ -845,7 +891,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
     private func handleSelectedText(_ selectedText: String) {
         if HelperClass.checkFormat(selectedText) {
             // Trigger haptic feedback when starting resolution
-            triggerHapticFeedback()
             
             APICaller.shared.resolveENSName(name: selectedText) { mappedAddress in
                 DispatchQueue.main.async { [weak self] in
@@ -860,17 +905,17 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                             self?.replaceTextInDocument(selectedText, with: mappedAddress)
                         }
                         
+                        // Add ENS name to suggestions for future use
+                        self?.addENSNameToSuggestions(selectedText)
+                        
                         // Trigger success haptic feedback
-                        self?.triggerSuccessHaptic()
                     } else {
                         // Trigger error haptic feedback
-                        self?.triggerErrorHaptic()
                     }
                 }
             }
         } else {
             // Trigger error haptic feedback for invalid format
-            triggerErrorHaptic()
         }
     }
     
@@ -883,22 +928,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         textDocumentProxy.insertText(replacementText)
     }
     
-    // MARK: - Haptic Feedback
-    
-    private func triggerHapticFeedback() {
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
-    }
-    
-    private func triggerSuccessHaptic() {
-        let notificationFeedback = UINotificationFeedbackGenerator()
-        notificationFeedback.notificationOccurred(.success)
-    }
-    
-    private func triggerErrorHaptic() {
-        let notificationFeedback = UINotificationFeedbackGenerator()
-        notificationFeedback.notificationOccurred(.error)
-    }
     
     // MARK: - Selection Monitoring
     
@@ -968,8 +997,60 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
     // MARK: - ENS Usage Tracking
     
     private func loadENSUsageData() {
-        // Use default suggestions to avoid I/O operations
-        mostTypedENS = defaultENSSuggestions
+        // Load saved ENS names from shared UserDefaults
+        if let savedENSNames = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.array(forKey: "savedENSNames") as? [String] {
+            mostTypedENS = savedENSNames
+        } else {
+            // Use default suggestions if no saved names
+            mostTypedENS = defaultENSSuggestions
+        }
+        
+        // Also load ENS names from contacts
+        loadContactsENSNames()
+    }
+    
+    private func loadContactsENSNames() {
+        // Load contacts and extract their ENS names
+        if let data = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.data(forKey: "savedContacts"),
+           let contacts = try? JSONDecoder().decode([Contact].self, from: data) {
+            let contactENSNames = contacts.map { $0.ensName }
+            
+            // Add contact ENS names to mostTypedENS if not already present
+            for ensName in contactENSNames {
+                if !mostTypedENS.contains(ensName) {
+                    mostTypedENS.append(ensName)
+                }
+            }
+            
+            // Keep only top 10 most recent
+            if mostTypedENS.count > 10 {
+                mostTypedENS = Array(mostTypedENS.prefix(10))
+            }
+        }
+    }
+    
+    private func saveENSNames() {
+        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.set(mostTypedENS, forKey: "savedENSNames")
+        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.synchronize()
+    }
+    
+    private func addENSNameToSuggestions(_ ensName: String) {
+        // Remove if already exists to avoid duplicates
+        mostTypedENS.removeAll { $0 == ensName }
+        
+        // Add to beginning of list
+        mostTypedENS.insert(ensName, at: 0)
+        
+        // Keep only top 10 most recent
+        if mostTypedENS.count > 10 {
+            mostTypedENS = Array(mostTypedENS.prefix(10))
+        }
+        
+        // Save to shared storage
+        saveENSNames()
+        
+        // Update suggestion bar
+        updateSuggestionBar(with: getDefaultSuggestions())
     }
     
     private func getDefaultSuggestions() -> [String] {
@@ -985,8 +1066,11 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         let lowercaseInput = input.lowercased()
         var suggestions: [String] = []
         
-        // Find domains that start with the input
-        for domain in popularENSDomains {
+        // Combine user's saved ENS names with popular domains for suggestions
+        let allDomains = mostTypedENS + popularENSDomains
+        
+        // Find domains that start with the input (prioritize user's saved names)
+        for domain in allDomains {
             let domainName = String(domain.dropLast(4)) // Remove ".eth"
             if domainName.lowercased().hasPrefix(lowercaseInput) {
                 suggestions.append(domain)
@@ -995,7 +1079,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         
         // If no exact prefix matches, find domains that contain the input
         if suggestions.isEmpty {
-            for domain in popularENSDomains {
+            for domain in allDomains {
                 let domainName = String(domain.dropLast(4)) // Remove ".eth"
                 if domainName.lowercased().contains(lowercaseInput) {
                     suggestions.append(domain)
@@ -1003,8 +1087,16 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             }
         }
         
+        // Remove duplicates while preserving order (user's names first)
+        var uniqueSuggestions: [String] = []
+        for suggestion in suggestions {
+            if !uniqueSuggestions.contains(suggestion) {
+                uniqueSuggestions.append(suggestion)
+            }
+        }
+        
         // Limit to top 3 suggestions
-        return Array(suggestions.prefix(3))
+        return Array(uniqueSuggestions.prefix(3))
     }
     
     private func updateSuggestionBar(with suggestions: [String]) {
@@ -1169,7 +1261,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         
         // Add haptic feedback
         print("🔶 Triggering haptic feedback")
-        triggerHapticFeedback()
         
         let cryptoOptions = [
             // Most popular blockchain networks
@@ -1340,7 +1431,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         gesture.cancelsTouchesInView = true
         
         // Add haptic feedback
-        triggerHapticFeedback()
         
         // Detect and resolve ENS domain around cursor
         detectAndResolveENSAroundCursor()
@@ -1353,7 +1443,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         gesture.cancelsTouchesInView = true
         
         // Add haptic feedback
-        triggerHapticFeedback()
         
         // Switch to next keyboard - required by Apple
         advanceToNextInputMode()
@@ -1459,7 +1548,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                             // Clear the address bar and insert the resolved URL
                             print("🔍 handleReturnKeyInAddressBar: Clearing address bar and inserting '\(resolvedURL)'")
                             self.clearAddressBarAndInsertURL(resolvedURL)
-                            self.triggerSuccessHaptic()
                             
                             // Restore return key and trigger navigation
                             self.updateReturnKeyToNormal()
@@ -1472,7 +1560,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                             print("🔍 handleReturnKeyInAddressBar: No resolution - proceeding with normal return")
                             self.updateReturnKeyToNormal()
                             self.textDocumentProxy.insertText("\n")
-                            self.triggerErrorHaptic()
                         }
                     }
                 }
@@ -1487,7 +1574,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                 if let resolvedURL = resolvedURL {
                     print("🔍 handleReturnKeyInAddressBar: Resolved to '\(resolvedURL)'")
                     clearAddressBarAndInsertURL(resolvedURL)
-                    triggerSuccessHaptic()
                     
                     // Trigger the return key to navigate
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -1508,7 +1594,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                         // Clear the address bar and insert the resolved URL
                         print("🔍 handleReturnKeyInAddressBar: Clearing address bar and inserting '\(resolvedURL)'")
                         self.clearAddressBarAndInsertURL(resolvedURL)
-                        self.triggerSuccessHaptic()
                         
                         // Restore return key and trigger navigation
                         self.updateReturnKeyToNormal()
@@ -1521,7 +1606,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                         print("🔍 handleReturnKeyInAddressBar: No resolution - proceeding with normal return")
                         self.updateReturnKeyToNormal()
                         self.textDocumentProxy.insertText("\n")
-                        self.triggerErrorHaptic()
                     }
                 }
             }
@@ -1648,6 +1732,9 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             
             DispatchQueue.main.async {
                 if !resolvedAddress.isEmpty {
+                    // Add ENS name to suggestions for future use
+                    self.addENSNameToSuggestions(ensName)
+                    
                     // Resolve the address to an explorer URL
                     let explorerURL = self.getExplorerURL(for: resolvedAddress)
                     completion(explorerURL)

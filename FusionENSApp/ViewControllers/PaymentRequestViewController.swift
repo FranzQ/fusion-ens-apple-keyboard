@@ -608,7 +608,9 @@ class PaymentRequestViewController: UIViewController {
             case .bitcoin:
                 return "trust://send?coin=0&address=\(resolvedAddress)&amount=\(amount)"
             case .ethereum:
-                return "trust://send?coin=60&address=\(resolvedAddress)&amount=\(amount)"
+                // For Ethereum with Trust Wallet, use ENS name instead of resolved address
+                let ethereumAddress = ensName.name
+                return "trust://send?coin=60&address=\(ethereumAddress)&amount=\(amount)"
             case .solana:
                 return "trust://send?coin=501&address=\(resolvedAddress)&amount=\(amount)"
             case .dogecoin:
@@ -875,12 +877,6 @@ class PaymentRequestViewController: UIViewController {
         
         let alert = UIAlertController(title: "Select ENS Name", message: "Choose which ENS name to use for this payment request", preferredStyle: .actionSheet)
         
-        // Add "Show Setup Instructions" at the top
-        let setupAction = UIAlertAction(title: "Show Setup Instructions", style: .default) { _ in
-            self.showSetupInstructions()
-        }
-        alert.addAction(setupAction)
-        
         // Add action for each saved ENS name
         for ensName in savedENSNames {
             let action = UIAlertAction(title: ensName.name, style: .default) { _ in
@@ -920,6 +916,7 @@ class PaymentRequestViewController: UIViewController {
     
     private func showSetupInstructions() {
         let setupVC = GettingStartedVC()
+        setupVC.isFromSettings = true
         setupVC.modalPresentationStyle = .pageSheet
         present(setupVC, animated: true)
     }

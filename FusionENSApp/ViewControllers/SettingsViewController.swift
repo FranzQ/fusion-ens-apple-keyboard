@@ -11,10 +11,6 @@ class SettingsViewController: UIViewController {
     
     // MARK: - UI Components
     private let contentView = UIView()
-    private let hapticCardView = UIView()
-    private let hapticTitleLabel = UILabel()
-    private let hapticDescriptionLabel = UILabel()
-    private let hapticToggle = UISwitch()
     
     private let setupCardView = UIView()
     private let setupTitleLabel = UILabel()
@@ -33,18 +29,7 @@ class SettingsViewController: UIViewController {
     private let settingsNavButton = UIButton(type: .system)
     
     // MARK: - Properties
-    private let hapticFeedbackKey = "hapticFeedbackEnabled"
     private let walletPreferenceKey = "useTrustWalletScheme"
-    
-    private var isHapticFeedbackEnabled: Bool {
-        get {
-            return UserDefaults(suiteName: "group.com.fusionens.keyboard")?.bool(forKey: hapticFeedbackKey) ?? true
-        }
-        set {
-            UserDefaults(suiteName: "group.com.fusionens.keyboard")?.set(newValue, forKey: hapticFeedbackKey)
-            UserDefaults(suiteName: "group.com.fusionens.keyboard")?.synchronize()
-        }
-    }
     
     private var useTrustWalletScheme: Bool {
         get {
@@ -105,41 +90,10 @@ class SettingsViewController: UIViewController {
         contentView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(contentView)
         
-        setupHapticCard()
-        setupWalletCard()
         setupSetupInstructionsCard()
+        setupWalletCard()
     }
     
-    private func setupHapticCard() {
-        // Haptic Card
-        hapticCardView.backgroundColor = ColorTheme.cardBackground
-        hapticCardView.layer.cornerRadius = 12
-        hapticCardView.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(hapticCardView)
-        
-        // Haptic Title
-        hapticTitleLabel.text = "Haptic Feedback"
-        hapticTitleLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-        hapticTitleLabel.textColor = ColorTheme.primaryText
-        hapticTitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        hapticCardView.addSubview(hapticTitleLabel)
-        
-        // Haptic Description
-        hapticDescriptionLabel.text = "Enable haptic feedback when names are resolved"
-        hapticDescriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
-        hapticDescriptionLabel.textColor = ColorTheme.secondaryText
-        hapticDescriptionLabel.numberOfLines = 0
-        hapticDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
-        hapticCardView.addSubview(hapticDescriptionLabel)
-        
-        // Haptic Toggle
-        hapticToggle.onTintColor = ColorTheme.accent
-        hapticToggle.backgroundColor = ColorTheme.accentSecondary
-        hapticToggle.layer.cornerRadius = 16
-        hapticToggle.addTarget(self, action: #selector(hapticToggleChanged), for: .valueChanged)
-        hapticToggle.translatesAutoresizingMaskIntoConstraints = false
-        hapticCardView.addSubview(hapticToggle)
-    }
     
     private func setupWalletCard() {
         // Wallet Card
@@ -251,48 +205,8 @@ class SettingsViewController: UIViewController {
             contentView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             contentView.bottomAnchor.constraint(equalTo: bottomNavView.topAnchor),
             
-            // Haptic Card Constraints
-            hapticCardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
-            hapticCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            hapticCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            hapticCardView.heightAnchor.constraint(equalToConstant: 100),
-            
-            hapticTitleLabel.topAnchor.constraint(equalTo: hapticCardView.topAnchor, constant: 16),
-            hapticTitleLabel.leadingAnchor.constraint(equalTo: hapticCardView.leadingAnchor, constant: 16),
-            hapticTitleLabel.trailingAnchor.constraint(equalTo: hapticToggle.leadingAnchor, constant: -16),
-            
-            hapticToggle.topAnchor.constraint(equalTo: hapticCardView.topAnchor, constant: 16),
-            hapticToggle.trailingAnchor.constraint(equalTo: hapticCardView.trailingAnchor, constant: -16),
-            hapticToggle.widthAnchor.constraint(equalToConstant: 51),
-            hapticToggle.heightAnchor.constraint(equalToConstant: 31),
-            
-            hapticDescriptionLabel.topAnchor.constraint(equalTo: hapticTitleLabel.bottomAnchor, constant: 8),
-            hapticDescriptionLabel.leadingAnchor.constraint(equalTo: hapticCardView.leadingAnchor, constant: 16),
-            hapticDescriptionLabel.trailingAnchor.constraint(equalTo: hapticCardView.trailingAnchor, constant: -16),
-            hapticDescriptionLabel.bottomAnchor.constraint(equalTo: hapticCardView.bottomAnchor, constant: -16),
-            
-            // Wallet Card Constraints
-            walletCardView.topAnchor.constraint(equalTo: hapticCardView.bottomAnchor, constant: 16),
-            walletCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            walletCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            walletCardView.heightAnchor.constraint(equalToConstant: 120),
-            
-            walletTitleLabel.topAnchor.constraint(equalTo: walletCardView.topAnchor, constant: 16),
-            walletTitleLabel.leadingAnchor.constraint(equalTo: walletCardView.leadingAnchor, constant: 16),
-            walletTitleLabel.trailingAnchor.constraint(equalTo: walletToggle.leadingAnchor, constant: -16),
-            
-            walletToggle.topAnchor.constraint(equalTo: walletCardView.topAnchor, constant: 16),
-            walletToggle.trailingAnchor.constraint(equalTo: walletCardView.trailingAnchor, constant: -16),
-            walletToggle.widthAnchor.constraint(equalToConstant: 51),
-            walletToggle.heightAnchor.constraint(equalToConstant: 31),
-            
-            walletDescriptionLabel.topAnchor.constraint(equalTo: walletTitleLabel.bottomAnchor, constant: 8),
-            walletDescriptionLabel.leadingAnchor.constraint(equalTo: walletCardView.leadingAnchor, constant: 16),
-            walletDescriptionLabel.trailingAnchor.constraint(equalTo: walletCardView.trailingAnchor, constant: -16),
-            walletDescriptionLabel.bottomAnchor.constraint(equalTo: walletCardView.bottomAnchor, constant: -16),
-            
             // Setup Instructions Card Constraints
-            setupCardView.topAnchor.constraint(equalTo: walletCardView.bottomAnchor, constant: 16),
+            setupCardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
             setupCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             setupCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             setupCardView.heightAnchor.constraint(equalToConstant: 100),
@@ -309,7 +223,27 @@ class SettingsViewController: UIViewController {
             setupDescriptionLabel.topAnchor.constraint(equalTo: setupTitleLabel.bottomAnchor, constant: 8),
             setupDescriptionLabel.leadingAnchor.constraint(equalTo: setupCardView.leadingAnchor, constant: 16),
             setupDescriptionLabel.trailingAnchor.constraint(equalTo: setupCardView.trailingAnchor, constant: -16),
-            setupDescriptionLabel.bottomAnchor.constraint(equalTo: setupCardView.bottomAnchor, constant: -16)
+            setupDescriptionLabel.bottomAnchor.constraint(equalTo: setupCardView.bottomAnchor, constant: -16),
+            
+            // Wallet Card Constraints
+            walletCardView.topAnchor.constraint(equalTo: setupCardView.bottomAnchor, constant: 16),
+            walletCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            walletCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            walletCardView.heightAnchor.constraint(equalToConstant: 120),
+            
+            walletTitleLabel.topAnchor.constraint(equalTo: walletCardView.topAnchor, constant: 16),
+            walletTitleLabel.leadingAnchor.constraint(equalTo: walletCardView.leadingAnchor, constant: 16),
+            walletTitleLabel.trailingAnchor.constraint(equalTo: walletToggle.leadingAnchor, constant: -16),
+            
+            walletToggle.topAnchor.constraint(equalTo: walletCardView.topAnchor, constant: 16),
+            walletToggle.trailingAnchor.constraint(equalTo: walletCardView.trailingAnchor, constant: -16),
+            walletToggle.widthAnchor.constraint(equalToConstant: 51),
+            walletToggle.heightAnchor.constraint(equalToConstant: 31),
+            
+            walletDescriptionLabel.topAnchor.constraint(equalTo: walletTitleLabel.bottomAnchor, constant: 8),
+            walletDescriptionLabel.leadingAnchor.constraint(equalTo: walletCardView.leadingAnchor, constant: 16),
+            walletDescriptionLabel.trailingAnchor.constraint(equalTo: walletCardView.trailingAnchor, constant: -16),
+            walletDescriptionLabel.bottomAnchor.constraint(equalTo: walletCardView.bottomAnchor, constant: -16)
         ])
         
         // Bottom Navigation Constraints
@@ -368,15 +302,6 @@ class SettingsViewController: UIViewController {
     // MARK: - Actions
     
     
-    @objc private func hapticToggleChanged() {
-        isHapticFeedbackEnabled = hapticToggle.isOn
-        
-        // Provide immediate feedback
-        if hapticToggle.isOn {
-            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-            impactFeedback.impactOccurred()
-        }
-    }
     
     @objc private func walletToggleChanged() {
         useTrustWalletScheme = walletToggle.isOn
@@ -411,6 +336,7 @@ class SettingsViewController: UIViewController {
     @objc private func setupCardTapped() {
         // Navigate to onboarding flow
         let vc = GettingStartedVC()
+        vc.isFromSettings = true
         let navController = UINavigationController(rootViewController: vc)
         navController.modalPresentationStyle = .pageSheet
         navController.modalTransitionStyle = .coverVertical
@@ -419,7 +345,6 @@ class SettingsViewController: UIViewController {
     
     // MARK: - Helper Methods
     private func loadSettings() {
-        hapticToggle.isOn = isHapticFeedbackEnabled
         walletToggle.isOn = useTrustWalletScheme
     }
 }

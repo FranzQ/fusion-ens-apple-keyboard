@@ -46,6 +46,7 @@
 		NEW0012A490A3600A0D0C4 /* ENSManagerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0011A490A3600A0D0C4 /* ENSManagerViewController.swift */; };
 		NEW0022A490A3600A0D0C4 /* ENSNameTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0021A490A3600A0D0C4 /* ENSNameTableViewCell.swift */; };
 		NEW0032A490A3600A0D0C4 /* AddENSNameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0031A490A3600A0D0C4 /* AddENSNameViewController.swift */; };
+		NEW0033A490A3600A0D0C4 /* AddContactViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0034A490A3600A0D0C4 /* AddContactViewController.swift */; };
 		NEW0042A490A3600A0D0C4 /* PaymentRequestViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0041A490A3600A0D0C4 /* PaymentRequestViewController.swift */; };
 		NEW0052A490A3600A0D0C4 /* QRSuccessPopupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0051A490A3600A0D0C4 /* QRSuccessPopupViewController.swift */; };
 		NEW0062A490A3600A0D0C4 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0061A490A3600A0D0C4 /* SettingsViewController.swift */; };
@@ -130,6 +131,7 @@
 		NEW0011A490A3600A0D0C4 /* ENSManagerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ENSManagerViewController.swift; sourceTree = "<group>"; };
 		NEW0021A490A3600A0D0C4 /* ENSNameTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ENSNameTableViewCell.swift; sourceTree = "<group>"; };
 		NEW0031A490A3600A0D0C4 /* AddENSNameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddENSNameViewController.swift; sourceTree = "<group>"; };
+		NEW0034A490A3600A0D0C4 /* AddContactViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddContactViewController.swift; sourceTree = "<group>"; };
 		NEW0041A490A3600A0D0C4 /* PaymentRequestViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentRequestViewController.swift; sourceTree = "<group>"; };
 		NEW0051A490A3600A0D0C4 /* QRSuccessPopupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRSuccessPopupViewController.swift; sourceTree = "<group>"; };
 		NEW0061A490A3600A0D0C4 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
@@ -291,6 +293,7 @@
 				NEW0011A490A3600A0D0C4 /* ENSManagerViewController.swift */,
 				NEW0021A490A3600A0D0C4 /* ENSNameTableViewCell.swift */,
 				NEW0031A490A3600A0D0C4 /* AddENSNameViewController.swift */,
+				NEW0034A490A3600A0D0C4 /* AddContactViewController.swift */,
 				NEW0041A490A3600A0D0C4 /* PaymentRequestViewController.swift */,
 				NEW0051A490A3600A0D0C4 /* QRSuccessPopupViewController.swift */,
 				NEW0061A490A3600A0D0C4 /* SettingsViewController.swift */,
@@ -478,6 +481,7 @@
 				NEW0012A490A3600A0D0C4 /* ENSManagerViewController.swift in Sources */,
 				NEW0022A490A3600A0D0C4 /* ENSNameTableViewCell.swift in Sources */,
 				NEW0032A490A3600A0D0C4 /* AddENSNameViewController.swift in Sources */,
+				NEW0033A490A3600A0D0C4 /* AddContactViewController.swift in Sources */,
 				NEW0042A490A3600A0D0C4 /* PaymentRequestViewController.swift in Sources */,
 				NEW0052A490A3600A0D0C4 /* QRSuccessPopupViewController.swift in Sources */,
 				NEW0062A490A3600A0D0C4 /* SettingsViewController.swift in Sources */,

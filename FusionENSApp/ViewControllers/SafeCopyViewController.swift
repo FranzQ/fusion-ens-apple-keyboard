@@ -32,6 +32,32 @@ class SafeCopyViewController: UIViewController {
     // MARK: - Properties
     private var resolvedAddress: String = ""
     
+    private var isHapticFeedbackEnabled: Bool {
+        return UserDefaults(suiteName: "group.com.fusionens.keyboard")?.bool(forKey: "hapticFeedbackEnabled") ?? true
+    }
+    
+    private func addENSNameToSuggestions(_ ensName: String) {
+        // Load current saved names
+        var savedENSNames = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.array(forKey: "savedENSNames") as? [String] ?? []
+        
+        // Remove if already exists to avoid duplicates
+        savedENSNames.removeAll { $0 == ensName }
+        
+        // Add to beginning of list
+        savedENSNames.insert(ensName, at: 0)
+        
+        // Keep only top 10 most recent
+        if savedENSNames.count > 10 {
+            savedENSNames = Array(savedENSNames.prefix(10))
+        }
+        
+        // Save to shared storage
+        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.set(savedENSNames, forKey: "savedENSNames")
+        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.synchronize()
+        
+        print("📝 Added '\(ensName)' to ENS suggestions from SafeCopy")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -262,8 +288,10 @@ class SafeCopyViewController: UIViewController {
         showCopySuccess()
         
         // Haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        if isHapticFeedbackEnabled {
+            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+            impactFeedback.impactOccurred()
+        }
     }
     
     // MARK: - Helper Methods
@@ -277,6 +305,9 @@ class SafeCopyViewController: UIViewController {
             resolvedAddress = address
             displayResolvedAddress(address, for: ensName)
             resultSectionView.isHidden = false
+            
+            // Add ENS name to keyboard suggestions
+            addENSNameToSuggestions(ensName)
             
             // Scroll to result
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

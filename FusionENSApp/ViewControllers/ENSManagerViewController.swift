@@ -56,6 +56,7 @@ class ENSManagerViewController: UIViewController {
         searchController.searchBar.searchTextField.backgroundColor = ColorTheme.searchBarBackground
         searchController.searchBar.searchTextField.textColor = ColorTheme.primaryText
         navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = true
         definesPresentationContext = true
         
         // Table View

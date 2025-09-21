@@ -29,24 +29,13 @@ class APICaller {
             // Use Fusion API for text records (.x, .url, .github, etc.)
             resolveWithFusionAPI(name: name, completion: completion)
         } else {
-            // Check if this is an ETH subdomain (.base.eth, .uni.eth, etc.)
-            let isEthSubdomain = name.hasSuffix(".eth") && name.contains(".")
-            
-            if isEthSubdomain {
-                // For ETH subdomains (.base.eth, .uni.eth, etc.), use ENS Ideas API only
-                resolveWithENSIdeasAPI(name: name, completion: completion)
-            } else if chain == "eth" {
-                // For .eth domains, use Fusion API
-                resolveWithFusionAPI(name: name, completion: completion)
-            } else {
-                // For multi-chain domains (.btc, .sol, .doge, etc.), use Fusion API first
-                resolveWithFusionAPI(name: name) { address in
-                    if !address.isEmpty {
-                        completion(address)
-                    } else {
-                        // Fallback to ENS Ideas API
-                        self.resolveWithENSIdeasAPI(name: name, completion: completion)
-                    }
+            // Use Fusion API for all ENS names (including subdomains)
+            resolveWithFusionAPI(name: name) { address in
+                if !address.isEmpty {
+                    completion(address)
+                } else {
+                    // Fallback to ENS Ideas API for compatibility
+                    self.resolveWithENSIdeasAPI(name: name, completion: completion)
                 }
             }
         }

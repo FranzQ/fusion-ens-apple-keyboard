@@ -9,6 +9,9 @@ import UIKit
 
 class GettingStartedVC: UIViewController {
     
+    // MARK: - Properties
+    var isFromSettings: Bool = false
+    
     // MARK: - UI Components
     private let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -17,6 +20,7 @@ class GettingStartedVC: UIViewController {
     private let headerView = UIView()
     private let titleLabel = UILabel()
     private let helpButton = UIButton(type: .system)
+    private let closeButton = UIButton(type: .system)
     
     // Welcome Section
     private let welcomeView = UIView()
@@ -81,15 +85,29 @@ class GettingStartedVC: UIViewController {
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         headerView.addSubview(titleLabel)
         
-        // Help Button
-        helpButton.setTitle("?", for: .normal)
-        helpButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-        helpButton.setTitleColor(UIColor.label, for: .normal)
-        helpButton.backgroundColor = UIColor.secondarySystemBackground
-        helpButton.layer.cornerRadius = 15
-        helpButton.translatesAutoresizingMaskIntoConstraints = false
-        helpButton.addTarget(self, action: #selector(helpButtonTapped), for: .touchUpInside)
-        headerView.addSubview(helpButton)
+        // Help Button (only show if not from settings)
+        if !isFromSettings {
+            helpButton.setTitle("?", for: .normal)
+            helpButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+            helpButton.setTitleColor(UIColor.label, for: .normal)
+            helpButton.backgroundColor = UIColor.secondarySystemBackground
+            helpButton.layer.cornerRadius = 15
+            helpButton.translatesAutoresizingMaskIntoConstraints = false
+            helpButton.addTarget(self, action: #selector(helpButtonTapped), for: .touchUpInside)
+            headerView.addSubview(helpButton)
+        }
+        
+        // Close Button (only show if from settings)
+        if isFromSettings {
+            closeButton.setTitle("✕", for: .normal)
+            closeButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+            closeButton.setTitleColor(UIColor.label, for: .normal)
+            closeButton.backgroundColor = UIColor.secondarySystemBackground
+            closeButton.layer.cornerRadius = 15
+            closeButton.translatesAutoresizingMaskIntoConstraints = false
+            closeButton.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
+            headerView.addSubview(closeButton)
+        }
     }
     
     private func setupWelcomeSection() {
@@ -280,7 +298,13 @@ class GettingStartedVC: UIViewController {
     
     
     private func setupDoneButton() {
-        doneButton.setTitle("Done", for: .normal)
+        // Set button title based on context
+        if isFromSettings {
+            doneButton.setTitle("Done", for: .normal)
+        } else {
+            doneButton.setTitle("Continue", for: .normal)
+        }
+        
         doneButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
         doneButton.backgroundColor = UIColor.systemBlue
         doneButton.setTitleColor(.white, for: .normal)
@@ -306,20 +330,34 @@ class GettingStartedVC: UIViewController {
         ])
         
         // Header Constraints
-        NSLayoutConstraint.activate([
+        var headerConstraints: [NSLayoutConstraint] = [
             headerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
             headerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             headerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             headerView.heightAnchor.constraint(equalToConstant: 50),
             
             titleLabel.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
-            titleLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
-            
-            helpButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
-            helpButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
-            helpButton.widthAnchor.constraint(equalToConstant: 30),
-            helpButton.heightAnchor.constraint(equalToConstant: 30)
-        ])
+            titleLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor)
+        ]
+        
+        // Add constraints for help button or close button based on context
+        if !isFromSettings {
+            headerConstraints.append(contentsOf: [
+                helpButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
+                helpButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+                helpButton.widthAnchor.constraint(equalToConstant: 30),
+                helpButton.heightAnchor.constraint(equalToConstant: 30)
+            ])
+        } else {
+            headerConstraints.append(contentsOf: [
+                closeButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
+                closeButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+                closeButton.widthAnchor.constraint(equalToConstant: 30),
+                closeButton.heightAnchor.constraint(equalToConstant: 30)
+            ])
+        }
+        
+        NSLayoutConstraint.activate(headerConstraints)
         
         // Welcome Section Constraints
         NSLayoutConstraint.activate([
@@ -430,6 +468,18 @@ class GettingStartedVC: UIViewController {
     }
     
     @objc private func doneButtonTapped() {
+        if isFromSettings {
+            // Close the popover/modal when from settings
+            dismiss(animated: true, completion: nil)
+        } else {
+            // Navigate to keyboard settings when from initial onboarding
+            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(settingsURL)
+            }
+        }
+    }
+    
+    @objc private func closeButtonTapped() {
         // Close the popover/modal
         dismiss(animated: true, completion: nil)
     }

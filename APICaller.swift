@@ -7,6 +7,7 @@
 
 import Foundation
 import Alamofire
+import UIKit
 
 /// A shared API client for resolving ENS (Ethereum Name Service) names to addresses
 /// Supports multiple chains and text records through Fusion API and ENS Ideas API
@@ -148,5 +149,79 @@ public class APICaller {
     // Keep the old method name for backward compatibility
     public func resolveFusionENSName(name: String, completion: @escaping (String) -> Void) {
         resolveENSName(name: name, completion: completion)
+    }
+    
+    /// Fetches ENS metadata including avatar URL
+    /// - Parameters:
+    ///   - name: The ENS name to get metadata for
+    ///   - completion: Completion handler that returns metadata dictionary
+    public func fetchENSMetadata(name: String, completion: @escaping ([String: Any]) -> Void) {
+        guard let url = URL(string: "https://api.ensideas.com/ens/metadata/\(name)") else {
+            completion([:])
+            return
+        }
+        
+        AF.request(url).response { response in
+            guard let data = response.data,
+                  let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+            else {
+                completion([:])
+                return
+            }
+            
+            completion(json)
+        }
+    }
+    
+    /// Fetches avatar image from URL with caching
+    /// - Parameters:
+    ///   - url: The avatar URL
+    ///   - completion: Completion handler that returns the UIImage
+    public func fetchAvatar(from url: String, completion: @escaping (UIImage?) -> Void) {
+        // Check cache first
+        if let cachedImage = ImageCache.shared.image(for: url) {
+            completion(cachedImage)
+            return
+        }
+        
+        guard let imageURL = URL(string: url) else {
+            completion(nil)
+            return
+        }
+        
+        AF.request(imageURL).responseData { response in
+            guard let data = response.data,
+                  let image = UIImage(data: data) else {
+                completion(nil)
+                return
+            }
+            
+            // Cache the image
+            ImageCache.shared.setImage(image, for: url)
+            completion(image)
+        }
+    }
+}
+
+/// Simple image cache for storing avatar images
+public class ImageCache {
+    public static let shared = ImageCache()
+    private let cache = NSCache<NSString, UIImage>()
+    private let maxCacheSize = 50 // Maximum number of images to cache
+    
+    private init() {
+        cache.countLimit = maxCacheSize
+    }
+    
+    public func image(for key: String) -> UIImage? {
+        return cache.object(forKey: key as NSString)
+    }
+    
+    public func setImage(_ image: UIImage, for key: String) {
+        cache.setObject(image, forKey: key as NSString)
+    }
+    
+    public func clearCache() {
+        cache.removeAllObjects()
     }
 }
