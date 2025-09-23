@@ -108,10 +108,11 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
         getENSButton.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .regular)
         getENSButton.titleLabel?.textAlignment = .center
         getENSButton.titleLabel?.numberOfLines = 0
+        getENSButton.backgroundColor = UIColor.clear
         getENSButton.translatesAutoresizingMaskIntoConstraints = false
         getENSButton.isUserInteractionEnabled = true
         getENSButton.addTarget(self, action: #selector(getENSButtonTapped), for: .touchUpInside)
-        emptyStateView.addSubview(getENSButton)
+        view.addSubview(getENSButton) // Add directly to main view instead of emptyStateView
     }
     
     private func setupConstraints() {
@@ -141,8 +142,9 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
         
         getENSButton.snp.makeConstraints { make in
             make.top.equalTo(emptyStateLabel.snp.bottom).offset(16)
-            make.centerX.equalToSuperview()
-            make.leading.trailing.equalToSuperview().inset(20)
+            make.centerX.equalTo(view)
+            make.leading.trailing.equalTo(view).inset(40)
+            make.height.equalTo(60) // Make button taller for easier tapping
         }
     }
     
@@ -168,6 +170,7 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
         let hasENSNames = !filteredENSNames.isEmpty
         emptyStateView.isHidden = hasENSNames
         tableView.isHidden = !hasENSNames
+        getENSButton.isHidden = hasENSNames // Hide button when there are ENS names
     }
     
     private func loadFullNamesForENSNames() {
@@ -278,9 +281,9 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
                 if !success {
                     // Fallback: show alert if URL can't be opened
                     DispatchQueue.main.async {
-                        let alert = UIAlertController(title: "Cannot Open Browser", message: "Please visit \(ensURL) in your browser to get an ENS name.", preferredStyle: .alert)
-                        alert.addAction(UIAlertAction(title: "OK", style: .default))
-                        self.present(alert, animated: true)
+                        let fallbackAlert = UIAlertController(title: "Cannot Open Browser", message: "Please visit \(ensURL) in your browser to get an ENS name.", preferredStyle: .alert)
+                        fallbackAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(fallbackAlert, animated: true)
                     }
                 }
             }
