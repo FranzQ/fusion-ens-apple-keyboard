@@ -165,7 +165,7 @@ class GettingStartedVC: UIViewController {
         let step1_1View = createStepCard(
             icon: "gearshape",
             title: "Open Keyboard Settings",
-            description: "Settings > General > Keyboard > Keyboards > Add New Keyboard...",
+            description: "Tap the 'Open Settings' button below to open iOS Settings directly to the keyboard section.",
             parentView: step1View
         )
         
@@ -201,11 +201,11 @@ class GettingStartedVC: UIViewController {
         step2TitleLabel.translatesAutoresizingMaskIntoConstraints = false
         step2View.addSubview(step2TitleLabel)
         
-        // Step 2.1: Tap on Fusion ENS
+        // Step 2.1: Enable Basic and Pro Keyboards
         let step2_1View = createStepCard(
             icon: "hand.tap",
-            title: "Tap on Fusion ENS",
-            description: "Select Fusion ENS in your list of active keyboards.",
+            title: "Enable Basic and Pro Keyboards",
+            description: "In the keyboard settings, toggle ON both 'Basic' and 'Pro' keyboards for Fusion ENS.",
             parentView: step2View
         )
         
@@ -296,13 +296,96 @@ class GettingStartedVC: UIViewController {
         return cardView
     }
     
+    private func createStepCardWithButton(icon: String, title: String, description: String, buttonTitle: String, buttonAction: Selector, parentView: UIView) -> UIView {
+        let cardView = UIView()
+        cardView.backgroundColor = UIColor.secondarySystemBackground
+        cardView.layer.cornerRadius = 12
+        cardView.translatesAutoresizingMaskIntoConstraints = false
+        parentView.addSubview(cardView)
+        
+        // Icon container
+        let iconContainer = UIView()
+        iconContainer.backgroundColor = UIColor.tertiarySystemBackground
+        iconContainer.layer.cornerRadius = 20
+        iconContainer.translatesAutoresizingMaskIntoConstraints = false
+        cardView.addSubview(iconContainer)
+        
+        // Icon
+        let iconView = UIImageView()
+        iconView.image = UIImage(systemName: icon)
+        iconView.tintColor = UIColor.label
+        iconView.contentMode = .scaleAspectFit
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        iconContainer.addSubview(iconView)
+        
+        // Title label
+        let titleLabel = UILabel()
+        titleLabel.text = title
+        titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .bold)
+        titleLabel.textColor = UIColor.label
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        cardView.addSubview(titleLabel)
+        
+        // Description label
+        let descriptionLabel = UILabel()
+        descriptionLabel.text = description
+        descriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        descriptionLabel.textColor = UIColor.secondaryLabel
+        descriptionLabel.numberOfLines = 0
+        descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
+        cardView.addSubview(descriptionLabel)
+        
+        // Action button
+        let actionButton = UIButton(type: .system)
+        actionButton.setTitle(buttonTitle, for: .normal)
+        actionButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
+        actionButton.backgroundColor = UIColor.systemBlue
+        actionButton.setTitleColor(.white, for: .normal)
+        actionButton.layer.cornerRadius = 8
+        actionButton.addTarget(self, action: buttonAction, for: .touchUpInside)
+        actionButton.translatesAutoresizingMaskIntoConstraints = false
+        cardView.addSubview(actionButton)
+        
+        // Layout constraints
+        NSLayoutConstraint.activate([
+            cardView.heightAnchor.constraint(greaterThanOrEqualToConstant: 120),
+            
+            iconContainer.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 16),
+            iconContainer.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 16),
+            iconContainer.widthAnchor.constraint(equalToConstant: 40),
+            iconContainer.heightAnchor.constraint(equalToConstant: 40),
+            
+            iconView.centerXAnchor.constraint(equalTo: iconContainer.centerXAnchor),
+            iconView.centerYAnchor.constraint(equalTo: iconContainer.centerYAnchor),
+            iconView.widthAnchor.constraint(equalToConstant: 20),
+            iconView.heightAnchor.constraint(equalToConstant: 20),
+            
+            titleLabel.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 16),
+            titleLabel.leadingAnchor.constraint(equalTo: iconContainer.trailingAnchor, constant: 12),
+            titleLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16),
+            
+            descriptionLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            descriptionLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            descriptionLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
+            
+            actionButton.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 12),
+            actionButton.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            actionButton.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
+            actionButton.heightAnchor.constraint(equalToConstant: 44),
+            actionButton.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -16)
+        ])
+        
+        return cardView
+    }
     
     private func setupDoneButton() {
-        // Set button title based on context
+        // Set button title and action based on context
         if isFromSettings {
             doneButton.setTitle("Done", for: .normal)
+            doneButton.addTarget(self, action: #selector(doneButtonTapped), for: .touchUpInside)
         } else {
-            doneButton.setTitle("Continue", for: .normal)
+            doneButton.setTitle("Open Settings", for: .normal)
+            doneButton.addTarget(self, action: #selector(openKeyboardSettings), for: .touchUpInside)
         }
         
         doneButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
@@ -310,7 +393,6 @@ class GettingStartedVC: UIViewController {
         doneButton.setTitleColor(.white, for: .normal)
         doneButton.layer.cornerRadius = 12
         doneButton.translatesAutoresizingMaskIntoConstraints = false
-        doneButton.addTarget(self, action: #selector(doneButtonTapped), for: .touchUpInside)
         view.addSubview(doneButton)
     }
     
@@ -425,6 +507,13 @@ class GettingStartedVC: UIViewController {
     
     
     // MARK: - Actions
+    
+    @objc private func openKeyboardSettings() {
+        // Open iOS Settings app to the keyboard section
+        if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(settingsURL)
+        }
+    }
     
     @objc private func helpButtonTapped() {
         // Show help information

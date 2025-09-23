@@ -6,6 +6,7 @@ protocol ENSNameTableViewCellDelegate: AnyObject {
     func didTapSettings(for ensName: ENSName)
     func didTapDelete(for ensName: ENSName)
     func didTapManage(for ensName: ENSName)
+    func didTapRefresh(for ensName: ENSName)
 }
 
 class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
@@ -17,6 +18,7 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
     // MARK: - Static Caching
     private static var avatarCache: [String: UIImage] = [:]
     private static var loadingRequests: Set<String> = []
+    private static let maxCacheSize = 50 // Limit cache size to prevent memory issues
     
     // MARK: - UI Elements
     private let cardView = UIView()
@@ -28,6 +30,7 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
     private let addressLabel = UILabel()
     private let qrCodeButton = UIButton(type: .system)
     private let settingsButton = UIButton(type: .system)
+    private let refreshButton = UIButton(type: .system)
     
     // MARK: - Initialization
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -104,6 +107,14 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
         settingsButton.addTarget(self, action: #selector(settingsButtonTapped), for: .touchUpInside)
         cardView.addSubview(settingsButton)
         
+        // Refresh Button (hidden by default, shown when address is "Resolving...")
+        refreshButton.setImage(UIImage(systemName: "arrow.clockwise"), for: .normal)
+        refreshButton.tintColor = ColorTheme.tabBarTint
+        refreshButton.translatesAutoresizingMaskIntoConstraints = false
+        refreshButton.addTarget(self, action: #selector(refreshButtonTapped), for: .touchUpInside)
+        refreshButton.isHidden = true
+        cardView.addSubview(refreshButton)
+        
         // Add context menu interaction to card view for long press
         let contextMenuInteraction = UIContextMenuInteraction(delegate: self)
         cardView.addInteraction(contextMenuInteraction)
@@ -153,7 +164,12 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
             qrCodeButton.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16),
             qrCodeButton.centerYAnchor.constraint(equalTo: cardView.centerYAnchor),
             qrCodeButton.widthAnchor.constraint(equalToConstant: 24),
-            qrCodeButton.heightAnchor.constraint(equalToConstant: 24)
+            qrCodeButton.heightAnchor.constraint(equalToConstant: 24),
+            
+            refreshButton.trailingAnchor.constraint(equalTo: settingsButton.leadingAnchor, constant: -8),
+            refreshButton.centerYAnchor.constraint(equalTo: cardView.centerYAnchor),
+            refreshButton.widthAnchor.constraint(equalToConstant: 24),
+            refreshButton.heightAnchor.constraint(equalToConstant: 24)
         ])
     }
     
@@ -173,9 +189,17 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
             fullNameLabel.textColor = ColorTheme.secondaryText.withAlphaComponent(0.7)
         }
         
-        // Truncate address for display
-        let truncatedAddress = "\(ensName.address.prefix(6))...\(ensName.address.suffix(4))"
-        addressLabel.text = truncatedAddress
+        // Handle address display and refresh button visibility
+        if ensName.address == "Resolving..." {
+            addressLabel.text = "Resolving..."
+            addressLabel.textColor = ColorTheme.tabBarTint
+            refreshButton.isHidden = false
+        } else {
+            let truncatedAddress = "\(ensName.address.prefix(6))...\(ensName.address.suffix(4))"
+            addressLabel.text = truncatedAddress
+            addressLabel.textColor = ColorTheme.secondaryText
+            refreshButton.isHidden = true
+        }
         
         // Reset avatar state
         avatarImageView.isHidden = true
@@ -261,7 +285,7 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
                         if let image = image {
                             
                             // Cache the image
-                            Self.avatarCache[baseDomain] = image
+                            Self.addToCache(image, for: baseDomain)
                             
                             self.avatarImageView.image = image
                             self.avatarImageView.isHidden = false
@@ -302,7 +326,7 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
                         if let image = image {
                             
                             // Cache the image
-                            Self.avatarCache[baseDomain] = image
+                            Self.addToCache(image, for: baseDomain)
                             
                             self.avatarImageView.image = image
                             self.avatarImageView.isHidden = false
@@ -379,6 +403,11 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
         showContextMenu()
     }
     
+    @objc private func refreshButtonTapped() {
+        guard let ensName = currentENSName else { return }
+        delegate?.didTapRefresh(for: ensName)
+    }
+    
     private func showContextMenu() {
         guard let ensName = currentENSName else { return }
         
@@ -413,5 +442,20 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
             
             return UIMenu(title: ensName.name, children: [manageAction, removeAction])
         }
+    }
+    
+    // MARK: - Cache Management
+    private static func addToCache(_ image: UIImage, for key: String) {
+        // Remove oldest entries if cache is full
+        if avatarCache.count >= maxCacheSize {
+            let keysToRemove = Array(avatarCache.keys.prefix(avatarCache.count - maxCacheSize + 1))
+            keysToRemove.forEach { avatarCache.removeValue(forKey: $0) }
+        }
+        avatarCache[key] = image
+    }
+    
+    static func clearAvatarCache() {
+        avatarCache.removeAll()
+        loadingRequests.removeAll()
     }
 }

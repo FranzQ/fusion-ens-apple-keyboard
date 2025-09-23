@@ -38,6 +38,8 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     
     deinit {
         NotificationCenter.default.removeObserver(self)
+        selectionTimer?.invalidate()
+        selectionTimer = nil
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -312,6 +314,23 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     
     private func handleBrowserENSResolution(_ ensName: String) {
         print("🔍 handleBrowserENSResolution: Processing '\(ensName)'")
+        
+        // Check if browser has auto-completed the ENS name with https://
+        if ensName.hasPrefix("https://") && ensName.hasSuffix("/") {
+            let potentialENSName = String(ensName.dropFirst(8).dropLast(1)) // Remove "https://" and "/"
+            if isENSName(potentialENSName) {
+                print("🔍 handleBrowserENSResolution: Browser auto-completed ENS name detected: \(potentialENSName)")
+                resolveENSToExplorer(potentialENSName) { [weak self] resolvedURL in
+                    DispatchQueue.main.async {
+                        print("🔍 handleBrowserENSResolution: Auto-completed ENS resolved to '\(resolvedURL ?? "nil")'")
+                        if let url = resolvedURL, !url.isEmpty {
+                            self?.replaceSelectedText(with: url)
+                        }
+                    }
+                }
+                return
+            }
+        }
         
         // For browser context, resolve ENS to explorer URL
         if ensName.contains(":") && isENSName(ensName.components(separatedBy: ":").first ?? "") {

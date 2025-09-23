@@ -110,7 +110,7 @@ class SettingsViewController: UIViewController {
         walletCardView.addSubview(walletTitleLabel)
         
         // Wallet Description
-        walletDescriptionLabel.text = "Use Trust Wallet's custom scheme (trust://) for all QR codes. When disabled, uses standard schemes (bitcoin:, ethereum:, etc.) for broader wallet compatibility."
+        walletDescriptionLabel.text = "Prioritize Trust Wallet's custom scheme (trust://) for deeplinks. When disabled, prioritizes standard schemes (bitcoin:, ethereum:, etc.) but will automatically try both if needed."
         walletDescriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
         walletDescriptionLabel.textColor = ColorTheme.secondaryText
         walletDescriptionLabel.numberOfLines = 0
@@ -229,7 +229,7 @@ class SettingsViewController: UIViewController {
             walletCardView.topAnchor.constraint(equalTo: setupCardView.bottomAnchor, constant: 16),
             walletCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             walletCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            walletCardView.heightAnchor.constraint(equalToConstant: 120),
+            walletCardView.heightAnchor.constraint(greaterThanOrEqualToConstant: 140),
             
             walletTitleLabel.topAnchor.constraint(equalTo: walletCardView.topAnchor, constant: 16),
             walletTitleLabel.leadingAnchor.constraint(equalTo: walletCardView.leadingAnchor, constant: 16),

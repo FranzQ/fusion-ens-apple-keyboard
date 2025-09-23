@@ -85,6 +85,14 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         }
     }
     
+    deinit {
+        // Clean up timers to prevent memory leaks
+        selectionTimer?.invalidate()
+        selectionTimer = nil
+        btcLongPressTimer?.invalidate()
+        btcLongPressTimer = nil
+    }
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
@@ -1652,10 +1660,14 @@ textDocumentProxy.insertText("\n")
     }
     
     private func isURL(_ input: String) -> Bool {
-        // Check if it looks like a URL
+        // Check if it looks like a URL, but exclude ENS names
+        if isENSName(input) {
+            return false // ENS names are not URLs
+        }
+        
         return input.contains(".") && (input.hasPrefix("http://") || input.hasPrefix("https://") || 
                 input.hasPrefix("www.") || input.contains(".com") || input.contains(".org") || 
-                input.contains(".net") || input.contains(".eth"))
+                input.contains(".net"))
     }
     
     private func autoResolveInput(_ input: String, completion: @escaping (String?) -> Void) {

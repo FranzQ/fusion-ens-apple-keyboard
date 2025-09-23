@@ -24,6 +24,13 @@ class ENSManagerViewController: UIViewController {
         setupUI()
         setupConstraints()
         loadENSNames()
+    }
+    
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Clear avatar caches to free memory
+        ENSNameTableViewCell.clearAvatarCache()
+        ContactTableViewCell.clearAvatarCache()
         
         // Hide bottom navigation if we're in a tab bar controller
         if tabBarController != nil {
@@ -347,7 +354,30 @@ extension ENSManagerViewController: UISearchResultsUpdating {
 // MARK: - AddENSNameDelegate
 extension ENSManagerViewController: AddENSNameDelegate {
     func didAddENSName(_ ensName: ENSName) {
+        print("📝 ENSManagerViewController: didAddENSName called for \(ensName.name) with address: \(ensName.address)")
         ensNames.append(ensName)
+        filteredENSNames = ensNames
+        saveENSNames()
+        tableView.reloadData()
+    }
+    
+    func didUpdateENSName(_ ensName: ENSName) {
+        print("📝 ENSManagerViewController: didUpdateENSName called for \(ensName.name) with address: \(ensName.address)")
+        // Find and update the existing ENS name
+        if let index = ensNames.firstIndex(where: { $0.name == ensName.name }) {
+            ensNames[index] = ensName
+            filteredENSNames = ensNames
+            saveENSNames()
+            tableView.reloadData()
+        } else {
+            print("⚠️ ENSManagerViewController: Could not find ENS name to update: \(ensName.name)")
+        }
+    }
+    
+    func didRemoveENSName(_ ensName: String) {
+        print("📝 ENSManagerViewController: didRemoveENSName called for \(ensName)")
+        // Remove the ENS name if it exists
+        ensNames.removeAll { $0.name == ensName }
         filteredENSNames = ensNames
         saveENSNames()
         tableView.reloadData()
@@ -371,6 +401,87 @@ struct ENSName: Codable {
 
 // MARK: - ENSNameTableViewCellDelegate
 extension ENSManagerViewController: ENSNameTableViewCellDelegate {
+    func didTapRefresh(for ensName: ENSName) {
+        refreshENSName(ensName)
+    }
+    
+    private func refreshENSName(_ ensName: ENSName) {
+        // Find the index of the ENS name to update
+        guard let index = ensNames.firstIndex(where: { $0.name == ensName.name }) else { return }
+        
+        // Show loading state by updating the address to "Resolving..."
+        var loadingENSName = ensNames[index]
+        loadingENSName = ENSName(name: ensName.name, address: "Resolving...", dateAdded: ensName.dateAdded, fullName: ensName.fullName)
+        ensNames[index] = loadingENSName
+        filteredENSNames = ensNames
+        saveENSNames()
+        tableView.reloadData()
+        
+        // Resolve the ENS name
+        print("🔄 ENSManagerViewController: Starting refresh resolution for: \(ensName.name)")
+        APICaller.shared.resolveENSName(name: ensName.name) { [weak self] resolvedAddress in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                
+                print("🔄 ENSManagerViewController: Refresh resolution result for \(ensName.name): '\(resolvedAddress)'")
+                
+                if !resolvedAddress.isEmpty {
+                    // Update with resolved address
+                    let updatedENSName = ENSName(name: ensName.name, address: resolvedAddress, dateAdded: ensName.dateAdded, fullName: ensName.fullName)
+                    
+                    // Load full name asynchronously
+                    self.loadFullName(for: updatedENSName) { fullName in
+                        DispatchQueue.main.async {
+                            var finalENSName = updatedENSName
+                            finalENSName.fullName = fullName
+                            
+                            // Update the ENS name in the array
+                            if let finalIndex = self.ensNames.firstIndex(where: { $0.name == ensName.name }) {
+                                self.ensNames[finalIndex] = finalENSName
+                                self.filteredENSNames = self.ensNames
+                                self.saveENSNames()
+                                self.tableView.reloadData()
+                            }
+                        }
+                    }
+                } else {
+                    // Resolution failed - keep showing "Resolving..." or show error
+                    print("Failed to resolve ENS name: \(ensName.name)")
+                }
+            }
+        }
+    }
+    
+    private func loadFullName(for ensName: ENSName, completion: @escaping (String?) -> Void) {
+        let baseDomain = extractBaseDomain(from: ensName.name)
+        let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
+        
+        URLSession.shared.dataTask(with: URL(string: fusionServerURL)!) { data, response, error in
+            guard let data = data else {
+                completion(nil)
+                return
+            }
+            
+            do {
+                let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+                guard let success = json?["success"] as? Bool,
+                      success,
+                      let dataDict = json?["data"] as? [String: Any],
+                      let fullName = dataDict["address"] as? String,
+                      !fullName.isEmpty else {
+                    completion(nil)
+                    return
+                }
+                
+                // Clean HTML tags if present
+                let cleanName = self.cleanHTMLTags(from: fullName)
+                completion(cleanName.isEmpty ? nil : cleanName)
+            } catch {
+                completion(nil)
+            }
+        }.resume()
+    }
+    
     func didTapQRCode(for ensName: ENSName) {
         // Navigate to payment request
         let paymentVC = PaymentRequestViewController(ensName: ensName)
@@ -385,11 +496,13 @@ extension ENSManagerViewController: ENSNameTableViewCellDelegate {
     }
     
     func didTapDelete(for ensName: ENSName) {
+        print("🗑️ ENSManagerViewController: Delete requested for \(ensName.name)")
         // Show remove confirmation alert
         let alert = UIAlertController(title: "Remove ENS Name", message: "Are you sure you want to remove \(ensName.name)? This action cannot be undone.", preferredStyle: .alert)
         
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         alert.addAction(UIAlertAction(title: "Remove", style: .destructive) { [weak self] _ in
+            print("🗑️ ENSManagerViewController: User confirmed delete for \(ensName.name)")
             self?.deleteENSName(ensName)
         })
         
@@ -405,12 +518,35 @@ extension ENSManagerViewController: ENSNameTableViewCellDelegate {
     }
     
     private func deleteENSName(_ ensName: ENSName) {
-        // Remove from UserDefaults
-        var savedENSNames = UserDefaults.standard.stringArray(forKey: "savedENSNames") ?? []
-        savedENSNames.removeAll { $0 == ensName.name }
-        UserDefaults.standard.set(savedENSNames, forKey: "savedENSNames")
+        print("🗑️ ENSManagerViewController: Deleting \(ensName.name)")
         
-        // Reload data
-        loadENSNames()
+        // Find the index of the ENS name to delete
+        guard let index = ensNames.firstIndex(where: { $0.name == ensName.name }) else { 
+            print("⚠️ ENSManagerViewController: Could not find ENS name to delete: \(ensName.name)")
+            return 
+        }
+        
+        // Remove from the main array
+        ensNames.remove(at: index)
+        print("🗑️ ENSManagerViewController: Removed from ensNames array, count now: \(ensNames.count)")
+        
+        // Update filtered array
+        filteredENSNames = ensNames
+        
+        // Save the updated array
+        saveENSNames()
+        print("🗑️ ENSManagerViewController: Saved updated ENS names")
+        
+        // Update the table view
+        tableView.reloadData()
+        
+        // Show success message
+        let successAlert = UIAlertController(
+            title: "Deleted",
+            message: "'\(ensName.name)' has been deleted successfully.",
+            preferredStyle: .alert
+        )
+        successAlert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(successAlert, animated: true)
     }
 }

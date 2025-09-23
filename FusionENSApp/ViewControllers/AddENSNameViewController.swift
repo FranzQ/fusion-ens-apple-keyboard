@@ -3,6 +3,8 @@ import SnapKit
 
 protocol AddENSNameDelegate: AnyObject {
     func didAddENSName(_ ensName: ENSName)
+    func didUpdateENSName(_ ensName: ENSName)
+    func didRemoveENSName(_ ensName: String)
 }
 
 class AddENSNameViewController: UIViewController {
@@ -191,30 +193,52 @@ class AddENSNameViewController: UIViewController {
             return
         }
         
+        // Check for duplicates in My ENS Names
+        if isDuplicateENSName(ensName) {
+            showAlert(title: "Duplicate ENS Name", message: "The ENS name '\(ensName)' is already in your My ENS Names list.")
+            return
+        }
+        
         // Show loading state
         showLoadingState()
         
-        // Resolve ENS name to get the actual address
+        // Add the ENS name first with a placeholder address
+        let newENSName = ENSName(name: ensName, address: "Resolving...", dateAdded: Date())
+        print("🔍 AddENSNameViewController: Adding ENS name with placeholder: \(newENSName.name)")
+        delegate?.didAddENSName(newENSName)
+        
+        // Then resolve ENS name to get the actual address
+        print("🔍 AddENSNameViewController: Starting resolution for: \(ensName)")
         resolveENSName(ensName) { [weak self] resolvedAddress in
             DispatchQueue.main.async {
                 self?.hideLoadingState()
                 
                 if let address = resolvedAddress, !address.isEmpty {
-                    // ENS name resolved successfully
-                    let newENSName = ENSName(name: ensName, address: address, dateAdded: Date())
+                    print("✅ AddENSNameViewController: Resolution successful for \(ensName): \(address)")
+                    // ENS name resolved successfully - update the existing entry immediately
+                    let updatedENSName = ENSName(name: ensName, address: address, dateAdded: Date())
                     
-                    // Load full name asynchronously
-                    self?.loadFullName(for: newENSName) { fullName in
+                    print("✅ AddENSNameViewController: Calling didUpdateENSName immediately for \(updatedENSName.name)")
+                    // Update the existing entry with resolved data immediately
+                    self?.delegate?.didUpdateENSName(updatedENSName)
+                    
+                    // Load full name asynchronously and update again
+                    self?.loadFullName(for: updatedENSName) { fullName in
                         DispatchQueue.main.async {
-                            var updatedENSName = newENSName
-                            updatedENSName.fullName = fullName
-                            self?.delegate?.didAddENSName(updatedENSName)
+                            var finalENSName = updatedENSName
+                            finalENSName.fullName = fullName
+                            print("✅ AddENSNameViewController: Calling didUpdateENSName with full name for \(finalENSName.name)")
+                            // Update the existing entry with full name data
+                            self?.delegate?.didUpdateENSName(finalENSName)
                         }
                     }
                     
+                    // Dismiss after immediate update
                     self?.dismiss(animated: true)
                 } else {
-                    // ENS name could not be resolved
+                    print("❌ AddENSNameViewController: Resolution failed for \(ensName), removing entry")
+                    // ENS name could not be resolved - remove the placeholder entry
+                    self?.delegate?.didRemoveENSName(ensName)
                     self?.showAlert(title: "ENS Name Not Found", message: "The ENS name '\(ensName)' could not be resolved. Please check the name and try again.")
                 }
             }
@@ -231,13 +255,32 @@ class AddENSNameViewController: UIViewController {
         return regex?.firstMatch(in: name, options: [], range: range) != nil
     }
     
+    private func isDuplicateENSName(_ name: String) -> Bool {
+        // Check if the ENS name already exists in My ENS Names
+        if let data = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.data(forKey: "savedENSNames"),
+           let savedNames = try? JSONDecoder().decode([ENSName].self, from: data) {
+            return savedNames.contains { $0.name.lowercased() == name.lowercased() }
+        }
+        return false
+    }
+    
     // MARK: - ENS Resolution
     private func resolveENSName(_ name: String, completion: @escaping (String?) -> Void) {
+        print("🔍 AddENSNameViewController: Starting resolution for: \(name)")
+        
+        // Test with a known ENS name first
+        if name == "vitalik.eth" {
+            print("🧪 AddENSNameViewController: Testing with vitalik.eth")
+        }
+        
         // Use the same API caller as the keyboard extension
         APICaller.shared.resolveENSName(name: name) { resolvedAddress in
+            print("🔍 AddENSNameViewController: Resolution result for \(name): '\(resolvedAddress)'")
+            
             if !resolvedAddress.isEmpty {
                 completion(resolvedAddress)
             } else {
+                print("❌ AddENSNameViewController: Resolution failed for \(name)")
                 completion(nil)
             }
         }

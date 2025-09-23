@@ -80,5 +80,25 @@
 	<array>
 		<string>com.fusionens.keyboard.ens-resolution</string>
 	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>trust</string>
+		<string>bitcoin</string>
+		<string>ethereum</string>
+		<string>solana</string>
+		<string>dogecoin</string>
+		<string>xrp</string>
+		<string>litecoin</string>
+		<string>cardano</string>
+		<string>polkadot</string>
+		<string>ripple</string>
+		<string>metamask</string>
+		<string>coinbase</string>
+		<string>phantom</string>
+		<string>exodus</string>
+		<string>atomic</string>
+		<string>https</string>
+		<string>cb-w</string>
+	</array>
 </dict>
 </plist>
