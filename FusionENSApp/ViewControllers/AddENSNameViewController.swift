@@ -35,23 +35,23 @@ class AddENSNameViewController: UIViewController {
     
     // MARK: - UI Setup
     private func setupUI() {
-        // Full screen background with better blur effect
-        view.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        // Clear background - no overlay
+        view.backgroundColor = UIColor.clear
         
-        // Modal View - positioned to appear above keyboard
+        // Modal View - small centered modal
         modalView.backgroundColor = UIColor.systemBackground
         modalView.layer.cornerRadius = 16
         modalView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner]
         modalView.layer.shadowColor = UIColor.black.cgColor
-        modalView.layer.shadowOffset = CGSize(width: 0, height: -2)
+        modalView.layer.shadowOffset = CGSize(width: 0, height: 2)
         modalView.layer.shadowRadius = 10
         modalView.layer.shadowOpacity = 0.3
         view.addSubview(modalView)
         
-        // Handle View
-        handleView.backgroundColor = ColorTheme.secondaryText
-        handleView.layer.cornerRadius = 2
-        modalView.addSubview(handleView)
+        // Handle View - not needed for centered modal
+        // handleView.backgroundColor = ColorTheme.secondaryText
+        // handleView.layer.cornerRadius = 2
+        // modalView.addSubview(handleView)
         
         // Title Label
         titleLabel.text = "Add ENS Name"
@@ -121,15 +121,10 @@ class AddENSNameViewController: UIViewController {
             make.height.equalTo(320)
         }
         
-        handleView.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(8)
-            make.centerX.equalToSuperview()
-            make.width.equalTo(36)
-            make.height.equalTo(4)
-        }
+        // Handle view constraints removed for centered modal
         
         titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(handleView.snp.bottom).offset(20)
+            make.top.equalToSuperview().offset(20)
             make.leading.trailing.equalToSuperview().inset(20)
         }
         
@@ -204,21 +199,17 @@ class AddENSNameViewController: UIViewController {
         
         // Add the ENS name first with a placeholder address
         let newENSName = ENSName(name: ensName, address: "Resolving...", dateAdded: Date())
-        print("🔍 AddENSNameViewController: Adding ENS name with placeholder: \(newENSName.name)")
         delegate?.didAddENSName(newENSName)
         
         // Then resolve ENS name to get the actual address
-        print("🔍 AddENSNameViewController: Starting resolution for: \(ensName)")
         resolveENSName(ensName) { [weak self] resolvedAddress in
             DispatchQueue.main.async {
                 self?.hideLoadingState()
                 
                 if let address = resolvedAddress, !address.isEmpty {
-                    print("✅ AddENSNameViewController: Resolution successful for \(ensName): \(address)")
                     // ENS name resolved successfully - update the existing entry immediately
                     let updatedENSName = ENSName(name: ensName, address: address, dateAdded: Date())
                     
-                    print("✅ AddENSNameViewController: Calling didUpdateENSName immediately for \(updatedENSName.name)")
                     // Update the existing entry with resolved data immediately
                     self?.delegate?.didUpdateENSName(updatedENSName)
                     
@@ -227,7 +218,6 @@ class AddENSNameViewController: UIViewController {
                         DispatchQueue.main.async {
                             var finalENSName = updatedENSName
                             finalENSName.fullName = fullName
-                            print("✅ AddENSNameViewController: Calling didUpdateENSName with full name for \(finalENSName.name)")
                             // Update the existing entry with full name data
                             self?.delegate?.didUpdateENSName(finalENSName)
                         }
@@ -236,7 +226,6 @@ class AddENSNameViewController: UIViewController {
                     // Dismiss after immediate update
                     self?.dismiss(animated: true)
                 } else {
-                    print("❌ AddENSNameViewController: Resolution failed for \(ensName), removing entry")
                     // ENS name could not be resolved - remove the placeholder entry
                     self?.delegate?.didRemoveENSName(ensName)
                     self?.showAlert(title: "ENS Name Not Found", message: "The ENS name '\(ensName)' could not be resolved. Please check the name and try again.")
@@ -266,21 +255,17 @@ class AddENSNameViewController: UIViewController {
     
     // MARK: - ENS Resolution
     private func resolveENSName(_ name: String, completion: @escaping (String?) -> Void) {
-        print("🔍 AddENSNameViewController: Starting resolution for: \(name)")
         
         // Test with a known ENS name first
         if name == "vitalik.eth" {
-            print("🧪 AddENSNameViewController: Testing with vitalik.eth")
         }
         
         // Use the same API caller as the keyboard extension
         APICaller.shared.resolveENSName(name: name) { resolvedAddress in
-            print("🔍 AddENSNameViewController: Resolution result for \(name): '\(resolvedAddress)'")
             
             if !resolvedAddress.isEmpty {
                 completion(resolvedAddress)
             } else {
-                print("❌ AddENSNameViewController: Resolution failed for \(name)")
                 completion(nil)
             }
         }

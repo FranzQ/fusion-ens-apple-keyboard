@@ -310,16 +310,13 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     }
     
     private func handleBrowserENSResolution(_ ensName: String) {
-        print("🔍 handleBrowserENSResolution: Processing '\(ensName)'")
         
         // Check if browser has auto-completed the ENS name with https://
         if ensName.hasPrefix("https://") && ensName.hasSuffix("/") {
             let potentialENSName = String(ensName.dropFirst(8).dropLast(1)) // Remove "https://" and "/"
             if isENSName(potentialENSName) {
-                print("🔍 handleBrowserENSResolution: Browser auto-completed ENS name detected: \(potentialENSName)")
                 resolveENSToExplorer(potentialENSName) { [weak self] resolvedURL in
                     DispatchQueue.main.async {
-                        print("🔍 handleBrowserENSResolution: Auto-completed ENS resolved to '\(resolvedURL ?? "nil")'")
                         if let url = resolvedURL, !url.isEmpty {
                             self?.replaceSelectedText(with: url)
                         }
@@ -331,11 +328,9 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         
         // For browser context, resolve ENS to explorer URL
         if ensName.contains(":") && isENSName(ensName.components(separatedBy: ":").first ?? "") {
-            print("🔍 handleBrowserENSResolution: ENS text record detected")
             // ENS text record - resolve to appropriate URL
             resolveENSToExplorer(ensName) { [weak self] resolvedURL in
                 DispatchQueue.main.async {
-                    print("🔍 handleBrowserENSResolution: Text record resolved to '\(resolvedURL ?? "nil")'")
                     if let url = resolvedURL, !url.isEmpty {
                         self?.replaceSelectedText(with: url)
                     } else {
@@ -343,11 +338,9 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
                 }
             }
         } else if isENSName(ensName) {
-            print("🔍 handleBrowserENSResolution: Plain ENS name detected")
             // Plain ENS name - resolve to Etherscan
             resolveENSToExplorer(ensName) { [weak self] resolvedURL in
                 DispatchQueue.main.async {
-                    print("🔍 handleBrowserENSResolution: ENS name resolved to '\(resolvedURL ?? "nil")'")
                     if let url = resolvedURL, !url.isEmpty {
                         self?.replaceSelectedText(with: url)
                     } else {
@@ -355,7 +348,6 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
                 }
             }
         } else {
-            print("🔍 handleBrowserENSResolution: Not a valid ENS name")
         }
     }
     

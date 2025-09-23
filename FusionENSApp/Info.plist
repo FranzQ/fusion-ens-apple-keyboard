@@ -135,6 +135,7 @@
 		<string>atomic</string>
 		<string>https</string>
 		<string>cb-w</string>
+		<string>mailto</string>
 	</array>
 </dict>
 </plist>

@@ -236,7 +236,7 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
     }
     
     private func showContactOptions(for contact: Contact, at indexPath: IndexPath) {
-        let alert = UIAlertController(title: contact.name, message: contact.ensName, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: contact.ensName, message: contact.name, preferredStyle: .actionSheet)
         
         // Edit action
         alert.addAction(UIAlertAction(title: "Edit", style: .default) { [weak self] _ in
@@ -558,7 +558,7 @@ class ContactTableViewCell: UITableViewCell {
         cardView.addSubview(nameLabel)
         
         // EFP Button
-        efpButton.setTitle("EFP", for: .normal)
+        efpButton.setTitle("Follow Protocol", for: .normal)
         efpButton.setTitleColor(.white, for: .normal)
         efpButton.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         efpButton.backgroundColor = ColorTheme.accent
@@ -609,15 +609,17 @@ class ContactTableViewCell: UITableViewCell {
             // EFP Button (positioned under the name with padding)
             efpButton.leadingAnchor.constraint(equalTo: ensNameLabel.leadingAnchor),
             efpButton.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 12),
-            efpButton.widthAnchor.constraint(equalToConstant: 60),
             efpButton.heightAnchor.constraint(equalToConstant: 36),
             efpButton.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -16),
             
             // Send Crypto Button (positioned under the name with padding, next to EFP)
             sendCryptoButton.leadingAnchor.constraint(equalTo: efpButton.trailingAnchor, constant: 12),
             sendCryptoButton.topAnchor.constraint(equalTo: efpButton.topAnchor),
-            sendCryptoButton.trailingAnchor.constraint(lessThanOrEqualTo: cardView.trailingAnchor, constant: -16),
-            sendCryptoButton.heightAnchor.constraint(equalToConstant: 36)
+            sendCryptoButton.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16),
+            sendCryptoButton.heightAnchor.constraint(equalToConstant: 36),
+            
+            // Make both buttons equal width
+            efpButton.widthAnchor.constraint(equalTo: sendCryptoButton.widthAnchor)
         ])
     }
     
@@ -800,15 +802,12 @@ class ContactTableViewCell: UITableViewCell {
         let chainSuffix = getChainSuffix(for: chain)
         let fullENSName = "\(baseDomain):\(chainSuffix)"
         
-        print("🔍 Resolving ENS for chain: \(fullENSName)")
         
         // Resolve using APICaller
         APICaller.shared.resolveENSName(name: fullENSName) { resolvedAddress in
-            print("🔍 Resolved address for \(fullENSName): \(resolvedAddress)")
             
             // Additional validation: if we're looking for a non-ETH chain but got an ETH address, it's likely a fallback
             if chain != .ethereum && resolvedAddress.hasPrefix("0x") && resolvedAddress.count == 42 {
-                print("⚠️ Got Ethereum address for non-ETH chain, treating as no mapping")
                 completion(nil)
             } else {
                 completion(resolvedAddress.isEmpty ? nil : resolvedAddress)

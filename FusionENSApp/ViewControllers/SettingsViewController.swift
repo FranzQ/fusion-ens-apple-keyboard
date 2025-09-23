@@ -301,6 +301,7 @@ class SettingsViewController: UIViewController {
             contactButton.topAnchor.constraint(equalTo: contactDescriptionLabel.bottomAnchor, constant: 16),
             contactButton.leadingAnchor.constraint(equalTo: contactCardView.leadingAnchor, constant: 16),
             contactButton.trailingAnchor.constraint(equalTo: contactCardView.trailingAnchor, constant: -16),
+            contactButton.bottomAnchor.constraint(equalTo: contactCardView.bottomAnchor, constant: -16),
             contactButton.heightAnchor.constraint(equalToConstant: 44)
         ])
         
@@ -378,16 +379,35 @@ class SettingsViewController: UIViewController {
         let subject = "Fusion ENS iOS App - Support Request"
         let body = "Hi Fusion ENS Team,\n\nI need help with:\n\n[Please describe your issue or feedback here]\n\nThanks!"
         
-        let emailString = "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&body=\(body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+        // Create mailto URL with proper encoding
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = email
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: subject),
+            URLQueryItem(name: "body", value: body)
+        ]
         
-        if let emailURL = URL(string: emailString) {
+        if let emailURL = components.url {
             if UIApplication.shared.canOpenURL(emailURL) {
-                UIApplication.shared.open(emailURL)
+                UIApplication.shared.open(emailURL) { success in
+                    if !success {
+                        // Fallback: copy email to clipboard
+                        DispatchQueue.main.async {
+                            UIPasteboard.general.string = email
+                            self.showAlert(title: "Email Copied", message: "Email address copied to clipboard: \(email)")
+                        }
+                    }
+                }
             } else {
-                // Fallback: copy email to clipboard
+                // Mail app not available, copy to clipboard
                 UIPasteboard.general.string = email
                 showAlert(title: "Email Copied", message: "Email address copied to clipboard: \(email)")
             }
+        } else {
+            // Fallback: copy email to clipboard
+            UIPasteboard.general.string = email
+            showAlert(title: "Email Copied", message: "Email address copied to clipboard: \(email)")
         }
         
         // Provide haptic feedback

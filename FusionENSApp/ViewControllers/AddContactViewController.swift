@@ -55,6 +55,11 @@ class AddContactViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         ensNameTextField.becomeFirstResponder()
+        
+        // Add tap gesture to dismiss modal when tapping outside (after layout is complete)
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
+        tapGesture.delegate = self
+        view.addGestureRecognizer(tapGesture)
     }
     
     deinit {
@@ -68,10 +73,7 @@ class AddContactViewController: UIViewController {
         // Full screen background with better blur effect
         view.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         
-        // Add tap gesture to dismiss modal when tapping outside
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
-        tapGesture.delegate = self
-        view.addGestureRecognizer(tapGesture)
+        // Tap gesture will be added in viewDidAppear after layout
         
         // Modal View - positioned to appear above keyboard
         modalView.backgroundColor = UIColor.systemBackground
@@ -114,6 +116,15 @@ class AddContactViewController: UIViewController {
         ensNameTextField.keyboardType = .default
         ensNameTextField.returnKeyType = .done
         ensNameTextField.delegate = self
+        
+        // Add internal padding to text field
+        let leftPaddingView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 44))
+        let rightPaddingView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 44))
+        ensNameTextField.leftView = leftPaddingView
+        ensNameTextField.rightView = rightPaddingView
+        ensNameTextField.leftViewMode = .always
+        ensNameTextField.rightViewMode = .always
+        
         modalView.addSubview(ensNameTextField)
         
         // ENS Preview Label
@@ -505,7 +516,14 @@ extension AddContactViewController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
         // Only dismiss when tapping outside the modal view
         let location = touch.location(in: view)
-        return !modalView.frame.contains(location)
+        let modalFrame = modalView.frame
+        
+        // If modal frame is not set yet, allow the gesture
+        if modalFrame.isEmpty {
+            return true
+        }
+        
+        return !modalFrame.contains(location)
     }
 }
 

@@ -37,7 +37,6 @@ class APICaller {
         
         // Check offline cache first
         if let cachedAddress = getCachedResolution(for: name) {
-            print("📱 APICaller: Using cached resolution for \(name): \(cachedAddress)")
             completion(cachedAddress)
             return
         }
@@ -90,7 +89,6 @@ class APICaller {
     
     private func resolveWithFusionAPI(name: String, completion: @escaping (String) -> Void) {
         guard let url = URL(string: "\(URLS.fusionNameResolver(name: name))") else {
-            print("❌ APICaller: Invalid URL for Fusion API: \(name)")
             completion("")
             return
         }
@@ -104,20 +102,17 @@ class APICaller {
             
             // Handle network errors
             if let error = response.error {
-                print("❌ APICaller: Fusion API error for \(name): \(error.localizedDescription)")
                 completion("")
                 return
             }
             
             guard let data = response.data else {
-                print("❌ APICaller: No data received from Fusion API for \(name)")
                 completion("")
                 return
             }
             
             do {
                 guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
-                    print("❌ APICaller: Invalid JSON from Fusion API for \(name)")
                     completion("")
                     return
                 }
@@ -126,20 +121,16 @@ class APICaller {
                 if let success = json["success"] as? Bool, success {
                     if let data = json["data"] as? [String: Any],
                        let address = data["address"] as? String, !address.isEmpty {
-                        print("✅ APICaller: Successfully resolved \(name) to \(address)")
                         // Cache the successful resolution
                         self.cacheResolution(name: name, address: address)
                         completion(address)
                     } else {
-                        print("❌ APICaller: No address in Fusion API response for \(name)")
                         completion("")
                     }
                 } else {
-                    print("❌ APICaller: Fusion API returned success=false for \(name)")
                     completion("")
                 }
             } catch {
-                print("❌ APICaller: JSON parsing error for \(name): \(error.localizedDescription)")
                 completion("")
             }
         }
@@ -147,7 +138,6 @@ class APICaller {
     
     private func resolveWithENSIdeasAPI(name: String, completion: @escaping (String) -> Void) {
         guard let url = URL(string: "\(URLS.ensIdeasResolver(name: name))") else {
-            print("❌ APICaller: Invalid URL for ENS Ideas API: \(name)")
             completion("")
             return
         }
@@ -161,37 +151,31 @@ class APICaller {
             
             // Handle network errors
             if let error = response.error {
-                print("❌ APICaller: ENS Ideas API error for \(name): \(error.localizedDescription)")
                 completion("")
                 return
             }
             
             guard let data = response.data else {
-                print("❌ APICaller: No data received from ENS Ideas API for \(name)")
                 completion("")
                 return
             }
             
             do {
                 guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
-                    print("❌ APICaller: Invalid JSON from ENS Ideas API for \(name)")
                     completion("")
                     return
                 }
                 
                 // Handle ENS Ideas API response format
                 if let address = json["address"] as? String, !address.isEmpty {
-                    print("✅ APICaller: Successfully resolved \(name) to \(address) via ENS Ideas")
                     // Cache the successful resolution
                     self.cacheResolution(name: name, address: address)
                     completion(address)
                 } else if let address = json["result"] as? String, !address.isEmpty {
-                    print("✅ APICaller: Successfully resolved \(name) to \(address) via ENS Ideas (result)")
                     // Cache the successful resolution
                     self.cacheResolution(name: name, address: address)
                     completion(address)
                 } else if let address = json["data"] as? String, !address.isEmpty {
-                    print("✅ APICaller: Successfully resolved \(name) to \(address) via ENS Ideas (data)")
                     // Cache the successful resolution
                     self.cacheResolution(name: name, address: address)
                     completion(address)
@@ -208,17 +192,14 @@ class APICaller {
                     }
                     
                     if let address = foundAddress {
-                        print("✅ APICaller: Successfully resolved \(name) to \(address) via ENS Ideas (fallback)")
                         // Cache the successful resolution
                         self.cacheResolution(name: name, address: address)
                         completion(address)
                     } else {
-                        print("❌ APICaller: No address found in ENS Ideas API response for \(name)")
                         completion("")
                     }
                 }
             } catch {
-                print("❌ APICaller: JSON parsing error for \(name): \(error.localizedDescription)")
                 completion("")
             }
         }

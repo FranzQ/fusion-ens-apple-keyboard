@@ -8,12 +8,15 @@
 import UIKit
 import SnapKit
 
-class ENSManagerViewController: UIViewController {
+class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
     
     // MARK: - UI Elements
     private let tableView = UITableView()
     private let searchController = UISearchController(searchResultsController: nil)
     private let addButton = UIButton(type: .system)
+    private let emptyStateView = UIView()
+    private let emptyStateLabel = UILabel()
+    private let getENSButton = UIButton(type: .system)
     
     // MARK: - Data
     private var ensNames: [ENSName] = []
@@ -84,6 +87,31 @@ class ENSManagerViewController: UIViewController {
         addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
         addButton.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(addButton)
+        
+        // Empty State View
+        emptyStateView.translatesAutoresizingMaskIntoConstraints = false
+        emptyStateView.isHidden = true
+        emptyStateView.isUserInteractionEnabled = true
+        view.addSubview(emptyStateView)
+        
+        emptyStateLabel.text = "No ENS names yet\nTap '+ Add ENS Name' to get started"
+        emptyStateLabel.textAlignment = .center
+        emptyStateLabel.numberOfLines = 0
+        emptyStateLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        emptyStateLabel.textColor = ColorTheme.secondaryText
+        emptyStateLabel.translatesAutoresizingMaskIntoConstraints = false
+        emptyStateView.addSubview(emptyStateLabel)
+        
+        // Get ENS Button
+        getENSButton.setTitle("Don't have an ENS name? Tap here to get one", for: .normal)
+        getENSButton.setTitleColor(.systemBlue, for: .normal)
+        getENSButton.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        getENSButton.titleLabel?.textAlignment = .center
+        getENSButton.titleLabel?.numberOfLines = 0
+        getENSButton.translatesAutoresizingMaskIntoConstraints = false
+        getENSButton.isUserInteractionEnabled = true
+        getENSButton.addTarget(self, action: #selector(getENSButtonTapped), for: .touchUpInside)
+        emptyStateView.addSubview(getENSButton)
     }
     
     private func setupConstraints() {
@@ -97,6 +125,24 @@ class ENSManagerViewController: UIViewController {
             make.leading.trailing.equalToSuperview().inset(20)
             make.height.equalTo(50)
             make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-16)
+        }
+        
+        // Empty State View
+        emptyStateView.snp.makeConstraints { make in
+            make.centerX.equalToSuperview()
+            make.centerY.equalToSuperview()
+            make.leading.trailing.equalToSuperview().inset(40)
+        }
+        
+        emptyStateLabel.snp.makeConstraints { make in
+            make.centerX.equalToSuperview()
+            make.centerY.equalToSuperview().offset(-20)
+        }
+        
+        getENSButton.snp.makeConstraints { make in
+            make.top.equalTo(emptyStateLabel.snp.bottom).offset(16)
+            make.centerX.equalToSuperview()
+            make.leading.trailing.equalToSuperview().inset(20)
         }
     }
     
@@ -114,7 +160,14 @@ class ENSManagerViewController: UIViewController {
         // Load full names for ENS names that don't have them
         loadFullNamesForENSNames()
         
+        updateEmptyState()
         tableView.reloadData()
+    }
+    
+    private func updateEmptyState() {
+        let hasENSNames = !filteredENSNames.isEmpty
+        emptyStateView.isHidden = hasENSNames
+        tableView.isHidden = !hasENSNames
     }
     
     private func loadFullNamesForENSNames() {
@@ -212,9 +265,26 @@ class ENSManagerViewController: UIViewController {
     @objc private func addButtonTapped() {
         let vc = AddENSNameViewController()
         vc.delegate = self
-        vc.modalPresentationStyle = .pageSheet
-        vc.modalTransitionStyle = .coverVertical
+        vc.modalPresentationStyle = .overCurrentContext
+        vc.modalTransitionStyle = .crossDissolve
         present(vc, animated: true)
+    }
+    
+    @objc private func getENSButtonTapped() {
+        // Open app.ens.domains to get an ENS name
+        let ensURL = "https://app.ens.domains"
+        if let url = URL(string: ensURL) {
+            UIApplication.shared.open(url) { success in
+                if !success {
+                    // Fallback: show alert if URL can't be opened
+                    DispatchQueue.main.async {
+                        let alert = UIAlertController(title: "Cannot Open Browser", message: "Please visit \(ensURL) in your browser to get an ENS name.", preferredStyle: .alert)
+                        alert.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(alert, animated: true)
+                    }
+                }
+            }
+        }
     }
     
     private func showDeleteConfirmation(for ensName: ENSName, at indexPath: IndexPath) {
@@ -276,6 +346,7 @@ class ENSManagerViewController: UIViewController {
     }
 }
 
+
 // MARK: - UITableViewDataSource
 extension ENSManagerViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -289,6 +360,7 @@ extension ENSManagerViewController: UITableViewDataSource {
         return cell
     }
 }
+
 
 // MARK: - UITableViewDelegate
 extension ENSManagerViewController: UITableViewDelegate {
@@ -325,36 +397,12 @@ extension ENSManagerViewController: UITableViewDelegate {
     }
 }
 
-// MARK: - UISearchResultsUpdating
-extension ENSManagerViewController: UISearchResultsUpdating {
-    func updateSearchResults(for searchController: UISearchController) {
-        guard let searchText = searchController.searchBar.text else { return }
-        
-        if searchText.isEmpty {
-            filteredENSNames = ensNames
-        } else {
-            filteredENSNames = ensNames.filter { ensName in
-                // Search by ENS name
-                let ensNameMatch = ensName.name.lowercased().contains(searchText.lowercased())
-                
-                // Search by full name (if available)
-                let fullNameMatch = ensName.fullName?.lowercased().contains(searchText.lowercased()) ?? false
-                
-                // Search by address (partial match)
-                let addressMatch = ensName.address.lowercased().contains(searchText.lowercased())
-                
-                return ensNameMatch || fullNameMatch || addressMatch
-            }
-        }
-        
-        tableView.reloadData()
-    }
-}
+
+
 
 // MARK: - AddENSNameDelegate
 extension ENSManagerViewController: AddENSNameDelegate {
     func didAddENSName(_ ensName: ENSName) {
-        print("📝 ENSManagerViewController: didAddENSName called for \(ensName.name) with address: \(ensName.address)")
         ensNames.append(ensName)
         filteredENSNames = ensNames
         saveENSNames()
@@ -362,7 +410,6 @@ extension ENSManagerViewController: AddENSNameDelegate {
     }
     
     func didUpdateENSName(_ ensName: ENSName) {
-        print("📝 ENSManagerViewController: didUpdateENSName called for \(ensName.name) with address: \(ensName.address)")
         // Find and update the existing ENS name
         if let index = ensNames.firstIndex(where: { $0.name == ensName.name }) {
             ensNames[index] = ensName
@@ -370,12 +417,10 @@ extension ENSManagerViewController: AddENSNameDelegate {
             saveENSNames()
             tableView.reloadData()
         } else {
-            print("⚠️ ENSManagerViewController: Could not find ENS name to update: \(ensName.name)")
         }
     }
     
     func didRemoveENSName(_ ensName: String) {
-        print("📝 ENSManagerViewController: didRemoveENSName called for \(ensName)")
         // Remove the ENS name if it exists
         ensNames.removeAll { $0.name == ensName }
         filteredENSNames = ensNames
@@ -383,6 +428,7 @@ extension ENSManagerViewController: AddENSNameDelegate {
         tableView.reloadData()
     }
 }
+
 
 // MARK: - ENSName Model
 struct ENSName: Codable {
@@ -398,6 +444,7 @@ struct ENSName: Codable {
         self.fullName = fullName
     }
 }
+
 
 // MARK: - ENSNameTableViewCellDelegate
 extension ENSManagerViewController: ENSNameTableViewCellDelegate {
@@ -418,12 +465,10 @@ extension ENSManagerViewController: ENSNameTableViewCellDelegate {
         tableView.reloadData()
         
         // Resolve the ENS name
-        print("🔄 ENSManagerViewController: Starting refresh resolution for: \(ensName.name)")
         APICaller.shared.resolveENSName(name: ensName.name) { [weak self] resolvedAddress in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 
-                print("🔄 ENSManagerViewController: Refresh resolution result for \(ensName.name): '\(resolvedAddress)'")
                 
                 if !resolvedAddress.isEmpty {
                     // Update with resolved address
@@ -446,7 +491,6 @@ extension ENSManagerViewController: ENSNameTableViewCellDelegate {
                     }
                 } else {
                     // Resolution failed - keep showing "Resolving..." or show error
-                    print("Failed to resolve ENS name: \(ensName.name)")
                 }
             }
         }
@@ -496,13 +540,11 @@ extension ENSManagerViewController: ENSNameTableViewCellDelegate {
     }
     
     func didTapDelete(for ensName: ENSName) {
-        print("🗑️ ENSManagerViewController: Delete requested for \(ensName.name)")
         // Show remove confirmation alert
         let alert = UIAlertController(title: "Remove ENS Name", message: "Are you sure you want to remove \(ensName.name)? This action cannot be undone.", preferredStyle: .alert)
         
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         alert.addAction(UIAlertAction(title: "Remove", style: .destructive) { [weak self] _ in
-            print("🗑️ ENSManagerViewController: User confirmed delete for \(ensName.name)")
             self?.deleteENSName(ensName)
         })
         
@@ -518,26 +560,23 @@ extension ENSManagerViewController: ENSNameTableViewCellDelegate {
     }
     
     private func deleteENSName(_ ensName: ENSName) {
-        print("🗑️ ENSManagerViewController: Deleting \(ensName.name)")
         
         // Find the index of the ENS name to delete
         guard let index = ensNames.firstIndex(where: { $0.name == ensName.name }) else { 
-            print("⚠️ ENSManagerViewController: Could not find ENS name to delete: \(ensName.name)")
             return 
         }
         
         // Remove from the main array
         ensNames.remove(at: index)
-        print("🗑️ ENSManagerViewController: Removed from ensNames array, count now: \(ensNames.count)")
         
         // Update filtered array
         filteredENSNames = ensNames
         
         // Save the updated array
         saveENSNames()
-        print("🗑️ ENSManagerViewController: Saved updated ENS names")
         
         // Update the table view
+        updateEmptyState()
         tableView.reloadData()
         
         // Show success message
@@ -548,5 +587,22 @@ extension ENSManagerViewController: ENSNameTableViewCellDelegate {
         )
         successAlert.addAction(UIAlertAction(title: "OK", style: .default))
         present(successAlert, animated: true)
+    }
+    
+    // MARK: - UISearchResultsUpdating
+    func updateSearchResults(for searchController: UISearchController) {
+        let searchText = searchController.searchBar.text ?? ""
+        
+        if searchText.isEmpty {
+            filteredENSNames = ensNames
+        } else {
+            filteredENSNames = ensNames.filter { ensName in
+                ensName.name.lowercased().contains(searchText.lowercased()) ||
+                (ensName.fullName?.lowercased().contains(searchText.lowercased()) ?? false)
+            }
+        }
+        
+        updateEmptyState()
+        tableView.reloadData()
     }
 }

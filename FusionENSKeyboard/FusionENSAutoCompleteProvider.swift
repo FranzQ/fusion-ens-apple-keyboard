@@ -115,8 +115,7 @@ class FusionENSAutoCompleteProvider {
         
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
-                if let error = error {
-                    print("❌ ENS resolution error: \(error)")
+                if error != nil {
                     completion(nil)
                     return
                 }

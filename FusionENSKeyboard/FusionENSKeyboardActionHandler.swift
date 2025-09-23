@@ -21,7 +21,6 @@ class FusionENSKeyboardActionHandler {
     // MARK: - Functions
     
     func alert(_ message: String) {
-        print("Alert: \(message)")
     }
     
     func copyImage(named imageName: String) {

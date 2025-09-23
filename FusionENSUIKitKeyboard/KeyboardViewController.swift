@@ -112,22 +112,16 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
-        // Check if the view bounds have changed and we need to update the layout
-        if isKeyboardViewSetup && view.bounds.width > 0 {
-            let currentWidth = view.bounds.width
-            if abs(currentWidth - (containerView?.bounds.width ?? 0)) > 10 {
-                print("🔧 View bounds changed, updating keyboard layout. New width: \(currentWidth)")
-                isKeyboardViewSetup = false
-                setupKeyboardView()
-                isKeyboardViewSetup = true
-            }
+        // Only update layout if we haven't set up yet and view has proper bounds
+        if !isKeyboardViewSetup && view.bounds.width > 0 {
+            setupKeyboardView()
+            isKeyboardViewSetup = true
         }
     }
     
     // MARK: - Setup Methods
     private func setupKeyboardView() {
         guard !isSettingUpView else {
-            print("⚠️ Already setting up view, skipping")
             return
         }
         
@@ -135,7 +129,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         
         cleanupExistingViews()
         
-        print("🔧 Creating UIKit keyboard view - Numbers: \(isNumbersLayout), Secondary: \(isSecondarySymbolsLayout), Shift: \(isShiftPressed), CapsLock: \(isCapsLock)")
         let keyboardView = createSimpleKeyboard()
         view.addSubview(keyboardView)
         
@@ -147,14 +140,11 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             keyboardView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             keyboardView.heightAnchor.constraint(greaterThanOrEqualToConstant: 216.0)
         ])
-        print("🔧 UIKit keyboard view created and added")
         
         isSettingUpView = false
-        print("🔧 UIKit setupKeyboardView completed")
     }
     
     private func cleanupExistingViews() {
-        print("🧹 UIKit KeyboardViewController: Cleaning up existing views")
         
         // Remove all subviews
         view.subviews.forEach { $0.removeFromSuperview() }
@@ -169,12 +159,10 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         view.setNeedsLayout()
         view.layoutIfNeeded()
         
-        print("🧹 UIKit KeyboardViewController: Cleanup completed")
     }
     
     // MARK: - Keyboard Creation
     private func createSimpleKeyboard() -> UIView {
-        print("🔧 UIKit KeyboardViewController: Creating advanced keyboard")
         
         // Create main container
         containerView = UIView()
@@ -188,11 +176,9 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         
         // Remove debugging border
         containerView.layer.borderWidth = 0.0
-        print("🔧 UIKit Container view background color set: \(containerView.backgroundColor?.description ?? "nil")")
         
         // Get the available width for the keyboard - use view bounds instead of screen bounds
         let availableWidth = view.bounds.width > 0 ? view.bounds.width : UIScreen.main.bounds.width
-        print("🔧 Available keyboard width: \(availableWidth)")
         
         // Set a minimum height for the container view to prevent 0 height issues
         let minimumHeight: CGFloat = 216.0 // Standard keyboard height
@@ -207,11 +193,9 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         // Set up constraints
         NSLayoutConstraint.activate([
             // Container constraints
-            containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: minimumHeight),
-            containerView.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -6) // Ensure it doesn't exceed view bounds
+            containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: minimumHeight)
         ])
         
-        print("🔧 UIKit KeyboardViewController: Advanced keyboard created")
         return containerView
     }
     
@@ -255,7 +239,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             suggestionStackView.heightAnchor.constraint(equalTo: suggestionBar!.heightAnchor)
         ])
         
-        print("🔧 UIKit KeyboardViewController: Suggestion bar added")
     }
     
     private func createSuggestionButton(title: String) -> UIButton {
@@ -338,7 +321,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                 rowView.addSubview(button)
                 
                 button.translatesAutoresizingMaskIntoConstraints = false
-                print("🔧 Created button '\(key)' for row \(rowIndex)")
                 
                 // Calculate appropriate width based on available space and key type
                 let keyWidth = calculateKeyWidth(for: key, in: row, rowIndex: rowIndex, availableWidth: availableWidth)
@@ -372,6 +354,11 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                 previousButton = button
             }
             
+            // Add trailing constraint for the last button to prevent overflow
+            if let lastButton = previousButton {
+                lastButton.trailingAnchor.constraint(lessThanOrEqualTo: rowView.trailingAnchor, constant: -3).isActive = true
+            }
+            
             // Position the row
             if let previousRowView = previousRowView {
                 rowView.topAnchor.constraint(equalTo: previousRowView.bottomAnchor, constant: 4).isActive = true
@@ -393,7 +380,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             previousRowView = rowView
         }
         
-        print("🔧 UIKit KeyboardViewController: Keyboard rows added")
     }
     
     private func createKeyboardButton(title: String) -> UIButton {
@@ -469,11 +455,9 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         
         // Handle button actions
         if title == ":btc" {
-            print("🔶 Setting up :btc button with special touch handling")
             // Special handling for :btc key with long press
             button.addTarget(self, action: #selector(btcButtonTouchDown), for: .touchDown)
             button.addTarget(self, action: #selector(btcButtonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
-            print("🔶 :btc button targets added successfully")
         } else if title == "space" {
             // Special handling for space bar with long press
             button.addTarget(self, action: #selector(spaceButtonTouchDown), for: .touchDown)
@@ -523,7 +507,6 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         sender.backgroundColor = UIColor.clear
         
         if let title = sender.title(for: .normal) {
-            print("📝 Inserting suggestion: \(title)")
             
             // Get the current word being typed (last word in lastTypedWord)
             let words = lastTypedWord.components(separatedBy: .whitespacesAndNewlines)
@@ -636,21 +619,16 @@ textDocumentProxy.insertText("\n")
         
         // Only resolve if there's selected text
         if let selectedText = textDocumentProxy.selectedText, !selectedText.isEmpty {
-            print("📝 Selected text: '\(selectedText)'")
             if HelperClass.checkFormat(selectedText) {
-                print("✅ ENS format detected, resolving...")
                 handleSelectedText(selectedText)
             } else {
-                print("❌ Not a valid ENS format")
             }
         } else {
-            print("❌ No text selected")
         }
     }
     
     // MARK: - Key Handling
     private func handleKeyPress(_ key: String) {
-        print("🔤 UIKit KeyboardViewController: Key pressed: \(key)")
         
         switch key {
         case "⌫":
@@ -669,31 +647,24 @@ textDocumentProxy.insertText("\n")
             handleSpaceKeyPress()
         case "return":
             // Check if we're in a browser address bar and handle auto-resolve
-            print("🔍 Return key pressed - checking browser context...")
             let isBrowser = isInBrowserAddressBar()
-            print("🔍 Browser context result: \(isBrowser)")
             if isBrowser {
-                print("🔍 Browser context detected - handling auto-resolve")
                 // Show loading indicator on return key
                 updateReturnKeyToLoading()
                 handleReturnKeyInAddressBar()
             } else {
-                print("🔍 No browser context - normal return")
                 insertText("\n")
                 // Clear last typed word when return is pressed
                 lastTypedWord = ""
             }
         case "123":
             // Switch to numbers layout OR next keyboard (long press)
-            print("🔢 123 key pressed - switching to numbers layout")
             switchToNumbersLayout()
         case "ABC":
             // Switch back to letters layout
-            print("🔤 ABC key pressed - switching to letters layout")
             switchToLettersLayout()
         case "#+=":
             // Switch to secondary symbols layout
-            print("🔣 #+= key pressed - switching to secondary symbols layout")
             switchToSecondarySymbolsLayout()
         case ".eth":
             // .eth key - insert .eth at cursor position
@@ -702,25 +673,21 @@ textDocumentProxy.insertText("\n")
             // Turn off shift after key press (unless caps lock is on)
             if isShiftPressed && !isCapsLock {
                 isShiftPressed = false
-                print("⇧ Shift turned off after .eth key press")
                 isKeyboardViewSetup = false
                 setupKeyboardView()
                 isKeyboardViewSetup = true
             }
         case ":btc":
-            print("🔶 handleKeyPress called for :btc - inserting :btc text")
             // Crypto ticker key - insert :btc at cursor position
             insertText(":btc")
             lastTypedWord += ":btc"
             // Turn off shift after key press (unless caps lock is on)
             if isShiftPressed && !isCapsLock {
                 isShiftPressed = false
-                print("⇧ Shift turned off after :btc key press")
                 isKeyboardViewSetup = false
                 setupKeyboardView()
                 isKeyboardViewSetup = true
             }
-            print("🔶 :btc text inserted successfully")
         case "🙂":
             // Emoji key - insert smiley face
             insertText("🙂")
@@ -728,7 +695,6 @@ textDocumentProxy.insertText("\n")
             // Turn off shift after key press (unless caps lock is on)
             if isShiftPressed && !isCapsLock {
                 isShiftPressed = false
-                print("⇧ Shift turned off after emoji key press")
                 isKeyboardViewSetup = false
                 setupKeyboardView()
                 isKeyboardViewSetup = true
@@ -740,16 +706,13 @@ textDocumentProxy.insertText("\n")
                 // Double tap shift - toggle caps lock
                 isCapsLock.toggle()
                 isShiftPressed = false
-                print("🔒 Caps lock toggled: \(isCapsLock)")
             } else {
                 // Single tap shift - enable for next key only
                 isShiftPressed = true
                 isCapsLock = false
-                print("⇧ Shift enabled for next key: \(isShiftPressed)")
             }
             lastShiftPressTime = currentTime
             // Recreate keyboard with new case
-            print("🔄 Recreating keyboard for shift state: shift=\(isShiftPressed), capslock=\(isCapsLock)")
             isKeyboardViewSetup = false
             setupKeyboardView()
             isKeyboardViewSetup = true
@@ -759,7 +722,6 @@ textDocumentProxy.insertText("\n")
             // Turn off shift after key press (unless caps lock is on)
             if isShiftPressed && !isCapsLock {
                 isShiftPressed = false
-                print("⇧ Shift turned off after period key press")
                 isKeyboardViewSetup = false
                 setupKeyboardView()
                 isKeyboardViewSetup = true
@@ -771,7 +733,6 @@ textDocumentProxy.insertText("\n")
             // Turn off shift after key press (unless caps lock is on)
             if isShiftPressed && !isCapsLock {
                 isShiftPressed = false
-                print("⇧ Shift turned off after key press")
                 // Recreate keyboard to show lowercase
                 isKeyboardViewSetup = false
                 setupKeyboardView()
@@ -985,11 +946,9 @@ textDocumentProxy.insertText("\n")
         guard selectedText != lastSelectedText else { return }
         
         lastSelectedText = selectedText
-        print("📝 Text selected (Lite): '\(selectedText)'")
         
         // Check if it's an ENS domain and resolve automatically
         if HelperClass.checkFormat(selectedText) {
-            print("✅ ENS format detected, auto-resolving (Lite)...")
             handleSelectedText(selectedText)
         }
     }
@@ -1140,13 +1099,11 @@ textDocumentProxy.insertText("\n")
     
     private func updateSuggestionBar(with suggestions: [String]) {
         guard let suggestionBar = suggestionBar else { 
-            print("⚠️ Suggestion bar is nil")
             return 
         }
         
         // Find the stack view
         guard let suggestionStackView = suggestionBar.subviews.first as? UIStackView else {
-            print("⚠️ Suggestion stack view not found")
             return
         }
         
@@ -1162,13 +1119,11 @@ textDocumentProxy.insertText("\n")
             suggestionButtons.append(button)
         }
         
-        print("📝 Updated suggestion bar with \(suggestions.count) suggestions")
     }
     
     // MARK: - Layout Switching
     
     @objc private func switchToNumbersLayout() {
-        print("🔢 Switching to numbers layout")
         isNumbersLayout = true
         isSecondarySymbolsLayout = false
         isKeyboardViewSetup = false
@@ -1177,7 +1132,6 @@ textDocumentProxy.insertText("\n")
     }
     
     @objc private func switchToLettersLayout() {
-        print("🔤 Switching to letters layout")
         isNumbersLayout = false
         isSecondarySymbolsLayout = false
         isKeyboardViewSetup = false
@@ -1186,7 +1140,6 @@ textDocumentProxy.insertText("\n")
     }
     
     @objc private func switchToSecondarySymbolsLayout() {
-        print("🔣 Switching to secondary symbols layout")
         isSecondarySymbolsLayout = true
         isKeyboardViewSetup = false
         setupKeyboardView()
@@ -1256,28 +1209,21 @@ textDocumentProxy.insertText("\n")
     private var btcLongPressOccurred = false
     
     @objc private func btcButtonTouchDown(_ sender: UIButton) {
-        print("🔶 :btc button touch down - starting long press detection")
         btcButtonPressed = true
         btcLongPressOccurred = false
         
         // Start long press timer
         btcLongPressTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
-            print("🔶 :btc long press timer fired - checking if button still pressed")
             if self?.btcButtonPressed == true {
-                print("🔶 :btc long press detected - showing crypto options")
                 // Long press detected - show crypto options
                 self?.btcLongPressOccurred = true
                 self?.showCryptoTickerOptions()
             } else {
-                print("🔶 :btc long press timer fired but button no longer pressed")
             }
         }
-        print("🔶 :btc long press timer started with 0.5 second delay")
     }
     
     @objc private func btcButtonTouchUp(_ sender: UIButton) {
-        print("🔶 :btc button touch up - checking if long press occurred")
-        print("🔶 :btc btcLongPressOccurred: \(btcLongPressOccurred)")
         
         btcButtonPressed = false
         btcLongPressTimer?.invalidate()
@@ -1285,10 +1231,8 @@ textDocumentProxy.insertText("\n")
         
         // If it was a short press (no long press occurred), handle as normal tap
         if !btcLongPressOccurred {
-            print("🔶 :btc short press detected - inserting :btc")
             handleKeyPress(":btc")
         } else {
-            print("🔶 :btc long press occurred - not inserting :btc")
         }
         
         // Reset the long press flag
@@ -1296,10 +1240,8 @@ textDocumentProxy.insertText("\n")
     }
     
     private func showCryptoTickerOptions() {
-        print("🔶 showCryptoTickerOptions called - starting crypto options display")
         
         // Add haptic feedback
-        print("🔶 Triggering haptic feedback")
         
         let cryptoOptions = [
             // Most popular blockchain networks
@@ -1310,7 +1252,6 @@ textDocumentProxy.insertText("\n")
             ":url", ":x", ":github", ":name", ":bio"
         ]
         
-        print("🔶 Creating custom popup with \(cryptoOptions.count) crypto options")
         
         // Create custom popup view instead of UIAlertController
         createCustomCryptoPopup(with: cryptoOptions)
@@ -1388,13 +1329,11 @@ textDocumentProxy.insertText("\n")
             button.heightAnchor.constraint(equalToConstant: 40).isActive = true
             
             button.addAction(UIAction { _ in
-                print("🔶 Crypto option selected: \(ticker)")
                 self.insertText(ticker)
                 self.lastTypedWord += ticker
                 // Turn off shift after key press (unless caps lock is on)
                 if self.isShiftPressed && !self.isCapsLock {
                     self.isShiftPressed = false
-                    print("⇧ Shift turned off after \(ticker) key press")
                     self.isKeyboardViewSetup = false
                     self.setupKeyboardView()
                     self.isKeyboardViewSetup = true
@@ -1416,7 +1355,6 @@ textDocumentProxy.insertText("\n")
         closeButton.translatesAutoresizingMaskIntoConstraints = false
         
         closeButton.addAction(UIAction { _ in
-            print("🔶 Crypto options closed")
             popupContainer.removeFromSuperview()
         }, for: .touchUpInside)
         
@@ -1460,7 +1398,6 @@ textDocumentProxy.insertText("\n")
             mainStackView.bottomAnchor.constraint(lessThanOrEqualTo: containerView.bottomAnchor, constant: -8)
         ])
         
-        print("🔶 Custom crypto popup created and displayed successfully")
     }
     
     @objc private func handleSpacebarLongPress(_ gesture: UILongPressGestureRecognizer) {
@@ -1495,19 +1432,13 @@ textDocumentProxy.insertText("\n")
         let afterText = textDocumentProxy.documentContextAfterInput ?? ""
         let fullText = beforeText + afterText
         
-        print("🔍 isInBrowserAddressBar: beforeText = '\(beforeText)'")
-        print("🔍 isInBrowserAddressBar: afterText = '\(afterText)'")
-        print("🔍 isInBrowserAddressBar: fullText = '\(fullText)'")
         
         // Check return key type for browser-like behavior
-        if let keyboardType = textDocumentProxy.keyboardType {
-            print("🔍 isInBrowserAddressBar: keyboardType = \(keyboardType.rawValue)")
+        if textDocumentProxy.keyboardType != nil {
         }
         if let returnKeyType = textDocumentProxy.returnKeyType {
-            print("🔍 isInBrowserAddressBar: returnKeyType = \(returnKeyType.rawValue)")
             // Look for browser-like return key types
             if returnKeyType == .go || returnKeyType == .search || returnKeyType == .done {
-                print("🔍 isInBrowserAddressBar: Browser-like return key type detected")
                 return true
             }
         }
@@ -1518,19 +1449,16 @@ textDocumentProxy.insertText("\n")
            beforeText.contains("google.com") || beforeText.contains("search") ||
            fullText.contains("q=") || fullText.contains("&q=") ||
            afterText.contains(".com") || afterText.contains(".org") || afterText.contains(".net") {
-            print("🔍 isInBrowserAddressBar: Browser context detected from URL patterns")
             return true
         }
         
         // Check if we're in a search context (like Google search with parameters)
         if fullText.contains("search") && (fullText.contains("q=") || fullText.contains("&q=")) {
-            print("🔍 isInBrowserAddressBar: Search context detected")
             return true
         }
         
         // Get the current input
         let currentInput = extractInputFromAddressBar(fullText)
-        print("🔍 isInBrowserAddressBar: currentInput = '\(currentInput)'")
         
         // Check for ENS names (both plain ENS names and text records) in browser context
         let hasStrongBrowserIndicators = (textDocumentProxy.returnKeyType == .go || 
@@ -1543,17 +1471,14 @@ textDocumentProxy.insertText("\n")
         if hasStrongBrowserIndicators {
             // Check if it's an ENS text record (like name.eth:x)
             if currentInput.contains(":") && isENSName(currentInput.components(separatedBy: ":").first ?? "") {
-                print("🔍 isInBrowserAddressBar: ENS text record with strong browser indicators - assuming browser")
                 return true
             }
             // Check if it's a plain ENS name (like name.eth)
             else if isENSName(currentInput) {
-                print("🔍 isInBrowserAddressBar: Plain ENS name with strong browser indicators - assuming browser")
                 return true
             }
         }
         
-        print("🔍 isInBrowserAddressBar: No browser context detected")
         return false
     }
     
@@ -1563,37 +1488,28 @@ textDocumentProxy.insertText("\n")
         let afterText = textDocumentProxy.documentContextAfterInput ?? ""
         let fullText = beforeText + afterText
         
-        print("🔍 handleReturnKeyInAddressBar: beforeText = '\(beforeText)'")
-        print("🔍 handleReturnKeyInAddressBar: afterText = '\(afterText)'")
-        print("🔍 handleReturnKeyInAddressBar: fullText = '\(fullText)'")
         
         // Extract the input (everything after the last space or from the beginning)
         let input = extractInputFromAddressBar(fullText)
-        print("🔍 handleReturnKeyInAddressBar: extracted input = '\(input)'")
         
         if !input.isEmpty {
             // Check if this is an ENS text record first (e.g., name.eth:x, name.eth:url)
             if input.contains(":") && isENSName(input.components(separatedBy: ":").first ?? "") {
-                print("🔍 handleReturnKeyInAddressBar: ENS text record detected - calling autoResolveInput")
                 // For ENS text records, try to auto-resolve with timeout
                 autoResolveInput(input) { resolvedURL in
                     DispatchQueue.main.async {
-                        print("🔍 handleReturnKeyInAddressBar: autoResolveInput completed with result: '\(resolvedURL ?? "nil")'")
                         
                         if let resolvedURL = resolvedURL {
                             // Clear the address bar and insert the resolved URL
-                            print("🔍 handleReturnKeyInAddressBar: Clearing address bar and inserting '\(resolvedURL)'")
                             self.clearAddressBarAndInsertURL(resolvedURL)
                             
                             // Restore return key and trigger navigation
                             self.updateReturnKeyToNormal()
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                print("🔍 handleReturnKeyInAddressBar: Triggering return key after resolution")
                                 self.textDocumentProxy.insertText("\n")
                             }
                         } else {
                             // If no resolution, proceed with normal return key
-                            print("🔍 handleReturnKeyInAddressBar: No resolution - proceeding with normal return")
                             self.updateReturnKeyToNormal()
                             self.textDocumentProxy.insertText("\n")
                         }
@@ -1604,42 +1520,34 @@ textDocumentProxy.insertText("\n")
             
             // Check if this is a simple case that can be resolved immediately
             if isCryptoAddress(input) || isURL(input) {
-                print("🔍 handleReturnKeyInAddressBar: Simple case detected")
                 // Handle simple cases immediately
                 let resolvedURL = isCryptoAddress(input) ? getExplorerURL(for: input) : ensureProperURL(input)
                 if let resolvedURL = resolvedURL {
-                    print("🔍 handleReturnKeyInAddressBar: Resolved to '\(resolvedURL)'")
                     clearAddressBarAndInsertURL(resolvedURL)
                     
                     // Trigger the return key to navigate
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        print("🔍 handleReturnKeyInAddressBar: Triggering return key")
                         self.textDocumentProxy.insertText("\n")
                     }
                     return
                 }
             }
             
-            print("🔍 handleReturnKeyInAddressBar: Complex case - calling autoResolveInput")
             // For ENS names or complex cases, try to auto-resolve with timeout
             autoResolveInput(input) { resolvedURL in
                 DispatchQueue.main.async {
-                    print("🔍 handleReturnKeyInAddressBar: autoResolveInput completed with result: '\(resolvedURL ?? "nil")'")
                     
                     if let resolvedURL = resolvedURL {
                         // Clear the address bar and insert the resolved URL
-                        print("🔍 handleReturnKeyInAddressBar: Clearing address bar and inserting '\(resolvedURL)'")
                         self.clearAddressBarAndInsertURL(resolvedURL)
                         
                         // Restore return key and trigger navigation
                         self.updateReturnKeyToNormal()
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                            print("🔍 handleReturnKeyInAddressBar: Triggering return key after resolution")
                             self.textDocumentProxy.insertText("\n")
                         }
                     } else {
                         // If no resolution, proceed with normal return key
-                        print("🔍 handleReturnKeyInAddressBar: No resolution - proceeding with normal return")
                         self.updateReturnKeyToNormal()
                         self.textDocumentProxy.insertText("\n")
                     }
@@ -1647,7 +1555,6 @@ textDocumentProxy.insertText("\n")
             }
         } else {
             // No input, proceed with normal return key
-            print("🔍 handleReturnKeyInAddressBar: No input - proceeding with normal return")
             textDocumentProxy.insertText("\n")
         }
     }
@@ -1701,25 +1608,20 @@ textDocumentProxy.insertText("\n")
     private func autoResolveInput(_ input: String, completion: @escaping (String?) -> Void) {
         // Check for ENS text records first (e.g., name.eth:x, name.eth:url)
         if input.contains(":") && isENSName(input.components(separatedBy: ":").first ?? "") {
-            print("🔍 autoResolveInput: ENS text record detected - calling resolveENSToExplorer")
             resolveENSToExplorer(input, completion: completion)
         } else if isCryptoAddress(input) {
             // For crypto addresses, append the appropriate explorer URL (immediate)
-            print("🔍 autoResolveInput: Crypto address detected")
             let explorerURL = getExplorerURL(for: input)
             completion(explorerURL)
         } else if isURL(input) {
             // For URLs, ensure proper protocol (immediate)
-            print("🔍 autoResolveInput: URL detected")
             let properURL = ensureProperURL(input)
             completion(properURL)
         } else if isENSName(input) {
             // For ENS names, resolve to address and then to explorer (with timeout)
-            print("🔍 autoResolveInput: ENS name detected")
             resolveENSToExplorer(input, completion: completion)
         } else {
             // Try to resolve as ENS name anyway (with timeout)
-            print("🔍 autoResolveInput: Unknown input - trying ENS resolution")
             resolveENSToExplorer(input, completion: completion)
         }
     }
@@ -1789,7 +1691,6 @@ textDocumentProxy.insertText("\n")
         // Use the Fusion ENS Server API to resolve text records
         let apiURL = "https://api.fusionens.com/resolve/\(baseName):\(recordType)?network=mainnet"
         
-        print("🔍 resolveTextRecord: Calling API: \(apiURL)")
         
         // Create URLSession with timeout
         let config = URLSessionConfiguration.default
@@ -1800,8 +1701,7 @@ textDocumentProxy.insertText("\n")
         // Make API call to resolve text record
         session.dataTask(with: URL(string: apiURL)!) { data, response, error in
             // Check for timeout or network error
-            if let error = error {
-                print("🔍 resolveTextRecord: API error: \(error)")
+            if error != nil {
                 DispatchQueue.main.async {
                     completion(nil)
                 }
@@ -1809,7 +1709,6 @@ textDocumentProxy.insertText("\n")
             }
             
             guard let data = data else {
-                print("🔍 resolveTextRecord: No data received")
                 DispatchQueue.main.async {
                     completion(nil)
                 }
@@ -1817,22 +1716,18 @@ textDocumentProxy.insertText("\n")
             }
             
             // Debug: Print raw response
-            if let responseString = String(data: data, encoding: .utf8) {
-                print("🔍 resolveTextRecord: Raw API response: \(responseString)")
+            if String(data: data, encoding: .utf8) != nil {
             }
             
             guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                print("🔍 resolveTextRecord: Failed to parse JSON")
                 DispatchQueue.main.async {
                     completion(nil)
                 }
                 return
             }
             
-            print("🔍 resolveTextRecord: Parsed JSON: \(json)")
             
             guard let success = json["success"] as? Bool, success else {
-                print("🔍 resolveTextRecord: API returned success=false")
                 DispatchQueue.main.async {
                     completion(nil)
                 }
@@ -1840,28 +1735,22 @@ textDocumentProxy.insertText("\n")
             }
             
             guard let dataDict = json["data"] as? [String: Any] else {
-                print("🔍 resolveTextRecord: No data dict in response")
                 DispatchQueue.main.async {
                     completion(nil)
                 }
                 return
             }
             
-            print("🔍 resolveTextRecord: Data dict: \(dataDict)")
             
             // Try different possible keys for the text record value
             let recordValue: String?
             if let value = dataDict["value"] as? String, !value.isEmpty {
                 recordValue = value
-                print("🔍 resolveTextRecord: Found value in 'value' key: \(value)")
             } else if let address = dataDict["address"] as? String, !address.isEmpty {
                 recordValue = address
-                print("🔍 resolveTextRecord: Found value in 'address' key: \(address)")
             } else if let result = dataDict["result"] as? String, !result.isEmpty {
                 recordValue = result
-                print("🔍 resolveTextRecord: Found value in 'result' key: \(result)")
             } else {
-                print("🔍 resolveTextRecord: No valid text record value found")
                 DispatchQueue.main.async {
                     completion(nil)
                 }
@@ -1870,7 +1759,6 @@ textDocumentProxy.insertText("\n")
             
             // Convert text record to appropriate URL
             let resolvedURL = self.convertTextRecordToURL(recordType: recordType, value: recordValue!)
-            print("🔍 resolveTextRecord: Converted to URL: \(resolvedURL)")
             DispatchQueue.main.async {
                 completion(resolvedURL)
             }
@@ -1925,7 +1813,6 @@ textDocumentProxy.insertText("\n")
             if let returnButton = self.findReturnKeyButton() {
                 returnButton.setTitle("...", for: .normal)
                 returnButton.isEnabled = false
-                print("🔍 Return key updated to loading state")
             }
         }
     }
@@ -1936,7 +1823,6 @@ textDocumentProxy.insertText("\n")
             if let returnButton = self.findReturnKeyButton() {
                 returnButton.setTitle("return", for: .normal)
                 returnButton.isEnabled = true
-                print("🔍 Return key restored to normal state")
             }
         }
     }

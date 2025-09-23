@@ -55,7 +55,6 @@ class SafeCopyViewController: UIViewController {
         UserDefaults(suiteName: "group.com.fusionens.keyboard")?.set(savedENSNames, forKey: "savedENSNames")
         UserDefaults(suiteName: "group.com.fusionens.keyboard")?.synchronize()
         
-        print("📝 Added '\(ensName)' to ENS suggestions from SafeCopy")
     }
     
     override func viewDidLoad() {
