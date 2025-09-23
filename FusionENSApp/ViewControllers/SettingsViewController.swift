@@ -22,6 +22,11 @@ class SettingsViewController: UIViewController {
     private let walletDescriptionLabel = UILabel()
     private let walletToggle = UISwitch()
     
+    private let contactCardView = UIView()
+    private let contactTitleLabel = UILabel()
+    private let contactDescriptionLabel = UILabel()
+    private let contactButton = UIButton(type: .system)
+    
     // Bottom Navigation
     private let bottomNavView = UIView()
     private let myENSButton = UIButton(type: .system)
@@ -92,6 +97,7 @@ class SettingsViewController: UIViewController {
         
         setupSetupInstructionsCard()
         setupWalletCard()
+        setupContactCard()
     }
     
     
@@ -124,6 +130,39 @@ class SettingsViewController: UIViewController {
         walletToggle.addTarget(self, action: #selector(walletToggleChanged), for: .valueChanged)
         walletToggle.translatesAutoresizingMaskIntoConstraints = false
         walletCardView.addSubview(walletToggle)
+    }
+    
+    private func setupContactCard() {
+        // Contact Card
+        contactCardView.backgroundColor = ColorTheme.cardBackground
+        contactCardView.layer.cornerRadius = 12
+        contactCardView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(contactCardView)
+        
+        // Contact Title
+        contactTitleLabel.text = "Contact Support"
+        contactTitleLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        contactTitleLabel.textColor = ColorTheme.primaryText
+        contactTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        contactCardView.addSubview(contactTitleLabel)
+        
+        // Contact Description
+        contactDescriptionLabel.text = "Need help or have feedback? Send us an email and we'll get back to you as soon as possible."
+        contactDescriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        contactDescriptionLabel.textColor = ColorTheme.secondaryText
+        contactDescriptionLabel.numberOfLines = 0
+        contactDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
+        contactCardView.addSubview(contactDescriptionLabel)
+        
+        // Contact Button
+        contactButton.setTitle("Send Email", for: .normal)
+        contactButton.setTitleColor(.white, for: .normal)
+        contactButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        contactButton.backgroundColor = ColorTheme.accent
+        contactButton.layer.cornerRadius = 8
+        contactButton.addTarget(self, action: #selector(contactButtonTapped), for: .touchUpInside)
+        contactButton.translatesAutoresizingMaskIntoConstraints = false
+        contactCardView.addSubview(contactButton)
     }
     
     private func setupSetupInstructionsCard() {
@@ -243,7 +282,26 @@ class SettingsViewController: UIViewController {
             walletDescriptionLabel.topAnchor.constraint(equalTo: walletTitleLabel.bottomAnchor, constant: 8),
             walletDescriptionLabel.leadingAnchor.constraint(equalTo: walletCardView.leadingAnchor, constant: 16),
             walletDescriptionLabel.trailingAnchor.constraint(equalTo: walletCardView.trailingAnchor, constant: -16),
-            walletDescriptionLabel.bottomAnchor.constraint(equalTo: walletCardView.bottomAnchor, constant: -16)
+            walletDescriptionLabel.bottomAnchor.constraint(equalTo: walletCardView.bottomAnchor, constant: -16),
+            
+            // Contact Card Constraints
+            contactCardView.topAnchor.constraint(equalTo: walletCardView.bottomAnchor, constant: 20),
+            contactCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            contactCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            contactCardView.heightAnchor.constraint(equalToConstant: 140),
+            
+            contactTitleLabel.topAnchor.constraint(equalTo: contactCardView.topAnchor, constant: 16),
+            contactTitleLabel.leadingAnchor.constraint(equalTo: contactCardView.leadingAnchor, constant: 16),
+            contactTitleLabel.trailingAnchor.constraint(equalTo: contactCardView.trailingAnchor, constant: -16),
+            
+            contactDescriptionLabel.topAnchor.constraint(equalTo: contactTitleLabel.bottomAnchor, constant: 8),
+            contactDescriptionLabel.leadingAnchor.constraint(equalTo: contactCardView.leadingAnchor, constant: 16),
+            contactDescriptionLabel.trailingAnchor.constraint(equalTo: contactCardView.trailingAnchor, constant: -16),
+            
+            contactButton.topAnchor.constraint(equalTo: contactDescriptionLabel.bottomAnchor, constant: 16),
+            contactButton.leadingAnchor.constraint(equalTo: contactCardView.leadingAnchor, constant: 16),
+            contactButton.trailingAnchor.constraint(equalTo: contactCardView.trailingAnchor, constant: -16),
+            contactButton.heightAnchor.constraint(equalToConstant: 44)
         ])
         
         // Bottom Navigation Constraints
@@ -280,15 +338,18 @@ class SettingsViewController: UIViewController {
             button.imageView?.contentMode = .scaleAspectFit
             button.imageView?.tintColor = button.tintColor
             
-            // Reset edge insets first
-            button.titleEdgeInsets = UIEdgeInsets.zero
-            button.imageEdgeInsets = UIEdgeInsets.zero
-            
-            // Configure edge insets for proper icon and text positioning
-            // Move text down and center it horizontally
-            button.titleEdgeInsets = UIEdgeInsets(top: 25, left: -button.imageView!.frame.width, bottom: 0, right: 0)
-            // Move image up and center it horizontally
-            button.imageEdgeInsets = UIEdgeInsets(top: -15, left: 0, bottom: 0, right: -button.titleLabel!.frame.width)
+            // Use modern UIButton.Configuration for iOS 15+
+            if #available(iOS 15.0, *) {
+                var config = UIButton.Configuration.plain()
+                config.imagePlacement = .top
+                config.imagePadding = 8
+                config.titlePadding = 4
+                button.configuration = config
+            } else {
+                // Fallback for older iOS versions
+                button.titleEdgeInsets = UIEdgeInsets(top: 25, left: -button.imageView!.frame.width, bottom: 0, right: 0)
+                button.imageEdgeInsets = UIEdgeInsets(top: -15, left: 0, bottom: 0, right: -button.titleLabel!.frame.width)
+            }
             
             // Ensure the button content is properly aligned
             button.contentVerticalAlignment = .center
@@ -307,6 +368,29 @@ class SettingsViewController: UIViewController {
         useTrustWalletScheme = walletToggle.isOn
         
         // Provide immediate feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+    }
+    
+    @objc private func contactButtonTapped() {
+        // Open email client with pre-filled email
+        let email = "hello@fusionens.com"
+        let subject = "Fusion ENS iOS App - Support Request"
+        let body = "Hi Fusion ENS Team,\n\nI need help with:\n\n[Please describe your issue or feedback here]\n\nThanks!"
+        
+        let emailString = "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&body=\(body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+        
+        if let emailURL = URL(string: emailString) {
+            if UIApplication.shared.canOpenURL(emailURL) {
+                UIApplication.shared.open(emailURL)
+            } else {
+                // Fallback: copy email to clipboard
+                UIPasteboard.general.string = email
+                showAlert(title: "Email Copied", message: "Email address copied to clipboard: \(email)")
+            }
+        }
+        
+        // Provide haptic feedback
         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
         impactFeedback.impactOccurred()
     }
@@ -346,5 +430,11 @@ class SettingsViewController: UIViewController {
     // MARK: - Helper Methods
     private func loadSettings() {
         walletToggle.isOn = useTrustWalletScheme
+    }
+    
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
 }

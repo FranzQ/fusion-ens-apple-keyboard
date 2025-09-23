@@ -22,66 +22,18 @@ class AddContactViewController: UIViewController {
     private var dataTasks: [URLSessionDataTask] = []
     
     // MARK: - UI Components
-    private let containerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor.systemBackground
-        view.layer.cornerRadius = 16
-        view.layer.masksToBounds = true
-        return view
-    }()
+    private let modalView = UIView()
+    private let handleView = UIView()
     
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "Add Contact"
-        label.font = UIFont.systemFont(ofSize: 20, weight: .bold)
-        label.textAlignment = .center
-        label.textColor = UIColor.label
-        return label
-    }()
+    private let titleLabel = UILabel()
     
-    private let ensNameLabel: UILabel = {
-        let label = UILabel()
-        label.text = "ENS Name"
-        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        label.textColor = UIColor.label
-        return label
-    }()
+    private let ensNameLabel = UILabel()
     
-    private let ensNameTextField: UITextField = {
-        let textField = UITextField()
-        textField.placeholder = "e.g. vitalik"
-        textField.font = UIFont.systemFont(ofSize: 16, weight: .regular)
-        textField.textColor = UIColor.label
-        textField.backgroundColor = UIColor.secondarySystemBackground
-        textField.layer.cornerRadius = 8
-        textField.layer.borderWidth = 1
-        textField.layer.borderColor = UIColor.separator.cgColor
-        textField.autocapitalizationType = .none
-        textField.autocorrectionType = .no
-        textField.keyboardType = .default
-        textField.returnKeyType = .done
-        return textField
-    }()
+    private let ensNameTextField = UITextField()
     
-    private let ensPreviewLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14, weight: .regular)
-        label.textColor = UIColor.secondaryLabel
-        label.text = ""
-        return label
-    }()
+    private let ensPreviewLabel = UILabel()
     
-    private let addButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Add Contact", for: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
-        button.backgroundColor = UIColor.systemBlue
-        button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 12
-        button.isEnabled = false
-        button.alpha = 0.6
-        return button
-    }()
+    private let addButton = UIButton(type: .system)
     
     
     private let loadingIndicator: UIActivityIndicatorView = {
@@ -113,55 +65,120 @@ class AddContactViewController: UIViewController {
     
     // MARK: - UI Setup
     private func setupUI() {
+        // Full screen background with better blur effect
         view.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-        
-        view.addSubview(containerView)
-        containerView.addSubview(titleLabel)
-        containerView.addSubview(ensNameLabel)
-        containerView.addSubview(ensNameTextField)
-        containerView.addSubview(ensPreviewLabel)
-        containerView.addSubview(addButton)
-        containerView.addSubview(loadingIndicator)
         
         // Add tap gesture to dismiss modal when tapping outside
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
         tapGesture.delegate = self
         view.addGestureRecognizer(tapGesture)
+        
+        // Modal View - positioned to appear above keyboard
+        modalView.backgroundColor = UIColor.systemBackground
+        modalView.layer.cornerRadius = 16
+        modalView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        modalView.layer.shadowColor = UIColor.black.cgColor
+        modalView.layer.shadowOffset = CGSize(width: 0, height: -2)
+        modalView.layer.shadowRadius = 10
+        modalView.layer.shadowOpacity = 0.3
+        view.addSubview(modalView)
+        
+        // Handle View for drag-to-dismiss
+        handleView.backgroundColor = UIColor.systemGray4
+        handleView.layer.cornerRadius = 2.5
+        modalView.addSubview(handleView)
+        
+        // Title Label
+        titleLabel.text = "Add Contact"
+        titleLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
+        titleLabel.textAlignment = .center
+        titleLabel.textColor = UIColor.label
+        modalView.addSubview(titleLabel)
+        
+        // ENS Name Label
+        ensNameLabel.text = "ENS Name"
+        ensNameLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        ensNameLabel.textColor = UIColor.label
+        modalView.addSubview(ensNameLabel)
+        
+        // ENS Name Text Field
+        ensNameTextField.placeholder = "e.g. vitalik"
+        ensNameTextField.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+        ensNameTextField.textColor = UIColor.label
+        ensNameTextField.backgroundColor = UIColor.secondarySystemBackground
+        ensNameTextField.layer.cornerRadius = 8
+        ensNameTextField.layer.borderWidth = 1
+        ensNameTextField.layer.borderColor = UIColor.separator.cgColor
+        ensNameTextField.autocapitalizationType = .none
+        ensNameTextField.autocorrectionType = .no
+        ensNameTextField.keyboardType = .default
+        ensNameTextField.returnKeyType = .done
+        ensNameTextField.delegate = self
+        modalView.addSubview(ensNameTextField)
+        
+        // ENS Preview Label
+        ensPreviewLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        ensPreviewLabel.textColor = UIColor.secondaryLabel
+        ensPreviewLabel.textAlignment = .center
+        ensPreviewLabel.text = ""
+        modalView.addSubview(ensPreviewLabel)
+        
+        // Add Button
+        addButton.setTitle("Add Contact", for: .normal)
+        addButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
+        addButton.backgroundColor = UIColor.systemBlue
+        addButton.setTitleColor(.white, for: .normal)
+        addButton.layer.cornerRadius = 12
+        addButton.isEnabled = false
+        addButton.alpha = 0.6
+        addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
+        modalView.addSubview(addButton)
+        
+        // Loading Indicator
+        loadingIndicator.hidesWhenStopped = true
+        loadingIndicator.color = UIColor.systemBlue
+        modalView.addSubview(loadingIndicator)
     }
     
     private func setupConstraints() {
-        containerView.snp.makeConstraints { make in
+        modalView.snp.makeConstraints { make in
             make.center.equalToSuperview()
             make.leading.trailing.equalToSuperview().inset(20)
-            make.height.equalTo(280)
+        }
+        
+        handleView.snp.makeConstraints { make in
+            make.top.equalTo(modalView.snp.top).offset(8)
+            make.centerX.equalTo(modalView)
+            make.width.equalTo(36)
+            make.height.equalTo(5)
         }
         
         titleLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(20)
-            make.leading.trailing.equalToSuperview().inset(20)
+            make.top.equalTo(handleView.snp.bottom).offset(16)
+            make.leading.trailing.equalTo(modalView).inset(20)
         }
         
         ensNameLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(24)
-            make.leading.trailing.equalToSuperview().inset(20)
+            make.top.equalTo(titleLabel.snp.bottom).offset(20)
+            make.leading.trailing.equalTo(modalView).inset(20)
         }
         
         ensNameTextField.snp.makeConstraints { make in
             make.top.equalTo(ensNameLabel.snp.bottom).offset(8)
-            make.leading.trailing.equalToSuperview().inset(20)
+            make.leading.trailing.equalTo(modalView).inset(20)
             make.height.equalTo(44)
         }
         
         ensPreviewLabel.snp.makeConstraints { make in
-            make.top.equalTo(ensNameTextField.snp.bottom).offset(4)
-            make.leading.trailing.equalToSuperview().inset(20)
+            make.top.equalTo(ensNameTextField.snp.bottom).offset(8)
+            make.leading.trailing.equalTo(modalView).inset(20)
         }
         
         addButton.snp.makeConstraints { make in
-            make.top.equalTo(ensPreviewLabel.snp.bottom).offset(24)
-            make.leading.trailing.equalToSuperview().inset(20)
+            make.top.equalTo(ensPreviewLabel.snp.bottom).offset(20)
+            make.leading.trailing.equalTo(modalView).inset(20)
             make.height.equalTo(50)
-            make.bottom.lessThanOrEqualToSuperview().offset(-20)
+            make.bottom.equalTo(modalView.snp.bottom).offset(-20)
         }
         
         loadingIndicator.snp.makeConstraints { make in
@@ -486,9 +503,9 @@ extension AddContactViewController: UITextFieldDelegate {
 // MARK: - UIGestureRecognizerDelegate
 extension AddContactViewController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-        // Only dismiss when tapping outside the container view
+        // Only dismiss when tapping outside the modal view
         let location = touch.location(in: view)
-        return !containerView.frame.contains(location)
+        return !modalView.frame.contains(location)
     }
 }
 

@@ -16,6 +16,7 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
     // MARK: - Data
     private var contacts: [Contact] = []
     private var filteredContacts: [Contact] = []
+    private var activeRequests: [String: DataRequest] = [:]
     
     
     override func viewDidLoad() {
@@ -29,6 +30,14 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
         // Clear avatar caches to free memory
         ContactTableViewCell.clearAvatarCache()
         ENSNameTableViewCell.clearAvatarCache()
+    }
+    
+    deinit {
+        // Cancel all active network requests
+        for (_, request) in activeRequests {
+            request.cancel()
+        }
+        activeRequests.removeAll()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -303,11 +312,16 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
             // Use ENS metadata API with Ethereum address (same as ENS list)
             let metadataURL = "https://metadata.ens.domains/mainnet/\(ethAddress)/avatar"
             
-            AF.request(metadataURL).responseString { [weak self] response in
+            let request = AF.request(metadataURL)
+            activeRequests["avatar_\(baseDomain)"] = request
+            request.responseString { [weak self] response in
                 DispatchQueue.main.async {
                     guard let self = self,
                           index < self.contacts.count,
                           self.contacts[index].ensName == ensName else { return }
+                    
+                    // Remove from active requests
+                    self.activeRequests.removeValue(forKey: "avatar_\(baseDomain)")
                     
                     guard let avatarURLString = response.value,
                           !avatarURLString.isEmpty,
@@ -329,7 +343,7 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
                     
                     // Check if it's a valid URL
                     guard !cleanURLString.isEmpty,
-                          let url = URL(string: cleanURLString) else {
+                          let _ = URL(string: cleanURLString) else {
                         // Fallback: try ENS Ideas API for avatar
                         self.loadContactAvatarFromENSIdeas(baseDomain: baseDomain, index: index)
                         return
@@ -361,10 +375,15 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
         // Fallback: try ENS Ideas API for avatar (same as ENS list)
         let ensIdeasURL = "https://api.ensideas.com/ens/resolve/\(baseDomain)"
         
-        AF.request(ensIdeasURL).response { [weak self] response in
+        let request = AF.request(ensIdeasURL)
+        activeRequests["avatar_ideas_\(baseDomain)"] = request
+        request.response { [weak self] response in
             DispatchQueue.main.async {
                 guard let self = self,
                       index < self.contacts.count else { return }
+                
+                // Remove from active requests
+                self.activeRequests.removeValue(forKey: "avatar_ideas_\(baseDomain)")
                 
                 guard let data = response.data,
                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -542,10 +561,10 @@ class ContactTableViewCell: UITableViewCell {
         efpButton.setTitle("EFP", for: .normal)
         efpButton.setTitleColor(.white, for: .normal)
         efpButton.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-        efpButton.backgroundColor = ColorTheme.cardBackground.withAlphaComponent(0.8)
+        efpButton.backgroundColor = ColorTheme.accent
         efpButton.layer.cornerRadius = 10
         efpButton.layer.borderWidth = 1
-        efpButton.layer.borderColor = ColorTheme.secondaryText.withAlphaComponent(0.3).cgColor
+        efpButton.layer.borderColor = ColorTheme.accent.cgColor
         efpButton.translatesAutoresizingMaskIntoConstraints = false
         efpButton.addTarget(self, action: #selector(efpButtonTapped), for: .touchUpInside)
         cardView.addSubview(efpButton)
@@ -554,10 +573,10 @@ class ContactTableViewCell: UITableViewCell {
         sendCryptoButton.setTitle("Send Crypto", for: .normal)
         sendCryptoButton.setTitleColor(.white, for: .normal)
         sendCryptoButton.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-        sendCryptoButton.backgroundColor = ColorTheme.cardBackground.withAlphaComponent(0.8)
+        sendCryptoButton.backgroundColor = ColorTheme.accent
         sendCryptoButton.layer.cornerRadius = 10
         sendCryptoButton.layer.borderWidth = 1
-        sendCryptoButton.layer.borderColor = ColorTheme.secondaryText.withAlphaComponent(0.3).cgColor
+        sendCryptoButton.layer.borderColor = ColorTheme.accent.cgColor
         sendCryptoButton.translatesAutoresizingMaskIntoConstraints = false
         sendCryptoButton.addTarget(self, action: #selector(sendCryptoButtonTapped), for: .touchUpInside)
         cardView.addSubview(sendCryptoButton)

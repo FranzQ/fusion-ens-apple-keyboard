@@ -111,6 +111,17 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
+        
+        // Check if the view bounds have changed and we need to update the layout
+        if isKeyboardViewSetup && view.bounds.width > 0 {
+            let currentWidth = view.bounds.width
+            if abs(currentWidth - (containerView?.bounds.width ?? 0)) > 10 {
+                print("🔧 View bounds changed, updating keyboard layout. New width: \(currentWidth)")
+                isKeyboardViewSetup = false
+                setupKeyboardView()
+                isKeyboardViewSetup = true
+            }
+        }
     }
     
     // MARK: - Setup Methods
@@ -179,8 +190,8 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         containerView.layer.borderWidth = 0.0
         print("🔧 UIKit Container view background color set: \(containerView.backgroundColor?.description ?? "nil")")
         
-        // Get the available width for the keyboard
-        let availableWidth = UIScreen.main.bounds.width
+        // Get the available width for the keyboard - use view bounds instead of screen bounds
+        let availableWidth = view.bounds.width > 0 ? view.bounds.width : UIScreen.main.bounds.width
         print("🔧 Available keyboard width: \(availableWidth)")
         
         // Set a minimum height for the container view to prevent 0 height issues
@@ -196,7 +207,8 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         // Set up constraints
         NSLayoutConstraint.activate([
             // Container constraints
-            containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: minimumHeight)
+            containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: minimumHeight),
+            containerView.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -6) // Ensure it doesn't exceed view bounds
         ])
         
         print("🔧 UIKit KeyboardViewController: Advanced keyboard created")
@@ -259,7 +271,16 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         }
         
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16)
-        button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
+        
+        // Use modern UIButton.Configuration for iOS 15+
+        if #available(iOS 15.0, *) {
+            var config = UIButton.Configuration.plain()
+            config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12)
+            button.configuration = config
+        } else {
+            // Fallback for older iOS versions
+            button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
+        }
         
         button.addTarget(self, action: #selector(suggestionButtonTouchDown), for: .touchDown)
         button.addTarget(self, action: #selector(suggestionButtonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
@@ -993,12 +1014,22 @@ textDocumentProxy.insertText("\n")
             let functionKeys = row.filter { ["space", "return", "123", "ABC", ".eth", "⇧", "⌫", "#+=", "🙂"].contains($0) }
             let regularKeys = row.filter { !["space", "return", "123", "ABC", ".eth", "⇧", "⌫", "#+=", "🙂"].contains($0) }
             
-            let functionKeyWidth = functionKeys.reduce(0) { total, key in
-                total + calculateKeyWidth(for: key, in: row, rowIndex: rowIndex, availableWidth: availableWidth)
+            // Calculate function key widths without recursion
+            let functionKeyWidth = functionKeys.reduce(0) { total, functionKey in
+                switch functionKey {
+                case "space":
+                    return total + (availableWidthForKeys * 0.4)
+                case "return":
+                    return total + (availableWidthForKeys * 0.15)
+                case "123", "ABC", ".eth", "⇧", "⌫", "#+=", "🙂":
+                    return total + (availableWidthForKeys * 0.12)
+                default:
+                    return total
+                }
             }
             
             let remainingWidth = availableWidthForKeys - functionKeyWidth - (CGFloat(row.count - 1) * spacing)
-            return remainingWidth / CGFloat(regularKeys.count)
+            return max(remainingWidth / CGFloat(regularKeys.count), 30) // Minimum width of 30 points
         }
     }
     
@@ -1469,17 +1500,15 @@ textDocumentProxy.insertText("\n")
         print("🔍 isInBrowserAddressBar: fullText = '\(fullText)'")
         
         // Check return key type for browser-like behavior
-        if let textInputTraits = textDocumentProxy as? UITextInputTraits {
-            if let keyboardType = textInputTraits.keyboardType {
-                print("🔍 isInBrowserAddressBar: keyboardType = \(keyboardType.rawValue)")
-            }
-            if let returnKeyType = textInputTraits.returnKeyType {
-                print("🔍 isInBrowserAddressBar: returnKeyType = \(returnKeyType.rawValue)")
-                // Look for browser-like return key types
-                if returnKeyType == .go || returnKeyType == .search || returnKeyType == .done {
-                    print("🔍 isInBrowserAddressBar: Browser-like return key type detected")
-                    return true
-                }
+        if let keyboardType = textDocumentProxy.keyboardType {
+            print("🔍 isInBrowserAddressBar: keyboardType = \(keyboardType.rawValue)")
+        }
+        if let returnKeyType = textDocumentProxy.returnKeyType {
+            print("🔍 isInBrowserAddressBar: returnKeyType = \(returnKeyType.rawValue)")
+            // Look for browser-like return key types
+            if returnKeyType == .go || returnKeyType == .search || returnKeyType == .done {
+                print("🔍 isInBrowserAddressBar: Browser-like return key type detected")
+                return true
             }
         }
         
@@ -1504,10 +1533,9 @@ textDocumentProxy.insertText("\n")
         print("🔍 isInBrowserAddressBar: currentInput = '\(currentInput)'")
         
         // Check for ENS names (both plain ENS names and text records) in browser context
-        let textInputTraits = textDocumentProxy as? UITextInputTraits
-        let hasStrongBrowserIndicators = (textInputTraits?.returnKeyType == .go || 
-                                        textInputTraits?.returnKeyType == .search || 
-                                        textInputTraits?.returnKeyType == .done) ||
+        let hasStrongBrowserIndicators = (textDocumentProxy.returnKeyType == .go || 
+                                        textDocumentProxy.returnKeyType == .search || 
+                                        textDocumentProxy.returnKeyType == .done) ||
                                        beforeText.contains("http://") || 
                                        beforeText.contains("https://") || 
                                        beforeText.contains("www.")

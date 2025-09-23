@@ -401,12 +401,6 @@ class PaymentRequestViewController: UIViewController {
             target: self,
             action: #selector(cancelTapped)
         )
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
-            title: "Done",
-            style: .done,
-            target: self,
-            action: #selector(doneTapped)
-        )
     }
     
     private func setupInitialState() {
@@ -439,9 +433,6 @@ class PaymentRequestViewController: UIViewController {
         dismiss(animated: true)
     }
     
-    @objc private func doneTapped() {
-        dismiss(animated: true)
-    }
     
     @objc private func ensCardTapped() {
         // Same action as tapping ENS name - could open ENS profile or copy address
@@ -667,7 +658,7 @@ class PaymentRequestViewController: UIViewController {
     private func checkAvailableChains() {
         // Add a subtle indicator to show which chains are available
         // This could be enhanced with visual indicators on the segmented control
-        let availableChains = PaymentChain.allCases
+        _ = PaymentChain.allCases
         
         // You could add visual indicators here, like:
         // - Gray out unavailable chains

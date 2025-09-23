@@ -344,7 +344,7 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
     
     private func loadImage(from url: URL, completion: @escaping (UIImage?) -> Void) {
         AF.request(url).responseData { response in
-            if let error = response.error {
+            if response.error != nil {
                 completion(nil)
                 return
             }
@@ -355,9 +355,8 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
             }
             
             
-            // Check the content type
-            if let contentType = response.response?.allHeaderFields["Content-Type"] as? String {
-            }
+            // Check the content type (for future use)
+            _ = response.response?.allHeaderFields["Content-Type"] as? String
             
             // Try to create UIImage from data
             guard let image = UIImage(data: data) else {

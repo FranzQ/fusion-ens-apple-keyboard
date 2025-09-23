@@ -225,12 +225,10 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         let fullText = beforeText + afterText
         
         // Check return key type for browser-like behavior
-        if let textInputTraits = textDocumentProxy as? UITextInputTraits {
-            if let returnKeyType = textInputTraits.returnKeyType {
-                // Look for browser-like return key types
-                if returnKeyType == .go || returnKeyType == .search || returnKeyType == .done {
-                    return true
-                }
+        if let returnKeyType = textDocumentProxy.returnKeyType {
+            // Look for browser-like return key types
+            if returnKeyType == .go || returnKeyType == .search || returnKeyType == .done {
+                return true
             }
         }
         
@@ -252,10 +250,9 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         let currentInput = extractInputFromAddressBar(fullText)
         
         // Check for ENS names (both plain ENS names and text records) in browser context
-        let textInputTraits = textDocumentProxy as? UITextInputTraits
-        let hasStrongBrowserIndicators = (textInputTraits?.returnKeyType == .go || 
-                                        textInputTraits?.returnKeyType == .search || 
-                                        textInputTraits?.returnKeyType == .done) ||
+        let hasStrongBrowserIndicators = (textDocumentProxy.returnKeyType == .go || 
+                                        textDocumentProxy.returnKeyType == .search || 
+                                        textDocumentProxy.returnKeyType == .done) ||
                                        beforeText.contains("http://") || 
                                        beforeText.contains("https://") || 
                                        beforeText.contains("www.")
@@ -367,7 +364,7 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
             // ENS text record (e.g., name.eth:x, name.eth:url)
             let components = input.components(separatedBy: ":")
             if components.count == 2 {
-                let baseName = components[0]
+                let _ = components[0] // baseName
                 let recordType = components[1]
                 
                 // Handle text records using the same API as pro keyboard
