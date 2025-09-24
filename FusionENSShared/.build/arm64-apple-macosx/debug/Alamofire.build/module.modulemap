@@ -1,4 +1,0 @@
-module Alamofire {
-    header "/Users/franzquarshie/source/ethaccra/fusion-ens-apple-keyboard/FusionENSShared/.build/arm64-apple-macosx/debug/Alamofire.build/Alamofire-Swift.h"
-    requires objc
-}
