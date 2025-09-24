@@ -16,7 +16,9 @@ class APICaller {
     private var activeRequests: [String: DataRequest] = [:]
     
     // Offline cache for ENS resolutions
-    private let offlineCache = UserDefaults(suiteName: "group.com.fusionens.keyboard")
+    private let offlineCache: UserDefaults = {
+        return UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+    }()
     private let cacheKey = "ensOfflineCache"
     private let maxCacheSize = 100 // Maximum number of cached resolutions
     

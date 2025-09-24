@@ -33,12 +33,17 @@ class SafeCopyViewController: UIViewController {
     private var resolvedAddress: String = ""
     
     private var isHapticFeedbackEnabled: Bool {
-        return UserDefaults(suiteName: "group.com.fusionens.keyboard")?.bool(forKey: "hapticFeedbackEnabled") ?? true
+        // Add fallback to standard UserDefaults if App Group fails
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        return userDefaults.bool(forKey: "hapticFeedbackEnabled")
     }
     
     private func addENSNameToSuggestions(_ ensName: String) {
+        // Add fallback to standard UserDefaults if App Group fails
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        
         // Load current saved names
-        var savedENSNames = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.array(forKey: "savedENSNames") as? [String] ?? []
+        var savedENSNames = userDefaults.array(forKey: "savedENSNames") as? [String] ?? []
         
         // Remove if already exists to avoid duplicates
         savedENSNames.removeAll { $0 == ensName }
@@ -52,9 +57,8 @@ class SafeCopyViewController: UIViewController {
         }
         
         // Save to shared storage
-        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.set(savedENSNames, forKey: "savedENSNames")
-        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.synchronize()
-        
+        userDefaults.set(savedENSNames, forKey: "savedENSNames")
+        userDefaults.synchronize()
     }
     
     override func viewDidLoad() {

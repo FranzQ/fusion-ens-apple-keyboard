@@ -590,8 +590,11 @@ class AddContactViewController: UIViewController {
     
     // MARK: - Validation
     private func isDuplicateContact(_ ensName: String) -> Bool {
+        // Add fallback to standard UserDefaults if App Group fails
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        
         // Check if the ENS name already exists in Contacts
-        if let data = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.data(forKey: "savedContacts"),
+        if let data = userDefaults.data(forKey: "savedContacts"),
            let savedContacts = try? JSONDecoder().decode([Contact].self, from: data) {
             return savedContacts.contains { $0.ensName.lowercased() == ensName.lowercased() }
         }

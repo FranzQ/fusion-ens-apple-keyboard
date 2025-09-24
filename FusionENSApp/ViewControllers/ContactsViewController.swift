@@ -167,8 +167,11 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
     
     // MARK: - Data Management
     private func loadContacts() {
+        // Add fallback to standard UserDefaults if App Group fails
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        
         // Load saved contacts from UserDefaults
-        if let data = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.data(forKey: "savedContacts"),
+        if let data = userDefaults.data(forKey: "savedContacts"),
            let savedContacts = try? JSONDecoder().decode([Contact].self, from: data) {
             contacts = savedContacts
         } else {
@@ -184,10 +187,13 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
     }
     
     private func saveContacts() {
+        // Add fallback to standard UserDefaults if App Group fails
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        
         // Save contacts to UserDefaults
         if let data = try? JSONEncoder().encode(contacts) {
-            UserDefaults(suiteName: "group.com.fusionens.keyboard")?.set(data, forKey: "savedContacts")
-            UserDefaults(suiteName: "group.com.fusionens.keyboard")?.synchronize()
+            userDefaults.set(data, forKey: "savedContacts")
+            userDefaults.synchronize()
         }
         
         // Also save ENS names for keyboard suggestions
@@ -201,9 +207,12 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
     }
     
     private func saveENSNamesToSharedStorage() {
+        // Add fallback to standard UserDefaults if App Group fails
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        
         let ensNames = contacts.map { $0.ensName }
-        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.set(ensNames, forKey: "contactENSNames")
-        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.synchronize()
+        userDefaults.set(ensNames, forKey: "contactENSNames")
+        userDefaults.synchronize()
     }
     
     private func filterContacts(with searchText: String) {
@@ -449,7 +458,14 @@ extension ContactsViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ContactCell", for: indexPath) as! ContactTableViewCell
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "ContactCell", for: indexPath) as? ContactTableViewCell else {
+            // Fallback to basic cell if casting fails
+            let fallbackCell = UITableViewCell(style: .subtitle, reuseIdentifier: "FallbackCell")
+            let contact = filteredContacts[indexPath.row]
+            fallbackCell.textLabel?.text = contact.name
+            fallbackCell.detailTextLabel?.text = contact.ensName
+            return fallbackCell
+        }
         let contact = filteredContacts[indexPath.row]
         cell.configure(with: contact)
         return cell

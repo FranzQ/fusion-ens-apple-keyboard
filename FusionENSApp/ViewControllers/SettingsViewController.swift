@@ -38,11 +38,15 @@ class SettingsViewController: UIViewController {
     
     private var useTrustWalletScheme: Bool {
         get {
-            return UserDefaults(suiteName: "group.com.fusionens.keyboard")?.bool(forKey: walletPreferenceKey) ?? true
+            // Add fallback to standard UserDefaults if App Group fails
+            let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+            return userDefaults.bool(forKey: walletPreferenceKey)
         }
         set {
-            UserDefaults(suiteName: "group.com.fusionens.keyboard")?.set(newValue, forKey: walletPreferenceKey)
-            UserDefaults(suiteName: "group.com.fusionens.keyboard")?.synchronize()
+            // Add fallback to standard UserDefaults if App Group fails
+            let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+            userDefaults.set(newValue, forKey: walletPreferenceKey)
+            userDefaults.synchronize()
         }
     }
     

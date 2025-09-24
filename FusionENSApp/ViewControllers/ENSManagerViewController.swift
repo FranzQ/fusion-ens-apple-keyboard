@@ -188,6 +188,20 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
         tableView.reloadData()
     }
     
+    private func updateTableViewEfficiently() {
+        updateEmptyState()
+        // Only reload if we have data to show
+        if !filteredENSNames.isEmpty {
+            tableView.reloadData()
+        }
+    }
+    
+    private func updateSpecificRow(at index: Int) {
+        guard index < filteredENSNames.count else { return }
+        let indexPath = IndexPath(row: index, section: 0)
+        tableView.reloadRows(at: [indexPath], with: .none)
+    }
+    
     private func loadFullNamesForENSNames() {
         for (index, ensName) in ensNames.enumerated() {
             // Only load if fullName is nil AND we haven't already tried to load it
@@ -236,7 +250,8 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
                     if !cleanName.isEmpty && index < self.ensNames.count {
                         self.ensNames[index].fullName = cleanName
                         self.saveENSNames()
-                        self.tableView.reloadData()
+                        // Update only the specific row instead of reloading entire table
+                        self.updateSpecificRow(at: index)
                     }
                 }
             } catch {
@@ -453,7 +468,7 @@ extension ENSManagerViewController: AddENSNameDelegate {
         ensNames.append(ensName)
         filteredENSNames = ensNames
         saveENSNames()
-        updateTableView()
+        updateTableViewEfficiently()
     }
     
     func didUpdateENSName(_ ensName: ENSName) {
