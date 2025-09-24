@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1E4B86E42E844C82000D679C /* FusionENSShared in Frameworks */ = {isa = PBXBuildFile; productRef = 1E4B86E32E844C82000D679C /* FusionENSShared */; };
+		1E4B86E62E844C8A000D679C /* FusionENSShared in Frameworks */ = {isa = PBXBuildFile; productRef = 1E4B86E52E844C8A000D679C /* FusionENSShared */; };
 		1E7715832E6579B3005914E9 /* UIHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BB89972A59B85B0038A0E0 /* UIHelpers.swift */; };
 		1E9AA2042E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E9AA1FD2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1E9AA2172E7AFB0800FEA0D4 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 1E9AA2162E7AFB0800FEA0D4 /* Alamofire */; };
@@ -159,6 +161,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1E4B86E62E844C8A000D679C /* FusionENSShared in Frameworks */,
 				1E9AA2172E7AFB0800FEA0D4 /* Alamofire in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -177,6 +180,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1E4B86E42E844C82000D679C /* FusionENSShared in Frameworks */,
 				A17DFA882A48F950003FB8B5 /* KeyboardKit in Frameworks */,
 				A1BCEF1F2A490A5E00A0D0C4 /* Alamofire in Frameworks */,
 			);
@@ -325,6 +329,7 @@
 			name = FusionENSUIKitKeyboard;
 			packageProductDependencies = (
 				1E9AA2162E7AFB0800FEA0D4 /* Alamofire */,
+				1E4B86E52E844C8A000D679C /* FusionENSShared */,
 			);
 			productName = FusionENSUIKitKeyboard;
 			productReference = 1E9AA1FD2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex */;
@@ -372,6 +377,7 @@
 			packageProductDependencies = (
 				A17DFA872A48F950003FB8B5 /* KeyboardKit */,
 				A1BCEF1E2A490A5E00A0D0C4 /* Alamofire */,
+				1E4B86E32E844C82000D679C /* FusionENSShared */,
 			);
 			productName = FusionENSKeyboard;
 			productReference = A1339000298ABB64007DC669 /* FusionENSKeyboard.appex */;
@@ -411,6 +417,7 @@
 				A17DFA842A48F93E003FB8B5 /* XCRemoteSwiftPackageReference "KeyboardKit" */,
 				A1BCEF1B2A490A3600A0D0C4 /* XCRemoteSwiftPackageReference "Alamofire" */,
 				A1BB898E2A599A820038A0E0 /* XCRemoteSwiftPackageReference "SnapKit" */,
+				1E4B86E22E844C79000D679C /* XCLocalSwiftPackageReference "FusionENSShared" */,
 			);
 			productRefGroup = A1338FE6298ABB02007DC669 /* Products */;
 			projectDirPath = "";
@@ -899,6 +906,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		1E4B86E22E844C79000D679C /* XCLocalSwiftPackageReference "FusionENSShared" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = FusionENSShared;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		A17DFA842A48F93E003FB8B5 /* XCRemoteSwiftPackageReference "KeyboardKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -927,6 +941,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		1E4B86E32E844C82000D679C /* FusionENSShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1E4B86E22E844C79000D679C /* XCLocalSwiftPackageReference "FusionENSShared" */;
+			productName = FusionENSShared;
+		};
+		1E4B86E52E844C8A000D679C /* FusionENSShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1E4B86E22E844C79000D679C /* XCLocalSwiftPackageReference "FusionENSShared" */;
+			productName = FusionENSShared;
+		};
 		1E9AA2162E7AFB0800FEA0D4 /* Alamofire */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A1BCEF1B2A490A3600A0D0C4 /* XCRemoteSwiftPackageReference "Alamofire" */;

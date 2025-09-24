@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import FusionENSShared
 
 // Protocol for keyboard functionality
 protocol KeyboardController {
@@ -619,11 +620,15 @@ textDocumentProxy.insertText("\n")
         
         // Only resolve if there's selected text
         if let selectedText = textDocumentProxy.selectedText, !selectedText.isEmpty {
+            print("🔍 Pro Keyboard: Selected text: '\(selectedText)'")
             if HelperClass.checkFormat(selectedText) {
+                print("✅ Pro Keyboard: Format check passed for '\(selectedText)'")
                 handleSelectedText(selectedText)
             } else {
+                print("❌ Pro Keyboard: Format check failed for '\(selectedText)'")
             }
         } else {
+            print("🔍 Pro Keyboard: No selected text")
         }
     }
     
@@ -880,18 +885,22 @@ textDocumentProxy.insertText("\n")
     
     private func handleSelectedText(_ selectedText: String) {
         if HelperClass.checkFormat(selectedText) {
+            print("🚀 Pro Keyboard: Calling APICaller for '\(selectedText)'")
             // Trigger haptic feedback when starting resolution
             
             APICaller.shared.resolveENSName(name: selectedText) { mappedAddress in
                 DispatchQueue.main.async { [weak self] in
+                    print("📡 Pro Keyboard: APICaller response for '\(selectedText)': '\(mappedAddress)'")
                     if !mappedAddress.isEmpty {
                         // Check if we have selected text (proper selection)
                         if let currentSelectedText = self?.textDocumentProxy.selectedText, currentSelectedText == selectedText {
                             // We have proper selected text, so we can replace it directly
                             // The text document proxy will handle the replacement correctly
+                            print("✅ Pro Keyboard: Replacing selected text with address")
                             self?.textDocumentProxy.insertText(mappedAddress)
                         } else {
                             // For spacebar long-press or other cases, we need to find and replace the text
+                            print("🔄 Pro Keyboard: Using replaceTextInDocument")
                             self?.replaceTextInDocument(selectedText, with: mappedAddress)
                         }
                         
@@ -900,11 +909,13 @@ textDocumentProxy.insertText("\n")
                         
                         // Trigger success haptic feedback
                     } else {
+                        print("❌ Pro Keyboard: Empty address response")
                         // Trigger error haptic feedback
                     }
                 }
             }
         } else {
+            print("❌ Pro Keyboard: Format check failed in handleSelectedText")
             // Trigger error haptic feedback for invalid format
         }
     }
@@ -946,10 +957,14 @@ textDocumentProxy.insertText("\n")
         guard selectedText != lastSelectedText else { return }
         
         lastSelectedText = selectedText
+        print("🔍 Pro Keyboard: processSelectedText called with: '\(selectedText)'")
         
         // Check if it's an ENS domain and resolve automatically
         if HelperClass.checkFormat(selectedText) {
+            print("✅ Pro Keyboard: Format check passed in processSelectedText for '\(selectedText)'")
             handleSelectedText(selectedText)
+        } else {
+            print("❌ Pro Keyboard: Format check failed in processSelectedText for '\(selectedText)'")
         }
     }
     

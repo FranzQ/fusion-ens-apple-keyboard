@@ -7,6 +7,7 @@
 
 import UIKit
 import KeyboardKit
+import FusionENSShared
 
 // Protocol for keyboard functionality
 protocol KeyboardController {
@@ -93,38 +94,48 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     func triggerENSResolution() {
         // Only resolve if there's selected text
         if let selectedText = textDocumentProxy.selectedText, !selectedText.isEmpty {
+            print("🔍 Basic Keyboard: Selected text: '\(selectedText)'")
             // Only resolve if it's an ENS domain
             if HelperClass.checkFormat(selectedText) {
+                print("✅ Basic Keyboard: Format check passed for '\(selectedText)'")
                 handleSelectedText(selectedText)
             } else {
+                print("❌ Basic Keyboard: Format check failed for '\(selectedText)'")
             }
         } else {
+            print("🔍 Basic Keyboard: No selected text")
         }
     }
     
     private func handleSelectedText(_ selectedText: String) {
         if HelperClass.checkFormat(selectedText) {
-            // Use the AutoCompleteProvider to resolve ENS names
-            autoCompleteProvider.getSuggestions(for: selectedText) { [weak self] suggestions in
+            print("🚀 Basic Keyboard: Calling APICaller for '\(selectedText)'")
+            // Use APICaller directly (same as Pro Keyboard) for consistent subdomain resolution
+            APICaller.shared.resolveENSName(name: selectedText) { [weak self] resolvedAddress in
                 DispatchQueue.main.async {
-                    if let resolvedAddress = suggestions.first, !resolvedAddress.isEmpty {
+                    print("📡 Basic Keyboard: APICaller response for '\(selectedText)': '\(resolvedAddress)'")
+                    if !resolvedAddress.isEmpty {
                         // Check if we have selected text (proper selection)
                         if let currentSelectedText = self?.textDocumentProxy.selectedText, currentSelectedText == selectedText {
                             // We have proper selected text, so we can replace it directly
                             // The text document proxy will handle the replacement correctly
+                            print("✅ Basic Keyboard: Replacing selected text with address")
                             self?.textDocumentProxy.insertText(resolvedAddress)
                         } else {
                             // For cases where text is not properly selected, use smart replacement
+                            print("🔄 Basic Keyboard: Using smart replacement")
                             self?.smartReplaceENS(selectedText, with: resolvedAddress)
                         }
                         
                         // Trigger success haptic feedback
                     } else {
+                        print("❌ Basic Keyboard: Empty address response")
                         // Trigger error haptic feedback
                     }
                 }
             }
         } else {
+            print("❌ Basic Keyboard: Format check failed in handleSelectedText")
             // Trigger error haptic feedback for invalid format
         }
     }
@@ -204,15 +215,21 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         guard selectedText != lastSelectedText else { return }
         
         lastSelectedText = selectedText
+        print("🔍 Basic Keyboard: processSelectedText called with: '\(selectedText)'")
         
         // Check if it's an ENS domain and resolve automatically
         if HelperClass.checkFormat(selectedText) {
+            print("✅ Basic Keyboard: Format check passed in processSelectedText for '\(selectedText)'")
             // Check if we're in a browser context for auto-resolve
             if isInBrowserAddressBar() {
+                print("🌐 Basic Keyboard: Browser context detected")
                 handleBrowserENSResolution(selectedText)
             } else {
-            handleSelectedText(selectedText)
+                print("📝 Basic Keyboard: Regular context, calling handleSelectedText")
+                handleSelectedText(selectedText)
             }
+        } else {
+            print("❌ Basic Keyboard: Format check failed in processSelectedText for '\(selectedText)'")
         }
     }
     

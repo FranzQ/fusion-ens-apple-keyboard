@@ -416,7 +416,7 @@ class PaymentRequestViewController: UIViewController {
         // Set initial ENS display
         ensNameLabel.text = ensName.name
         fullNameLabel.text = ensName.fullName ?? ensName.name // Use existing fullName or show ENS name
-        ensAddressLabel.text = "" // Will be loaded when address is resolved
+        ensAddressLabel.text = ensName.address // Use existing address
         
         // Load crypto prices
         loadCryptoPrices()
@@ -535,10 +535,25 @@ class PaymentRequestViewController: UIViewController {
     }
     
     private func resolveENSName(completion: @escaping (String?) -> Void) {
-        // Extract base domain from ENS name (remove .eth if present)
-        let baseDomain = extractBaseDomain(from: ensName.name)
+        // For Ethereum, use standard ENS resolution (same as "My ENS Names" and keyboards)
+        if selectedChain == .ethereum {
+            APICaller.shared.resolveENSName(name: ensName.name) { resolvedAddress in
+                DispatchQueue.main.async {
+                    if !resolvedAddress.isEmpty {
+                        completion(resolvedAddress)
+                    } else {
+                        let chainName = self.selectedChain.displayName
+                        let ensName = self.ensName.name
+                        self.showMissingAddressAlert(ensName: ensName, chainName: chainName)
+                        completion(nil)
+                    }
+                }
+            }
+            return
+        }
         
-        // Create multi-chain ENS name based on selected chain
+        // For other chains, use multi-chain resolution
+        let baseDomain = extractBaseDomain(from: ensName.name)
         let chainSuffix = getChainSuffix(for: selectedChain)
         let multiChainENSName = "\(baseDomain):\(chainSuffix)"
         
@@ -668,19 +683,25 @@ class PaymentRequestViewController: UIViewController {
     
     // MARK: - ENS Details Loading
     private func loadENSDetails() {
-        // First resolve the Ethereum address to display in the ENS card
-        resolveEthereumAddress()
+        // Only load missing data - use cached data when available
         
-        // Load full name and avatar from ENS metadata
-        loadENSFullName()
+        // Only resolve address if we don't have it
+        if ensName.address.isEmpty {
+            resolveEthereumAddress()
+        }
+        
+        // Only load full name if we don't have it
+        if ensName.fullName == nil || ensName.fullName?.isEmpty == true {
+            loadENSFullName()
+        }
+        
+        // Always try to load avatar (with cache check)
         loadENSAvatar()
     }
     
     private func resolveEthereumAddress() {
-        // Resolve the base ENS name to get Ethereum address for display
-        let baseDomain = extractBaseDomain(from: ensName.name)
-        
-        APICaller.shared.resolveENSName(name: baseDomain) { [weak self] resolvedAddress in
+        // Resolve the ENS name to get Ethereum address for display (same as keyboards)
+        APICaller.shared.resolveENSName(name: ensName.name) { [weak self] resolvedAddress in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 if !resolvedAddress.isEmpty {
@@ -767,8 +788,8 @@ class PaymentRequestViewController: UIViewController {
         // If no cached image, proceed with API loading
         // Use the same approach as Chrome extension: ENS metadata API with Ethereum address
         
-        // First get the Ethereum address for avatar lookup
-        APICaller.shared.resolveENSName(name: baseDomain) { [weak self] ethAddress in
+        // First get the Ethereum address for avatar lookup (use full ENS name like keyboards)
+        APICaller.shared.resolveENSName(name: ensName.name) { [weak self] ethAddress in
             guard let self = self, !ethAddress.isEmpty else { return }
             
             // Use ENS metadata API with Ethereum address (same as Chrome extension)
@@ -904,8 +925,8 @@ class PaymentRequestViewController: UIViewController {
         
         // Update the UI
         ensNameLabel.text = newENSName.name
-        fullNameLabel.text = newENSName.fullName ?? "Loading..."
-        ensAddressLabel.text = ""
+        fullNameLabel.text = newENSName.fullName ?? newENSName.name // Use cached fullName or show ENS name
+        ensAddressLabel.text = newENSName.address // Use cached address
         
         // Reset avatar state
         avatarImageView.isHidden = true

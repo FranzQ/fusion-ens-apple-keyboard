@@ -888,13 +888,20 @@ class ContactTableViewCell: UITableViewCell {
     }
     
     private func resolveENSForChain(ensName: String, chain: PaymentChain, completion: @escaping (String?) -> Void) {
-        // Extract base domain from ENS name (handle formats like vitalik.eth:btc)
-        let baseDomain = extractBaseDomain(from: ensName)
+        // For Ethereum, use standard ENS resolution (same as keyboards and payment requests)
+        if chain == .ethereum {
+            APICaller.shared.resolveENSName(name: ensName) { resolvedAddress in
+                DispatchQueue.main.async {
+                    completion(resolvedAddress.isEmpty ? nil : resolvedAddress)
+                }
+            }
+            return
+        }
         
-        // Create the full ENS name with chain suffix
+        // For other chains, use multi-chain resolution
+        let baseDomain = extractBaseDomain(from: ensName)
         let chainSuffix = getChainSuffix(for: chain)
         let fullENSName = "\(baseDomain):\(chainSuffix)"
-        
         
         // Resolve using APICaller
         APICaller.shared.resolveENSName(name: fullENSName) { resolvedAddress in
