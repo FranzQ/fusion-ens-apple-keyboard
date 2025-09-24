@@ -20,6 +20,26 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
     private static var loadingRequests: Set<String> = []
     private static let maxCacheSize = 50 // Limit cache size to prevent memory issues
     
+    // MARK: - Disk Cache
+    private static let cacheDirectory: URL = {
+        let urls = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
+        let cacheURL = urls[0].appendingPathComponent("ENSAvatars")
+        try? FileManager.default.createDirectory(at: cacheURL, withIntermediateDirectories: true)
+        return cacheURL
+    }()
+    
+    private static func cacheImageToDisk(_ image: UIImage, for key: String) {
+        guard let data = image.jpegData(compressionQuality: 0.8) else { return }
+        let fileURL = cacheDirectory.appendingPathComponent("\(key.hash).jpg")
+        try? data.write(to: fileURL)
+    }
+    
+    private static func loadImageFromDisk(for key: String) -> UIImage? {
+        let fileURL = cacheDirectory.appendingPathComponent("\(key.hash).jpg")
+        guard let data = try? Data(contentsOf: fileURL) else { return nil }
+        return UIImage(data: data)
+    }
+    
     // MARK: - UI Elements
     private let cardView = UIView()
     private let globeIconView = UIView()
@@ -213,10 +233,22 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
     private func loadENSAvatar(for ensName: ENSName) {
         let baseDomain = extractBaseDomain(from: ensName.name)
         
-        // Check cache first
+        // Check memory cache first
         if let cachedImage = Self.avatarCache[baseDomain] {
             DispatchQueue.main.async {
                 self.avatarImageView.image = cachedImage
+                self.avatarImageView.isHidden = false
+                self.globeIcon.isHidden = true
+            }
+            return
+        }
+        
+        // Check disk cache
+        if let diskImage = Self.loadImageFromDisk(for: baseDomain) {
+            // Add to memory cache and display
+            Self.addToCache(diskImage, for: baseDomain)
+            DispatchQueue.main.async {
+                self.avatarImageView.image = diskImage
                 self.avatarImageView.isHidden = false
                 self.globeIcon.isHidden = true
             }
@@ -284,8 +316,9 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
                         
                         if let image = image {
                             
-                            // Cache the image
+                            // Cache the image (memory + disk)
                             Self.addToCache(image, for: baseDomain)
+                            Self.cacheImageToDisk(image, for: baseDomain)
                             
                             self.avatarImageView.image = image
                             self.avatarImageView.isHidden = false
@@ -325,8 +358,9 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
                         
                         if let image = image {
                             
-                            // Cache the image
+                            // Cache the image (memory + disk)
                             Self.addToCache(image, for: baseDomain)
+                            Self.cacheImageToDisk(image, for: baseDomain)
                             
                             self.avatarImageView.image = image
                             self.avatarImageView.isHidden = false
@@ -456,5 +490,9 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
     static func clearAvatarCache() {
         avatarCache.removeAll()
         loadingRequests.removeAll()
+    }
+    
+    static func getCachedAvatar(for key: String) -> UIImage? {
+        return avatarCache[key]
     }
 }

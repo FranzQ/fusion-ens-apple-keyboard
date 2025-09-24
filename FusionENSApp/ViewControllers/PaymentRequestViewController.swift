@@ -754,8 +754,18 @@ class PaymentRequestViewController: UIViewController {
     }
     
     private func loadENSAvatar() {
-        // Use the same approach as Chrome extension: ENS metadata API with Ethereum address
         let baseDomain = extractBaseDomain(from: ensName.name)
+        
+        // First check if we have a cached image from ENSNameTableViewCell
+        if let cachedImage = ENSNameTableViewCell.getCachedAvatar(for: baseDomain) {
+            self.avatarImageView.image = cachedImage
+            self.avatarImageView.isHidden = false
+            self.globeIconImageView.isHidden = true
+            return
+        }
+        
+        // If no cached image, proceed with API loading
+        // Use the same approach as Chrome extension: ENS metadata API with Ethereum address
         
         // First get the Ethereum address for avatar lookup
         APICaller.shared.resolveENSName(name: baseDomain) { [weak self] ethAddress in

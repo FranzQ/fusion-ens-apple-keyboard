@@ -42,7 +42,14 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        loadContacts()
+        // Only reload if we don't have any contacts loaded
+        if contacts.isEmpty {
+            loadContacts()
+        } else {
+            // Just update the display without reloading data
+            updateEmptyState()
+            tableView.reloadData()
+        }
     }
     
     // MARK: - UI Setup
@@ -411,24 +418,6 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
         }
     }
     
-    private func cleanHTMLTags(from htmlString: String) -> String {
-        // Remove HTML tags and decode HTML entities
-        let cleanString = htmlString
-            .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
-            .replacingOccurrences(of: "&lt;", with: "<")
-            .replacingOccurrences(of: "&gt;", with: ">")
-            .replacingOccurrences(of: "&amp;", with: "&")
-            .replacingOccurrences(of: "&quot;", with: "\"")
-            .replacingOccurrences(of: "&#39;", with: "'")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // If the result is empty or contains only HTML artifacts, return empty string
-        if cleanString.isEmpty || cleanString.contains("DOCTYPE") || cleanString.contains("html") {
-            return ""
-        }
-        
-        return cleanString
-    }
     
     func extractBaseDomain(from ensName: String) -> String {
         // Handle multi-chain format (name.eth:chain) or shortcut format (name:chain)
@@ -494,6 +483,67 @@ extension ContactsViewController: UISearchResultsUpdating {
         let searchText = searchController.searchBar.text ?? ""
         filterContacts(with: searchText)
     }
+    
+    // MARK: - Contact Resolution
+    func updateContactWithResolvedName(_ contact: Contact, resolvedName: String) {
+        // Find the contact in the array and update it
+        if let index = contacts.firstIndex(where: { $0.ensName == contact.ensName }) {
+            let updatedContact = Contact(
+                name: contact.name,
+                ensName: contact.ensName,
+                profileImage: nil,
+                address: contact.address,
+                avatarURL: contact.avatarURL,
+                resolvedName: resolvedName
+            )
+            contacts[index] = updatedContact
+            saveContacts()
+            
+            // Reload the specific row
+            let indexPath = IndexPath(row: index, section: 0)
+            tableView.reloadRows(at: [indexPath], with: .none)
+        }
+    }
+    
+    func fetchResolvedNameForContact(_ contact: Contact, completion: @escaping (String?) -> Void) {
+        let baseDomain = extractBaseDomain(from: contact.ensName)
+        let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
+        
+        URLSession.shared.dataTask(with: URL(string: fusionServerURL)!) { data, response, error in
+            guard let data = data else {
+                completion(nil)
+                return
+            }
+            
+            do {
+                let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+                guard let success = json?["success"] as? Bool,
+                      success,
+                      let dataDict = json?["data"] as? [String: Any],
+                      let fullName = dataDict["address"] as? String,
+                      !fullName.isEmpty else {
+                    completion(nil)
+                    return
+                }
+                
+                // Clean HTML tags if present
+                let cleanName = self.cleanHTMLTags(from: fullName)
+                completion(cleanName.isEmpty ? nil : cleanName)
+            } catch {
+                completion(nil)
+            }
+        }.resume()
+    }
+    
+    private func cleanHTMLTags(from text: String) -> String {
+        return text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+            .replacingOccurrences(of: "&lt;", with: "<")
+            .replacingOccurrences(of: "&gt;", with: ">")
+            .replacingOccurrences(of: "&amp;", with: "&")
+            .replacingOccurrences(of: "&quot;", with: "\"")
+            .replacingOccurrences(of: "&#39;", with: "'")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }
 
 // MARK: - ContactTableViewCell
@@ -503,6 +553,26 @@ class ContactTableViewCell: UITableViewCell {
     private static var avatarCache: [String: UIImage] = [:]
     private static var loadingRequests: Set<String> = []
     private static let maxCacheSize = 50 // Limit cache size to prevent memory issues
+    
+    // MARK: - Disk Cache
+    private static let cacheDirectory: URL = {
+        let urls = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
+        let cacheURL = urls[0].appendingPathComponent("ContactAvatars")
+        try? FileManager.default.createDirectory(at: cacheURL, withIntermediateDirectories: true)
+        return cacheURL
+    }()
+    
+    private static func cacheImageToDisk(_ image: UIImage, for key: String) {
+        guard let data = image.jpegData(compressionQuality: 0.8) else { return }
+        let fileURL = cacheDirectory.appendingPathComponent("\(key.hash).jpg")
+        try? data.write(to: fileURL)
+    }
+    
+    private static func loadImageFromDisk(for key: String) -> UIImage? {
+        let fileURL = cacheDirectory.appendingPathComponent("\(key.hash).jpg")
+        guard let data = try? Data(contentsOf: fileURL) else { return nil }
+        return UIImage(data: data)
+    }
     
     private let cardView = UIView()
     private let profileImageView = UIImageView()
@@ -635,20 +705,42 @@ class ContactTableViewCell: UITableViewCell {
             nameLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
             nameLabel.textColor = ColorTheme.secondaryText
         } else {
-            // If no resolved name, try to fetch it
-            nameLabel.text = "Loading..."
-            nameLabel.font = UIFont.italicSystemFont(ofSize: 14)
+            // If no resolved name, show a fallback and try to fetch it in background
+            nameLabel.text = contact.name.isEmpty ? contact.ensName : contact.name
+            nameLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
             nameLabel.textColor = ColorTheme.secondaryText.withAlphaComponent(0.7)
             
-            // Try to fetch the resolved name
-            fetchResolvedNameForContact(contact)
+            // Try to fetch the resolved name in background (don't show loading)
+            if let contactsVC = self.findViewController() as? ContactsViewController {
+                contactsVC.fetchResolvedNameForContact(contact) { [weak self] (resolvedName: String?) in
+                    DispatchQueue.main.async {
+                        if let resolvedName = resolvedName, !resolvedName.isEmpty {
+                            self?.nameLabel.text = resolvedName
+                            self?.nameLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+                            self?.nameLabel.textColor = ColorTheme.secondaryText
+                            
+                            // Update the contact in the view controller
+                            contactsVC.updateContactWithResolvedName(contact, resolvedName: resolvedName)
+                        }
+                        // If fetch fails, keep showing the fallback (don't change to "Unknown Name")
+                    }
+                }
+            }
         }
         
         // Set profile image with caching
         if let avatarURL = contact.avatarURL {
-            // Check cache first
+            // Check memory cache first
             if let cachedImage = Self.avatarCache[avatarURL] {
                 profileImageView.image = cachedImage
+                return
+            }
+            
+            // Check disk cache
+            if let diskImage = Self.loadImageFromDisk(for: avatarURL) {
+                // Add to memory cache and display
+                Self.addToCache(diskImage, for: avatarURL)
+                profileImageView.image = diskImage
                 return
             }
             
@@ -680,8 +772,9 @@ class ContactTableViewCell: UITableViewCell {
                     Self.loadingRequests.remove(avatarURL)
                     
                     if let image = image {
-                        // Cache the image with size limit
+                        // Cache the image with size limit (memory + disk)
                         Self.addToCache(image, for: avatarURL)
+                        Self.cacheImageToDisk(image, for: avatarURL)
                         self.profileImageView.image = image
                 } else if retryCount < maxRetries {
                     // Retry loading with exponential backoff
@@ -1162,61 +1255,6 @@ class ContactTableViewCell: UITableViewCell {
         loadingRequests.removeAll()
     }
     
-    private func fetchResolvedNameForContact(_ contact: Contact) {
-        let baseDomain = extractBaseDomain(from: contact.ensName)
-        let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
-        
-        URLSession.shared.dataTask(with: URL(string: fusionServerURL)!) { [weak self] data, response, error in
-            guard let data = data else {
-                DispatchQueue.main.async {
-                    self?.nameLabel.text = "Unknown Name"
-                }
-                return
-            }
-            
-            do {
-                let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-                guard let success = json?["success"] as? Bool,
-                      success,
-                      let dataDict = json?["data"] as? [String: Any],
-                      let fullName = dataDict["address"] as? String,
-                      !fullName.isEmpty else {
-                    DispatchQueue.main.async {
-                        self?.nameLabel.text = "Unknown Name"
-                    }
-                    return
-                }
-                
-                // Clean HTML tags if present
-                let cleanName = self?.cleanHTMLTags(from: fullName) ?? ""
-                
-                DispatchQueue.main.async {
-                    if !cleanName.isEmpty {
-                        self?.nameLabel.text = cleanName
-                        self?.nameLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
-                        self?.nameLabel.textColor = ColorTheme.secondaryText
-                    } else {
-                        self?.nameLabel.text = "Unknown Name"
-                    }
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self?.nameLabel.text = "Unknown Name"
-                }
-            }
-        }.resume()
-    }
-    
-    private func cleanHTMLTags(from text: String) -> String {
-        return text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
-            .replacingOccurrences(of: "&lt;", with: "<")
-            .replacingOccurrences(of: "&gt;", with: ">")
-            .replacingOccurrences(of: "&amp;", with: "&")
-            .replacingOccurrences(of: "&quot;", with: "\"")
-            .replacingOccurrences(of: "&#39;", with: "'")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-    
     private func extractBaseDomain(from ensName: String) -> String {
         // Handle multi-chain format (name.eth:chain) or shortcut format (name:chain)
         let colonIndex = ensName.lastIndex(of: ":")
@@ -1278,4 +1316,17 @@ struct DeeplinkInfo {
     let url: String
     let scheme: String
     let walletName: String
+}
+
+// MARK: - UIView Extension
+extension UIView {
+    func findViewController() -> UIViewController? {
+        if let nextResponder = self.next as? UIViewController {
+            return nextResponder
+        } else if let nextResponder = self.next as? UIView {
+            return nextResponder.findViewController()
+        } else {
+            return nil
+        }
+    }
 }

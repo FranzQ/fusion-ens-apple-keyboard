@@ -43,7 +43,14 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        loadENSNames()
+        // Only reload if we don't have any ENS names loaded
+        if ensNames.isEmpty {
+            loadENSNames()
+        } else {
+            // Just update the display without reloading data
+            updateEmptyState()
+            tableView.reloadData()
+        }
     }
     
     // MARK: - UI Setup
@@ -175,7 +182,8 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
     
     private func loadFullNamesForENSNames() {
         for (index, ensName) in ensNames.enumerated() {
-            if ensName.fullName == nil {
+            // Only load if fullName is nil AND we haven't already tried to load it
+            if ensName.fullName == nil && !ensName.name.isEmpty {
                 loadFullName(for: ensName, at: index)
             }
         }
