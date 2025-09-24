@@ -35,8 +35,8 @@ class AddENSNameViewController: UIViewController {
     
     // MARK: - UI Setup
     private func setupUI() {
-        // Clear background - no overlay
-        view.backgroundColor = UIColor.clear
+        // Dimmed background like Add Contact modal
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         
         // Modal View - small centered modal
         modalView.backgroundColor = UIColor.systemBackground
@@ -48,10 +48,11 @@ class AddENSNameViewController: UIViewController {
         modalView.layer.shadowOpacity = 0.3
         view.addSubview(modalView)
         
-        // Handle View - not needed for centered modal
-        // handleView.backgroundColor = ColorTheme.secondaryText
-        // handleView.layer.cornerRadius = 2
-        // modalView.addSubview(handleView)
+        // Handle view for visual indicator
+        handleView.backgroundColor = UIColor.systemGray3
+        handleView.layer.cornerRadius = 2.5
+        modalView.addSubview(handleView)
+        
         
         // Title Label
         titleLabel.text = "Add ENS Name"
@@ -115,13 +116,16 @@ class AddENSNameViewController: UIViewController {
     
     private func setupConstraints() {
         modalView.snp.makeConstraints { make in
-            make.centerX.equalToSuperview()
-            make.centerY.equalToSuperview()
+            make.center.equalToSuperview()
             make.leading.trailing.equalToSuperview().inset(20)
-            make.height.equalTo(320)
         }
         
-        // Handle view constraints removed for centered modal
+        handleView.snp.makeConstraints { make in
+            make.top.equalTo(modalView.snp.top).offset(8)
+            make.centerX.equalTo(modalView)
+            make.width.equalTo(36)
+            make.height.equalTo(5)
+        }
         
         titleLabel.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(20)

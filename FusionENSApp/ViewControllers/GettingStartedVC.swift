@@ -509,9 +509,16 @@ class GettingStartedVC: UIViewController {
     // MARK: - Actions
     
     @objc private func openKeyboardSettings() {
-        // Open iOS Settings app to the keyboard section
-        if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
-            UIApplication.shared.open(settingsURL)
+        // Open iOS Settings app directly to the keyboard section
+        if let settingsURL = URL(string: "App-Prefs:root=General&path=Keyboard") {
+            if UIApplication.shared.canOpenURL(settingsURL) {
+                UIApplication.shared.open(settingsURL)
+            } else {
+                // Fallback to general settings if the specific URL doesn't work
+                if let fallbackURL = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(fallbackURL)
+                }
+            }
         }
     }
     
@@ -562,9 +569,7 @@ class GettingStartedVC: UIViewController {
             dismiss(animated: true, completion: nil)
         } else {
             // Navigate to keyboard settings when from initial onboarding
-            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
-                UIApplication.shared.open(settingsURL)
-            }
+            openKeyboardSettings()
         }
     }
     
