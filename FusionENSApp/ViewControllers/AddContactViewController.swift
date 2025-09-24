@@ -295,14 +295,15 @@ class AddContactViewController: UIViewController {
         let baseDomain = extractBaseDomain(from: ensName)
         let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
         
-        let dataTask = URLSession.shared.dataTask(with: URL(string: fusionServerURL)!) { [weak self] data, response, error in
+        guard let url = URL(string: fusionServerURL) else {
+            print("❌ Invalid URL: \(fusionServerURL)")
+            return
+        }
+        
+        let dataTask = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
             guard let data = data else {
-                DispatchQueue.main.async {
-                    // Create contact without resolved name
-                    let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: nil, resolvedName: nil)
-                    self?.delegate?.didAddContact(contact)
-                    self?.dismiss(animated: true)
-                }
+                // Still fetch avatar URL even if resolved name fetch fails
+                self?.fetchAvatarURL(for: ensName, address: address, resolvedName: nil)
                 return
             }
             
@@ -313,31 +314,96 @@ class AddContactViewController: UIViewController {
                       let dataDict = json?["data"] as? [String: Any],
                       let fullName = dataDict["address"] as? String,
                       !fullName.isEmpty else {
-                    DispatchQueue.main.async {
-                        // Create contact without resolved name
-                        let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: nil, resolvedName: nil)
-                        self?.delegate?.didAddContact(contact)
-                        self?.dismiss(animated: true)
-                    }
+                    // Still fetch avatar URL even without resolved name
+                    self?.fetchAvatarURL(for: ensName, address: address, resolvedName: nil)
                     return
                 }
                 
                 // Clean HTML tags if present
                 let cleanName = self?.cleanHTMLTags(from: fullName) ?? ""
                 
-                DispatchQueue.main.async {
-                    // Create contact with resolved name
-                    let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: nil, resolvedName: cleanName.isEmpty ? nil : cleanName)
-                    self?.delegate?.didAddContact(contact)
-                    self?.dismiss(animated: true)
-                }
+                // Now fetch the avatar URL as well
+                self?.fetchAvatarURL(for: ensName, address: address, resolvedName: cleanName.isEmpty ? nil : cleanName)
             } catch {
-                DispatchQueue.main.async {
-                    // Create contact without resolved name
-                    let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: nil, resolvedName: nil)
+                // Still fetch avatar URL even if resolved name fetch fails
+                self?.fetchAvatarURL(for: ensName, address: address, resolvedName: nil)
+            }
+        }
+        dataTasks.append(dataTask)
+        dataTask.resume()
+    }
+    
+    private func fetchAvatarURL(for ensName: String, address: String, resolvedName: String?) {
+        // Use ENS metadata API with correct endpoint format
+        let metadataURL = "https://metadata.ens.domains/mainnet/avatar/\(ensName)"
+        
+        guard let metadataURL = URL(string: metadataURL) else {
+            print("❌ Invalid metadata URL: \(metadataURL)")
+            return
+        }
+        
+        let dataTask = URLSession.shared.dataTask(with: metadataURL) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                guard let data = data else {
+                    // No data received, create contact without avatar
+                    let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: nil, resolvedName: resolvedName)
                     self?.delegate?.didAddContact(contact)
                     self?.dismiss(animated: true)
+                    return
                 }
+                
+                // Check if the response is binary image data
+                if let fullImage = UIImage(data: data) {
+                    // The API returned the actual image, resize it to optimize performance
+                    let resizedImage = self?.resizeImage(fullImage, to: CGSize(width: 200, height: 200))
+                    
+                    // Save resized image locally and use local URL
+                    let localAvatarURL = self?.saveResizedImageLocally(resizedImage, for: ensName)
+                    
+                    let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: localAvatarURL, resolvedName: resolvedName)
+                    self?.delegate?.didAddContact(contact)
+                    self?.dismiss(animated: true)
+                    return
+                }
+                
+                // Try to parse as text (avatar URL)
+                guard let avatarURLString = String(data: data, encoding: .utf8),
+                      !avatarURLString.isEmpty,
+                      avatarURLString != "data:image/svg+xml;base64," else {
+                    // No valid avatar data, create contact without avatar
+                    let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: nil, resolvedName: resolvedName)
+                    self?.delegate?.didAddContact(contact)
+                    self?.dismiss(animated: true)
+                    return
+                }
+                
+            
+                // Check if the response is a JSON error message
+                if avatarURLString.hasPrefix("{") && avatarURLString.contains("message") {
+                    // No avatar URL found, create contact without avatar
+                    let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: nil, resolvedName: resolvedName)
+                    self?.delegate?.didAddContact(contact)
+                    self?.dismiss(animated: true)
+                    return
+                }
+                
+                // Clean HTML tags if present
+                let cleanURLString = self?.cleanHTMLTags(from: avatarURLString) ?? ""
+                
+                // Check if it's a valid URL
+                guard !cleanURLString.isEmpty,
+                      let _ = URL(string: cleanURLString) else {
+                    // Invalid avatar URL, create contact without avatar
+                    let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: nil, resolvedName: resolvedName)
+                    self?.delegate?.didAddContact(contact)
+                    self?.dismiss(animated: true)
+                    return
+                }
+                
+                // Create contact with all data (address, resolved name, and avatar URL)
+                let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: cleanURLString, resolvedName: resolvedName)
+                self?.delegate?.didAddContact(contact)
+                self?.dismiss(animated: true)
             }
         }
         dataTasks.append(dataTask)
@@ -366,6 +432,40 @@ class AddContactViewController: UIViewController {
             .replacingOccurrences(of: "&quot;", with: "\"")
             .replacingOccurrences(of: "&#39;", with: "'")
             .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    private func resizeImage(_ image: UIImage, to size: CGSize) -> UIImage? {
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: size))
+        }
+    }
+    
+    private func saveResizedImageLocally(_ image: UIImage?, for ensName: String) -> String? {
+        guard let image = image else { return nil }
+        
+        // Create a unique filename for the ENS name
+        let filename = "\(ensName.replacingOccurrences(of: ".", with: "_"))_avatar.jpg"
+        
+        // Get the documents directory
+        guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+        
+        let fileURL = documentsDirectory.appendingPathComponent(filename)
+        
+        // Convert image to JPEG data with compression
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            return nil
+        }
+        
+        // Save to disk
+        do {
+            try imageData.write(to: fileURL)
+            return fileURL.absoluteString
+        } catch {
+            return nil
+        }
     }
     
     private func validateAndUpdateContact(ensName: String, originalContact: Contact, at indexPath: IndexPath) {
@@ -404,7 +504,12 @@ class AddContactViewController: UIViewController {
         let baseDomain = extractBaseDomain(from: ensName)
         let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
         
-        let dataTask = URLSession.shared.dataTask(with: URL(string: fusionServerURL)!) { [weak self] data, response, error in
+        guard let url = URL(string: fusionServerURL) else {
+            print("❌ Invalid URL: \(fusionServerURL)")
+            return
+        }
+        
+        let dataTask = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
             guard let data = data else {
                 DispatchQueue.main.async {
                     // Update contact without resolved name

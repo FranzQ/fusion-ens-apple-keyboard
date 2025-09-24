@@ -14,6 +14,7 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
     // MARK: - Properties
     weak var delegate: ENSNameTableViewCellDelegate?
     private var currentENSName: ENSName?
+    private var currentRequest: Alamofire.DataRequest?
     
     // MARK: - Static Caching
     private static var avatarCache: [String: UIImage] = [:]
@@ -61,6 +62,19 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        
+        // Cancel any ongoing avatar loading request
+        currentRequest?.cancel()
+        currentRequest = nil
+        
+        // Reset UI state
+        avatarImageView.isHidden = true
+        globeIcon.isHidden = false
+        avatarImageView.image = nil
     }
     
     // MARK: - UI Setup
@@ -218,7 +232,8 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
             let truncatedAddress = "\(ensName.address.prefix(6))...\(ensName.address.suffix(4))"
             addressLabel.text = truncatedAddress
             addressLabel.textColor = ColorTheme.secondaryText
-            refreshButton.isHidden = true
+            // Always show refresh button - users should be able to retry resolution
+            refreshButton.isHidden = false
         }
         
         // Reset avatar state
@@ -263,68 +278,60 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
         // Mark as loading
         Self.loadingRequests.insert(baseDomain)
         
-        // First get the Ethereum address for avatar lookup
-        APICaller.shared.resolveENSName(name: baseDomain) { [weak self] ethAddress in
-            guard let self = self, !ethAddress.isEmpty else { 
-                // Remove from loading requests
+        // Use ENS metadata API directly with ENS name (1 API call instead of 3)
+        let metadataURL = "https://metadata.ens.domains/mainnet/avatar/\(baseDomain)"
+        
+        // Cancel any existing request
+        currentRequest?.cancel()
+        
+        currentRequest = AF.request(metadataURL).responseString { [weak self] response in
+            guard let self = self else { 
                 Self.loadingRequests.remove(baseDomain)
                 return 
             }
             
+            // Remove from loading requests
+            Self.loadingRequests.remove(baseDomain)
             
-            // Use ENS metadata API with Ethereum address (same as Chrome extension)
-            let metadataURL = "https://metadata.ens.domains/mainnet/\(ethAddress)/avatar"
+            guard let avatarURLString = response.value,
+                  !avatarURLString.isEmpty,
+                  avatarURLString != "data:image/svg+xml;base64," else {
+                // Fallback: try ENS Ideas API for avatar
+                self.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
+                return
+            }
             
-            AF.request(metadataURL).responseString { [weak self] response in
-                guard let self = self else { return }
-                
-                guard let avatarURLString = response.value,
-                      !avatarURLString.isEmpty,
-                      avatarURLString != "data:image/svg+xml;base64," else {
-                    // Fallback: try ENS Ideas API for avatar
-                    self.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
-                    return
-                }
-                
-                
-                // Check if the response is a JSON error message
-                if avatarURLString.hasPrefix("{") && avatarURLString.contains("message") {
-                    // Fallback: try ENS Ideas API for avatar
-                    self.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
-                    return
-                }
-                
-                // Clean HTML tags if present
-                let cleanURLString = self.cleanHTMLTags(from: avatarURLString)
-                
-                // Check if it's a valid URL
-                guard !cleanURLString.isEmpty,
-                      let url = URL(string: cleanURLString) else {
-                    // Fallback: try ENS Ideas API for avatar
-                    self.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
-                    return
-                }
-                
-                
-                // Load avatar image
-                self.loadImage(from: url) { [weak self] image in
-                    DispatchQueue.main.async {
-                        guard let self = self else { return }
+            // Check if the response is a JSON error message
+            if avatarURLString.hasPrefix("{") && avatarURLString.contains("message") {
+                // Fallback: try ENS Ideas API for avatar
+                self.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
+                return
+            }
+            
+            // Clean HTML tags if present
+            let cleanURLString = self.cleanHTMLTags(from: avatarURLString)
+            
+            // Check if it's a valid URL
+            guard !cleanURLString.isEmpty,
+                  let url = URL(string: cleanURLString) else {
+                // Fallback: try ENS Ideas API for avatar
+                self.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
+                return
+            }
+            
+            // Load avatar image (this is the only image loading call needed)
+            self.loadImage(from: url) { [weak self] image in
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
+                    
+                    if let image = image {
+                        // Cache the image (memory + disk)
+                        Self.addToCache(image, for: baseDomain)
+                        Self.cacheImageToDisk(image, for: baseDomain)
                         
-                        // Remove from loading requests
-                        Self.loadingRequests.remove(baseDomain)
-                        
-                        if let image = image {
-                            
-                            // Cache the image (memory + disk)
-                            Self.addToCache(image, for: baseDomain)
-                            Self.cacheImageToDisk(image, for: baseDomain)
-                            
-                            self.avatarImageView.image = image
-                            self.avatarImageView.isHidden = false
-                            self.globeIcon.isHidden = true
-                        } else {
-                        }
+                        self.avatarImageView.image = image
+                        self.avatarImageView.isHidden = false
+                        self.globeIcon.isHidden = true
                     }
                 }
             }
@@ -335,7 +342,10 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
         // Fallback: try ENS Ideas API for avatar (same as Chrome extension)
         let ensIdeasURL = "https://api.ensideas.com/ens/resolve/\(baseDomain)"
         
-        AF.request(ensIdeasURL).responseData { [weak self] response in
+        // Cancel any existing request
+        currentRequest?.cancel()
+        
+        currentRequest = AF.request(ensIdeasURL).responseData { [weak self] response in
             guard let self = self,
                   let data = response.data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],

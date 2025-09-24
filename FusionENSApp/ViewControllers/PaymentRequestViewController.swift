@@ -886,7 +886,7 @@ class PaymentRequestViewController: UIViewController {
     
     private func showENSNameSelector() {
         // Get all saved ENS names from UserDefaults
-        guard let data = UserDefaults.standard.data(forKey: "SavedENSNames"),
+        guard let data = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.data(forKey: "savedENSNamesData"),
               let savedENSNames = try? JSONDecoder().decode([ENSName].self, from: data) else {
             showAlert(title: "No ENS Names", message: "You don't have any saved ENS names yet.")
             return

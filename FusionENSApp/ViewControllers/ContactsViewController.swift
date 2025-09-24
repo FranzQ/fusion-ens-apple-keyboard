@@ -102,6 +102,11 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
         tableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tableView)
         
+        // Add long press gesture recognizer for edit/delete options
+        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        longPressGesture.minimumPressDuration = 0.5
+        tableView.addGestureRecognizer(longPressGesture)
+        
         
         // Empty State View
         emptyStateView.translatesAutoresizingMaskIntoConstraints = false
@@ -149,6 +154,16 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
         showAddContactModal()
     }
     
+    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        
+        let location = gesture.location(in: tableView)
+        guard let indexPath = tableView.indexPathForRow(at: location) else { return }
+        
+        let contact = filteredContacts[indexPath.row]
+        showContactOptions(for: contact, at: indexPath)
+    }
+    
     
     // MARK: - Data Management
     private func loadContacts() {
@@ -187,7 +202,7 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
     
     private func saveENSNamesToSharedStorage() {
         let ensNames = contacts.map { $0.ensName }
-        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.set(ensNames, forKey: "savedENSNames")
+        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.set(ensNames, forKey: "contactENSNames")
         UserDefaults(suiteName: "group.com.fusionens.keyboard")?.synchronize()
     }
     
@@ -223,9 +238,6 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
         // Update filtered contacts
         filterContacts(with: searchController.searchBar.text ?? "")
         
-        // Fetch ENS metadata and avatar
-        fetchContactMetadata(for: contact.ensName, at: 0)
-        
         // Update UI
         updateEmptyState()
         tableView.reloadData()
@@ -245,11 +257,6 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
     private func showContactOptions(for contact: Contact, at indexPath: IndexPath) {
         let alert = UIAlertController(title: contact.ensName, message: contact.name, preferredStyle: .actionSheet)
         
-        // Edit action
-        alert.addAction(UIAlertAction(title: "Edit", style: .default) { [weak self] _ in
-            self?.editContact(contact, at: indexPath)
-        })
-        
         // Delete action
         alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
             self?.deleteContact(contact, at: indexPath)
@@ -266,16 +273,6 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
         }
         
         present(alert, animated: true)
-    }
-    
-    private func editContact(_ contact: Contact, at indexPath: IndexPath) {
-        let editContactVC = AddContactViewController()
-        editContactVC.delegate = self
-        editContactVC.contactToEdit = contact
-        editContactVC.editingIndexPath = indexPath
-        editContactVC.modalPresentationStyle = .overFullScreen
-        editContactVC.modalTransitionStyle = .crossDissolve
-        present(editContactVC, animated: true)
     }
     
     private func deleteContact(_ contact: Contact, at indexPath: IndexPath) {
@@ -312,8 +309,8 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
         // Use the same approach as ENS list for consistency
         let baseDomain = extractBaseDomain(from: ensName)
         
-        // First get the Ethereum address for avatar lookup
-        APICaller.shared.resolveENSName(name: baseDomain) { [weak self] ethAddress in
+        // First get the Ethereum address for avatar lookup (use full ENS name for subdomain support)
+        APICaller.shared.resolveENSName(name: ensName) { [weak self] ethAddress in
             guard let self = self, !ethAddress.isEmpty else { return }
             
             // Use ENS metadata API with Ethereum address (same as ENS list)
@@ -372,7 +369,12 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
                     
                     // Reload the specific cell
                     let indexPath = IndexPath(row: index, section: 0)
-                    self.tableView.reloadRows(at: [indexPath], with: .none)
+                    if indexPath.row < self.tableView.numberOfRows(inSection: 0) {
+                        self.tableView.reloadRows(at: [indexPath], with: .none)
+                    } else {
+                        // Fallback: reload entire table if index is out of bounds
+                        self.tableView.reloadData()
+                    }
                 }
             }
         }
@@ -413,7 +415,12 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
                 
                 // Reload the specific cell
                 let indexPath = IndexPath(row: index, section: 0)
-                self.tableView.reloadRows(at: [indexPath], with: .none)
+                if indexPath.row < self.tableView.numberOfRows(inSection: 0) {
+                    self.tableView.reloadRows(at: [indexPath], with: .none)
+                } else {
+                    // Fallback: reload entire table if index is out of bounds
+                    self.tableView.reloadData()
+                }
             }
         }
     }
@@ -457,8 +464,7 @@ extension ContactsViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let contact = filteredContacts[indexPath.row]
-        showContactOptions(for: contact, at: indexPath)
+        // No action on tap - use long press for edit/delete options
     }
     
     func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
@@ -509,7 +515,12 @@ extension ContactsViewController: UISearchResultsUpdating {
         let baseDomain = extractBaseDomain(from: contact.ensName)
         let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
         
-        URLSession.shared.dataTask(with: URL(string: fusionServerURL)!) { data, response, error in
+        guard let url = URL(string: fusionServerURL) else {
+            print("❌ Invalid URL: \(fusionServerURL)")
+            return
+        }
+        
+        URLSession.shared.dataTask(with: url) { data, response, error in
             guard let data = data else {
                 completion(nil)
                 return
@@ -591,6 +602,13 @@ class ContactTableViewCell: UITableViewCell {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        // Clear the avatar image to prevent showing wrong avatar during cell reuse
+        profileImageView.image = nil
+        currentContact = nil
     }
     
     private func setupUI() {
@@ -728,21 +746,8 @@ class ContactTableViewCell: UITableViewCell {
             }
         }
         
-        // Set profile image with caching
+        // Set profile image without caching (always load fresh)
         if let avatarURL = contact.avatarURL {
-            // Check memory cache first
-            if let cachedImage = Self.avatarCache[avatarURL] {
-                profileImageView.image = cachedImage
-                return
-            }
-            
-            // Check disk cache
-            if let diskImage = Self.loadImageFromDisk(for: avatarURL) {
-                // Add to memory cache and display
-                Self.addToCache(diskImage, for: avatarURL)
-                profileImageView.image = diskImage
-                return
-            }
             
             // Check if already loading
             if Self.loadingRequests.contains(avatarURL) {
@@ -752,7 +757,7 @@ class ContactTableViewCell: UITableViewCell {
             // Mark as loading
             Self.loadingRequests.insert(avatarURL)
             
-            // Load avatar from URL with caching and retry logic
+            // Load avatar from URL without caching
             loadAvatarWithRetry(from: avatarURL, contact: contact, retryCount: 0)
         } else {
             // Create a placeholder with the first letter of the ENS name
@@ -772,11 +777,9 @@ class ContactTableViewCell: UITableViewCell {
                     Self.loadingRequests.remove(avatarURL)
                     
                     if let image = image {
-                        // Cache the image with size limit (memory + disk)
-                        Self.addToCache(image, for: avatarURL)
-                        Self.cacheImageToDisk(image, for: avatarURL)
+                        // Don't cache - always load fresh
                         self.profileImageView.image = image
-                } else if retryCount < maxRetries {
+                    } else if retryCount < maxRetries {
                     // Retry loading with exponential backoff
                     let delay = Double(retryCount + 1) * 1.0 // 1s, 2s delays
                     DispatchQueue.main.asyncAfter(deadline: .now() + delay) {

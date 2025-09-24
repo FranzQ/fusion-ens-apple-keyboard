@@ -157,7 +157,11 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
     
     // MARK: - Data Management
     private func loadENSNames() {
-        if let data = UserDefaults.standard.data(forKey: "SavedENSNames"),
+        // Use shared UserDefaults to enable keyboard suggestions
+        // Add fallback to standard UserDefaults if App Group fails
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        
+        if let data = userDefaults.data(forKey: "savedENSNamesData"),
            let savedNames = try? JSONDecoder().decode([ENSName].self, from: data) {
             ensNames = savedNames
         } else {
@@ -169,8 +173,7 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
         // Load full names for ENS names that don't have them
         loadFullNamesForENSNames()
         
-        updateEmptyState()
-        tableView.reloadData()
+        updateTableView()
     }
     
     private func updateEmptyState() {
@@ -178,6 +181,11 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
         emptyStateView.isHidden = hasENSNames
         tableView.isHidden = !hasENSNames
         getENSButton.isHidden = hasENSNames // Hide button when there are ENS names
+    }
+    
+    private func updateTableView() {
+        updateEmptyState()
+        tableView.reloadData()
     }
     
     private func loadFullNamesForENSNames() {
@@ -193,9 +201,21 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
         let baseDomain = extractBaseDomain(from: ensName.name)
         let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
         
-        URLSession.shared.dataTask(with: URL(string: fusionServerURL)!) { [weak self] data, response, error in
-            guard let self = self,
-                  let data = data else {
+        guard let url = URL(string: fusionServerURL) else {
+            print("❌ Invalid URL: \(fusionServerURL)")
+            return
+        }
+        
+        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("❌ Network error loading full name for \(ensName.name): \(error.localizedDescription)")
+                return
+            }
+            
+            guard let data = data else {
+                print("❌ No data received for full name: \(ensName.name)")
                 return
             }
             
@@ -267,9 +287,19 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
     }
     
     private func saveENSNames() {
+        // Add fallback to standard UserDefaults if App Group fails
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        
+        // Save full ENS name objects for the main app
         if let data = try? JSONEncoder().encode(ensNames) {
-            UserDefaults.standard.set(data, forKey: "SavedENSNames")
+            userDefaults.set(data, forKey: "savedENSNamesData")
+            userDefaults.synchronize()
         }
+        
+        // Also save ENS names as strings for keyboard suggestions (separate from contacts)
+        let ensNameStrings = ensNames.map { $0.name }
+        userDefaults.set(ensNameStrings, forKey: "myENSNames")
+        userDefaults.synchronize()
     }
     
     // MARK: - Actions
@@ -365,7 +395,13 @@ extension ENSManagerViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ENSNameCell", for: indexPath) as! ENSNameTableViewCell
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "ENSNameCell", for: indexPath) as? ENSNameTableViewCell else {
+            // Fallback to basic cell if casting fails
+            let fallbackCell = UITableViewCell(style: .subtitle, reuseIdentifier: "FallbackCell")
+            fallbackCell.textLabel?.text = filteredENSNames[indexPath.row].name
+            fallbackCell.detailTextLabel?.text = filteredENSNames[indexPath.row].address
+            return fallbackCell
+        }
         cell.delegate = self
         cell.configure(with: filteredENSNames[indexPath.row])
         return cell
@@ -417,7 +453,7 @@ extension ENSManagerViewController: AddENSNameDelegate {
         ensNames.append(ensName)
         filteredENSNames = ensNames
         saveENSNames()
-        tableView.reloadData()
+        updateTableView()
     }
     
     func didUpdateENSName(_ ensName: ENSName) {
@@ -475,11 +511,38 @@ extension ENSManagerViewController: ENSNameTableViewCellDelegate {
         saveENSNames()
         tableView.reloadData()
         
-        // Resolve the ENS name
-        APICaller.shared.resolveENSName(name: ensName.name) { [weak self] resolvedAddress in
+        // Resolve the ENS name with timeout
+        let timeoutTask = DispatchWorkItem { [weak self] in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 
+                // Timeout reached - restore original state
+                if let originalIndex = self.ensNames.firstIndex(where: { $0.name == ensName.name }) {
+                    self.ensNames[originalIndex] = ensName
+                    self.filteredENSNames = self.ensNames
+                    self.saveENSNames()
+                    self.tableView.reloadData()
+                }
+                
+                let timeoutAlert = UIAlertController(
+                    title: "Request Timeout",
+                    message: "Resolution of '\(ensName.name)' timed out. Please try again.",
+                    preferredStyle: .alert
+                )
+                timeoutAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                self.present(timeoutAlert, animated: true)
+            }
+        }
+        
+        // Set 10 second timeout
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: timeoutTask)
+        
+        APICaller.shared.resolveENSName(name: ensName.name) { [weak self] resolvedAddress in
+            // Cancel timeout task since we got a response
+            timeoutTask.cancel()
+            
+            DispatchQueue.main.async {
+                guard let self = self else { return }
                 
                 if !resolvedAddress.isEmpty {
                     // Update with resolved address
@@ -501,7 +564,23 @@ extension ENSManagerViewController: ENSNameTableViewCellDelegate {
                         }
                     }
                 } else {
-                    // Resolution failed - keep showing "Resolving..." or show error
+                    // Resolution failed - restore original state and show error
+                    if let originalIndex = self.ensNames.firstIndex(where: { $0.name == ensName.name }) {
+                        // Restore the original ENS name (remove "Resolving..." state)
+                        self.ensNames[originalIndex] = ensName
+                        self.filteredENSNames = self.ensNames
+                        self.saveENSNames()
+                        self.tableView.reloadData()
+                    }
+                    
+                    // Show error alert
+                    let errorAlert = UIAlertController(
+                        title: "Resolution Failed",
+                        message: "Could not resolve '\(ensName.name)'. Please check your internet connection and try again.",
+                        preferredStyle: .alert
+                    )
+                    errorAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(errorAlert, animated: true)
                 }
             }
         }
@@ -511,8 +590,21 @@ extension ENSManagerViewController: ENSNameTableViewCellDelegate {
         let baseDomain = extractBaseDomain(from: ensName.name)
         let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
         
-        URLSession.shared.dataTask(with: URL(string: fusionServerURL)!) { data, response, error in
+        guard let url = URL(string: fusionServerURL) else {
+            print("❌ Invalid URL: \(fusionServerURL)")
+            completion(nil)
+            return
+        }
+        
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("❌ Network error in loadFullName: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+            
             guard let data = data else {
+                print("❌ No data received in loadFullName")
                 completion(nil)
                 return
             }
@@ -587,8 +679,7 @@ extension ENSManagerViewController: ENSNameTableViewCellDelegate {
         saveENSNames()
         
         // Update the table view
-        updateEmptyState()
-        tableView.reloadData()
+        updateTableView()
         
         // Show success message
         let successAlert = UIAlertController(
@@ -609,11 +700,11 @@ extension ENSManagerViewController: ENSNameTableViewCellDelegate {
         } else {
             filteredENSNames = ensNames.filter { ensName in
                 ensName.name.lowercased().contains(searchText.lowercased()) ||
-                (ensName.fullName?.lowercased().contains(searchText.lowercased()) ?? false)
+                (ensName.fullName?.lowercased().contains(searchText.lowercased()) ?? false) ||
+                ensName.address.lowercased().contains(searchText.lowercased())
             }
         }
         
-        updateEmptyState()
-        tableView.reloadData()
+        updateTableView()
     }
 }

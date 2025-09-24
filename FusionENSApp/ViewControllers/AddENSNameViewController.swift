@@ -250,7 +250,7 @@ class AddENSNameViewController: UIViewController {
     
     private func isDuplicateENSName(_ name: String) -> Bool {
         // Check if the ENS name already exists in My ENS Names
-        if let data = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.data(forKey: "savedENSNames"),
+        if let data = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.data(forKey: "savedENSNamesData"),
            let savedNames = try? JSONDecoder().decode([ENSName].self, from: data) {
             return savedNames.contains { $0.name.lowercased() == name.lowercased() }
         }
@@ -259,13 +259,18 @@ class AddENSNameViewController: UIViewController {
     
     // MARK: - ENS Resolution
     private func resolveENSName(_ name: String, completion: @escaping (String?) -> Void) {
-        
-        // Test with a known ENS name first
-        if name == "vitalik.eth" {
+        // Add timeout handling
+        let timeoutTask = DispatchWorkItem {
+            completion(nil)
         }
+        
+        // Set 15 second timeout for initial resolution
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15, execute: timeoutTask)
         
         // Use the same API caller as the keyboard extension
         APICaller.shared.resolveENSName(name: name) { resolvedAddress in
+            // Cancel timeout since we got a response
+            timeoutTask.cancel()
             
             if !resolvedAddress.isEmpty {
                 completion(resolvedAddress)
@@ -309,7 +314,12 @@ class AddENSNameViewController: UIViewController {
         let baseDomain = extractBaseDomain(from: ensName.name)
         let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
         
-        URLSession.shared.dataTask(with: URL(string: fusionServerURL)!) { data, response, error in
+        guard let url = URL(string: fusionServerURL) else {
+            completion(nil)
+            return
+        }
+        
+        URLSession.shared.dataTask(with: url) { data, response, error in
             guard let data = data else {
                 completion(nil)
                 return

@@ -92,6 +92,10 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         selectionTimer = nil
         btcLongPressTimer?.invalidate()
         btcLongPressTimer = nil
+        ethLongPressTimer?.invalidate()
+        ethLongPressTimer = nil
+        backspaceLongPressTimer?.invalidate()
+        backspaceLongPressTimer = nil
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -459,6 +463,14 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             // Special handling for :btc key with long press
             button.addTarget(self, action: #selector(btcButtonTouchDown), for: .touchDown)
             button.addTarget(self, action: #selector(btcButtonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
+        } else if title == ".eth" {
+            // Special handling for .eth key with long press
+            button.addTarget(self, action: #selector(ethButtonTouchDown), for: .touchDown)
+            button.addTarget(self, action: #selector(ethButtonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
+        } else if title == "⌫" {
+            // Special handling for backspace key with long press
+            button.addTarget(self, action: #selector(backspaceButtonTouchDown), for: .touchDown)
+            button.addTarget(self, action: #selector(backspaceButtonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
         } else if title == "space" {
             // Special handling for space bar with long press
             button.addTarget(self, action: #selector(spaceButtonTouchDown), for: .touchDown)
@@ -474,9 +486,9 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         if title == "space" {
             let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleSpacebarLongPress(_:)))
             longPressGesture.minimumPressDuration = 0.5
-            longPressGesture.cancelsTouchesInView = true
-            longPressGesture.delaysTouchesBegan = true
-            longPressGesture.delaysTouchesEnded = true
+            longPressGesture.cancelsTouchesInView = false
+            longPressGesture.delaysTouchesBegan = false
+            longPressGesture.delaysTouchesEnded = false
             button.addGestureRecognizer(longPressGesture)
         }
         
@@ -996,21 +1008,44 @@ textDocumentProxy.insertText("\n")
     // MARK: - ENS Usage Tracking
     
     private func loadENSUsageData() {
-        // Load saved ENS names from shared UserDefaults
-        if let savedENSNames = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.array(forKey: "savedENSNames") as? [String] {
-            mostTypedENS = savedENSNames
+        var allENSNames: [String] = []
+        
+        // Add fallback to standard UserDefaults if App Group fails
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        
+        // Load ENS names from "My ENS Names" page
+        if let myENSNames = userDefaults.array(forKey: "myENSNames") as? [String] {
+            allENSNames.append(contentsOf: myENSNames)
+        }
+        
+        // Load ENS names from contacts
+        if let contactENSNames = userDefaults.array(forKey: "contactENSNames") as? [String] {
+            allENSNames.append(contentsOf: contactENSNames)
+        }
+        
+        // Load individual ENS names from usage tracking
+        if let savedENSNames = userDefaults.array(forKey: "savedENSNames") as? [String] {
+            allENSNames.append(contentsOf: savedENSNames)
+        }
+        
+        // Remove duplicates and use combined list
+        if !allENSNames.isEmpty {
+            mostTypedENS = Array(Set(allENSNames)) // Remove duplicates
         } else {
             // Use default suggestions if no saved names
             mostTypedENS = defaultENSSuggestions
         }
         
-        // Also load ENS names from contacts
+        // Also load ENS names from contacts (legacy method)
         loadContactsENSNames()
     }
     
     private func loadContactsENSNames() {
         // Load contacts and extract their ENS names
-        if let data = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.data(forKey: "savedContacts"),
+        // Add fallback to standard UserDefaults if App Group fails
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        
+        if let data = userDefaults.data(forKey: "savedContacts"),
            let contacts = try? JSONDecoder().decode([Contact].self, from: data) {
             let contactENSNames = contacts.map { $0.ensName }
             
@@ -1029,8 +1064,10 @@ textDocumentProxy.insertText("\n")
     }
     
     private func saveENSNames() {
-        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.set(mostTypedENS, forKey: "savedENSNames")
-        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.synchronize()
+        // Add fallback to standard UserDefaults if App Group fails
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        userDefaults.set(mostTypedENS, forKey: "savedENSNames")
+        userDefaults.synchronize()
     }
     
     private func addENSNameToSuggestions(_ ensName: String) {
@@ -1240,9 +1277,165 @@ textDocumentProxy.insertText("\n")
         btcLongPressOccurred = false
     }
     
+    // MARK: - .eth Key Handling
+    
+    private var ethLongPressTimer: Timer?
+    private var ethButtonPressed = false
+    private var ethLongPressOccurred = false
+    
+    @objc private func ethButtonTouchDown(_ sender: UIButton) {
+        ethButtonPressed = true
+        ethLongPressOccurred = false
+        
+        // Start long press timer
+        ethLongPressTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            if self?.ethButtonPressed == true {
+                // Long press detected - show ENS subdomain options
+                self?.ethLongPressOccurred = true
+                self?.showENSSubdomainOptions()
+            }
+        }
+    }
+    
+    @objc private func ethButtonTouchUp(_ sender: UIButton) {
+        ethButtonPressed = false
+        ethLongPressTimer?.invalidate()
+        ethLongPressTimer = nil
+        
+        // If it was a short press (no long press occurred), handle as normal tap
+        if !ethLongPressOccurred {
+            handleKeyPress(".eth")
+        }
+        
+        // Reset the long press flag
+        ethLongPressOccurred = false
+    }
+    
+    private func showENSSubdomainOptions() {
+        // Add haptic feedback - use notification feedback for keyboard extensions
+        let notificationFeedback = UINotificationFeedbackGenerator()
+        notificationFeedback.notificationOccurred(.success)
+        
+        let subdomainOptions = [
+            ".base.eth",
+            ".uni.eth", 
+            ".dao.eth",
+            ".ens.eth",
+            ".defi.eth"
+        ]
+        
+        // Create a popup view similar to crypto options
+        let popupView = UIView()
+        popupView.backgroundColor = UIColor.systemBackground
+        popupView.layer.cornerRadius = 12
+        popupView.layer.shadowColor = UIColor.black.cgColor
+        popupView.layer.shadowOffset = CGSize(width: 0, height: 2)
+        popupView.layer.shadowRadius = 8
+        popupView.layer.shadowOpacity = 0.3
+        popupView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(popupView)
+        
+        // Create stack view for buttons
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.distribution = .fillEqually
+        stackView.spacing = 8
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        popupView.addSubview(stackView)
+        
+        // Create buttons for each subdomain
+        for subdomain in subdomainOptions {
+            let button = UIButton(type: .system)
+            button.setTitle(subdomain, for: .normal)
+            button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+            button.backgroundColor = UIColor(red: 0.0, green: 0.5, blue: 0.74, alpha: 1.0) // Same blue as .eth key
+            button.setTitleColor(.white, for: .normal)
+            button.layer.cornerRadius = 8
+            button.addAction(UIAction { _ in
+                self.insertText(subdomain)
+                self.lastTypedWord += subdomain
+                popupView.removeFromSuperview()
+            }, for: .touchUpInside)
+            stackView.addArrangedSubview(button)
+        }
+        
+        // Position the popup above the .eth button
+        NSLayoutConstraint.activate([
+            popupView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            popupView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -60),
+            popupView.heightAnchor.constraint(equalToConstant: 50),
+            popupView.widthAnchor.constraint(equalToConstant: 380),
+            
+            stackView.topAnchor.constraint(equalTo: popupView.topAnchor, constant: 8),
+            stackView.leadingAnchor.constraint(equalTo: popupView.leadingAnchor, constant: 8),
+            stackView.trailingAnchor.constraint(equalTo: popupView.trailingAnchor, constant: -8),
+            stackView.bottomAnchor.constraint(equalTo: popupView.bottomAnchor, constant: -8)
+        ])
+        
+        // Auto-dismiss after 3 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            popupView.removeFromSuperview()
+        }
+    }
+    
+    // MARK: - ⌫ Backspace Key Handling
+    
+    private var backspaceLongPressTimer: Timer?
+    private var backspaceButtonPressed = false
+    private var backspaceLongPressOccurred = false
+    private var backspaceContinuousTimer: Timer?
+    
+    @objc private func backspaceButtonTouchDown(_ sender: UIButton) {
+        backspaceButtonPressed = true
+        backspaceLongPressOccurred = false
+        
+        // Start long press timer
+        backspaceLongPressTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            if self?.backspaceButtonPressed == true {
+                // Long press detected - start continuous deletion
+                self?.backspaceLongPressOccurred = true
+                self?.startContinuousDeletion()
+            }
+        }
+    }
+    
+    @objc private func backspaceButtonTouchUp(_ sender: UIButton) {
+        backspaceButtonPressed = false
+        backspaceLongPressTimer?.invalidate()
+        backspaceLongPressTimer = nil
+        backspaceContinuousTimer?.invalidate()
+        backspaceContinuousTimer = nil
+        
+        // If it was a short press (no long press occurred), handle as normal tap
+        if !backspaceLongPressOccurred {
+            handleKeyPress("⌫")
+        }
+        
+        // Reset the long press flag
+        backspaceLongPressOccurred = false
+    }
+    
+    private func startContinuousDeletion() {
+        // Add haptic feedback
+        let notificationFeedback = UINotificationFeedbackGenerator()
+        notificationFeedback.notificationOccurred(.success)
+        
+        // Start continuous deletion timer
+        backspaceContinuousTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+            guard self?.backspaceButtonPressed == true else {
+                self?.backspaceContinuousTimer?.invalidate()
+                self?.backspaceContinuousTimer = nil
+                return
+            }
+            self?.textDocumentProxy.deleteBackward()
+        }
+    }
+    
     private func showCryptoTickerOptions() {
         
         // Add haptic feedback
+        let notificationFeedback = UINotificationFeedbackGenerator()
+        notificationFeedback.notificationOccurred(.success)
         
         let cryptoOptions = [
             // Most popular blockchain networks
@@ -1408,6 +1601,8 @@ textDocumentProxy.insertText("\n")
         gesture.cancelsTouchesInView = true
         
         // Add haptic feedback
+        let notificationFeedback = UINotificationFeedbackGenerator()
+        notificationFeedback.notificationOccurred(.success)
         
         // Detect and resolve ENS domain around cursor
         detectAndResolveENSAroundCursor()
