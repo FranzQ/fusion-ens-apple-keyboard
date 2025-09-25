@@ -7,6 +7,7 @@
 
 import UIKit
 import AVKit
+import AVFoundation
 
 class KeyboardGuideViewController: UIViewController {
     
@@ -52,6 +53,9 @@ class KeyboardGuideViewController: UIViewController {
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         
+        // Add header section
+        addHeaderSection()
+        
         // Add content sections
         addBasicKeyboardSection()
         addProKeyboardSection()
@@ -60,7 +64,7 @@ class KeyboardGuideViewController: UIViewController {
         
         // Set final bottom constraint
         if let lastView = lastView {
-            contentView.bottomAnchor.constraint(equalTo: lastView.bottomAnchor, constant: 20).isActive = true
+            contentView.bottomAnchor.constraint(equalTo: lastView.bottomAnchor, constant: 40).isActive = true
         }
     }
     
@@ -83,69 +87,162 @@ class KeyboardGuideViewController: UIViewController {
     
     // MARK: - Content Sections
     
+    private func addHeaderSection() {
+        let headerContainer = UIView()
+        headerContainer.translatesAutoresizingMaskIntoConstraints = false
+        headerContainer.backgroundColor = ColorTheme.cardBackground
+        headerContainer.layer.cornerRadius = 16
+        headerContainer.layer.shadowColor = UIColor.black.cgColor
+        headerContainer.layer.shadowOffset = CGSize(width: 0, height: 2)
+        headerContainer.layer.shadowRadius = 8
+        headerContainer.layer.shadowOpacity = 0.1
+        
+        // Icon
+        let iconView = UIImageView()
+        iconView.image = UIImage(systemName: "keyboard.fill")
+        iconView.tintColor = ColorTheme.accent
+        iconView.contentMode = .scaleAspectFit
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Title
+        let titleLabel = UILabel()
+        titleLabel.text = "Fusion ENS Keyboard"
+        titleLabel.font = UIFont.systemFont(ofSize: 28, weight: .bold)
+        titleLabel.textColor = ColorTheme.primaryText
+        titleLabel.textAlignment = .center
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Subtitle
+        let subtitleLabel = UILabel()
+        subtitleLabel.text = "Choose your keyboard experience"
+        subtitleLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        subtitleLabel.textColor = ColorTheme.secondaryText
+        subtitleLabel.textAlignment = .center
+        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Description
+        let descriptionLabel = UILabel()
+        descriptionLabel.text = "Two powerful keyboard modes designed for different use cases. Switch between Basic and Pro to match your workflow."
+        descriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        descriptionLabel.textColor = ColorTheme.secondaryText
+        descriptionLabel.textAlignment = .center
+        descriptionLabel.numberOfLines = 0
+        descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        headerContainer.addSubview(iconView)
+        headerContainer.addSubview(titleLabel)
+        headerContainer.addSubview(subtitleLabel)
+        headerContainer.addSubview(descriptionLabel)
+        
+        NSLayoutConstraint.activate([
+            iconView.topAnchor.constraint(equalTo: headerContainer.topAnchor, constant: 24),
+            iconView.centerXAnchor.constraint(equalTo: headerContainer.centerXAnchor),
+            iconView.widthAnchor.constraint(equalToConstant: 48),
+            iconView.heightAnchor.constraint(equalToConstant: 48),
+            
+            titleLabel.topAnchor.constraint(equalTo: iconView.bottomAnchor, constant: 16),
+            titleLabel.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: 20),
+            titleLabel.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -20),
+            
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            subtitleLabel.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: 20),
+            subtitleLabel.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -20),
+            
+            descriptionLabel.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 12),
+            descriptionLabel.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: 20),
+            descriptionLabel.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -20),
+            descriptionLabel.bottomAnchor.constraint(equalTo: headerContainer.bottomAnchor, constant: -24)
+        ])
+        
+        addSectionToContentView(headerContainer)
+    }
+    
     private func addBasicKeyboardSection() {
-        let section = createSection(
+        let section = createEnhancedSection(
             title: "Basic Keyboard",
-            description: "Minimal design with core ENS tools.",
+            subtitle: "Minimal & Clean",
+            description: "Perfect for everyday ENS resolution with a clean, distraction-free interface.",
+            icon: "keyboard",
+            accentColor: UIColor.systemBlue,
             features: [
-                "ENS Resolution: type and highlight vitalik.eth",
-                "Browser detection: Resolves links in browser search or address bars",
+                ("🔍", "ENS Resolution", "Type and highlight any ENS name to auto-resolve"),
+                ("🌐", "Browser Integration", "Works seamlessly in search bars and address fields"),
+                ("⚡", "Lightning Fast", "Instant resolution with minimal battery impact")
             ],
             howToUse: [
-                "Switch to Fusion ENS Basic in settings",
-                "Type ENS name and highlight it → auto resolves",
+                "Select 'Basic — Fusion ENS' from your keyboards",
+                "Type any ENS name and highlight it to resolve"
             ],
-            visuals: []
+            hasVideo: true,
+            videoName: "Basic Keyboard"
         )
         
         addSectionToContentView(section)
     }
     
     private func addProKeyboardSection() {
-        let section = createSection(
+        let section = createEnhancedSection(
             title: "Pro Keyboard",
-            description: "Advanced ENS + crypto functions.",
+            subtitle: "Advanced & Powerful",
+            description: "Full-featured keyboard with crypto tickers, subdomains, and advanced ENS tools for power users.",
+            icon: "keyboard.badge.ellipsis",
+            accentColor: UIColor.systemGreen,
             features: [
-                "ENS Resolution: full ENS + subdomains",
-                "Crypto Tickers: long-press :btc for :btc, :eth, :sol, :doge, :ada",
-                "ENS Subdomains: long-press .eth for .base.eth, .uni.eth, .dao.eth, .ens.eth, .defi.eth",
-                "Spacebar Resolution: long-press spacebar to resolve names in text",
-                "Browser Integration: ENS names open in Etherscan on Enter"
+                ("💰", "Crypto Tickers", "Long-press :btc"),
+                ("🏷️", "ENS Subdomains", "Long-press .eth for popular subdomain suggestions"),
+                ("⚡", "Spacebar Resolution", "Long-press spacebar to resolve after typing ENS names"),
+                ("🚀", "Browser Magic", "Press Enter to instantly open ENS name links")
             ],
             howToUse: [
-                "Switch to Fusion ENS Pro in settings",
+                "Select 'Pro — Fusion ENS' from your keyboards",
                 "Use long-press gestures for advanced features",
-                "Press Enter to open ENS names in Etherscan"
             ],
-            visuals: [
-                "Video: Pro Keyboard Demo"
-            ]
+            hasVideo: true,
+            videoName: "Pro Keyboard"
         )
         
         addSectionToContentView(section)
     }
     
     private func addGeneralTipsSection() {
-        let section = createSimpleSection(
+        let section = createEnhancedSection(
             title: "General Tips",
-            content: [
-                "Subdomains supported (e.g. jessie.base.eth)",
-                "Case insensitive",
-                "Auto-append .eth",
-                "Haptic feedback for Pro long-presses"
-            ]
+            subtitle: "Pro Tips & Tricks",
+            description: "Get the most out of your Fusion ENS keyboard experience.",
+            icon: "lightbulb.fill",
+            accentColor: UIColor.systemOrange,
+            features: [
+                ("🏷️", "Subdomain Support", "Works with any subdomain (e.g., jessie.base.eth)"),
+                ("🔤", "Case Insensitive", "Type ENS names in any case - it just works"),
+                ("📳", "Haptic Feedback", "Feel the response on long-presses for special keys"),
+                ("🌐", "Universal Compatibility", "Works in any app that supports custom keyboards")
+            ],
+            howToUse: [],
+            hasVideo: false,
+            videoName: nil,
+            showFeaturesHeading: false
         )
         
         addSectionToContentView(section)
     }
     
     private func addTroubleshootingSection() {
-        let section = createSimpleSection(
+        let section = createEnhancedSection(
             title: "Troubleshooting",
-            content: [
-                "Check internet, ENS validity, or device haptics",
-                "Parent domain must allow subdomains"
-            ]
+            subtitle: "Need Help?",
+            description: "Common issues and solutions to keep your keyboard running smoothly.",
+            icon: "wrench.and.screwdriver.fill",
+            accentColor: UIColor.systemRed,
+            features: [
+                ("🌐", "Connection Issues", "Check your internet connection for ENS resolution"),
+                ("✅", "ENS Validity", "Ensure the ENS name exists and is properly configured"),
+                ("📳", "Haptic Settings", "Verify haptic feedback is enabled in device settings"),
+                ("🏷️", "Subdomain Rules", "Parent domain must allow subdomain creation")
+            ],
+            howToUse: [],
+            hasVideo: false,
+            videoName: nil,
+            showFeaturesHeading: false
         )
         
         addSectionToContentView(section)
@@ -154,6 +251,264 @@ class KeyboardGuideViewController: UIViewController {
     
     // MARK: - Helper Methods
     private var lastView: UIView?
+    
+    private func createEnhancedSection(
+        title: String,
+        subtitle: String,
+        description: String,
+        icon: String,
+        accentColor: UIColor,
+        features: [(String, String, String)],
+        howToUse: [String],
+        hasVideo: Bool,
+        videoName: String?,
+        showFeaturesHeading: Bool = true
+    ) -> UIView {
+        let containerView = UIView()
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.backgroundColor = ColorTheme.cardBackground
+        containerView.layer.cornerRadius = 16
+        containerView.layer.shadowColor = UIColor.black.cgColor
+        containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
+        containerView.layer.shadowRadius = 8
+        containerView.layer.shadowOpacity = 0.1
+        
+        // Header with icon and title
+        let headerView = UIView()
+        headerView.translatesAutoresizingMaskIntoConstraints = false
+        headerView.backgroundColor = accentColor.withAlphaComponent(0.1)
+        headerView.layer.cornerRadius = 12
+        headerView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        
+        // Icon
+        let iconView = UIImageView()
+        iconView.image = UIImage(systemName: icon)
+        iconView.tintColor = accentColor
+        iconView.contentMode = .scaleAspectFit
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Title
+        let titleLabel = UILabel()
+        titleLabel.text = title
+        titleLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        titleLabel.textColor = ColorTheme.primaryText
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Subtitle
+        let subtitleLabel = UILabel()
+        subtitleLabel.text = subtitle
+        subtitleLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        subtitleLabel.textColor = accentColor
+        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        headerView.addSubview(iconView)
+        headerView.addSubview(titleLabel)
+        headerView.addSubview(subtitleLabel)
+        
+        // Description
+        let descriptionLabel = UILabel()
+        descriptionLabel.text = description
+        descriptionLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+        descriptionLabel.textColor = ColorTheme.secondaryText
+        descriptionLabel.numberOfLines = 0
+        descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        containerView.addSubview(headerView)
+        containerView.addSubview(descriptionLabel)
+        
+        var lastView: UIView = descriptionLabel
+        
+        // Features section
+        if !features.isEmpty {
+            var featuresTitle: UILabel?
+            
+            if showFeaturesHeading {
+                featuresTitle = UILabel()
+                featuresTitle!.text = "Features"
+                featuresTitle!.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
+                featuresTitle!.textColor = ColorTheme.primaryText
+                featuresTitle!.translatesAutoresizingMaskIntoConstraints = false
+                
+                containerView.addSubview(featuresTitle!)
+            }
+            
+            for (emoji, featureTitle, featureDesc) in features {
+                let featureView = createFeatureRow(emoji: emoji, title: featureTitle, description: featureDesc)
+                containerView.addSubview(featureView)
+                
+                NSLayoutConstraint.activate([
+                    featureView.topAnchor.constraint(equalTo: lastView.bottomAnchor, constant: 12),
+                    featureView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+                    featureView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20)
+                ])
+                
+                lastView = featureView
+            }
+            
+            if let featuresTitle = featuresTitle {
+                NSLayoutConstraint.activate([
+                    featuresTitle.topAnchor.constraint(equalTo: lastView.bottomAnchor, constant: 20),
+                    featuresTitle.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+                    featuresTitle.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20)
+                ])
+                
+                lastView = featuresTitle
+            }
+        }
+        
+        // How to Use section
+        if !howToUse.isEmpty {
+            for (index, step) in howToUse.enumerated() {
+                let stepView = createStepRow(step: step, index: index + 1)
+                containerView.addSubview(stepView)
+                
+                NSLayoutConstraint.activate([
+                    stepView.topAnchor.constraint(equalTo: lastView.bottomAnchor, constant: 12),
+                    stepView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+                    stepView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20)
+                ])
+                
+                lastView = stepView
+            }
+        }
+        
+        // Video section
+        if hasVideo, let videoName = videoName {
+            let videoContainer = createVideoContainer(for: videoName)
+            containerView.addSubview(videoContainer)
+            
+            NSLayoutConstraint.activate([
+                videoContainer.topAnchor.constraint(equalTo: lastView.bottomAnchor, constant: 20),
+                videoContainer.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+                videoContainer.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16)
+            ])
+            
+            lastView = videoContainer
+        }
+        
+        // Layout constraints
+        NSLayoutConstraint.activate([
+            headerView.topAnchor.constraint(equalTo: containerView.topAnchor),
+            headerView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            headerView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            headerView.heightAnchor.constraint(equalToConstant: 80),
+            
+            iconView.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
+            iconView.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            iconView.widthAnchor.constraint(equalToConstant: 32),
+            iconView.heightAnchor.constraint(equalToConstant: 32),
+            
+            titleLabel.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 12),
+            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 16),
+            titleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
+            
+            subtitleLabel.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 12),
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            subtitleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
+            
+            descriptionLabel.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 20),
+            descriptionLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            descriptionLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            
+            lastView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -20)
+        ])
+        
+        return containerView
+    }
+    
+    private func createFeatureRow(emoji: String, title: String, description: String) -> UIView {
+        let containerView = UIView()
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.backgroundColor = ColorTheme.searchBarBackground
+        containerView.layer.cornerRadius = 8
+        
+        let emojiLabel = UILabel()
+        emojiLabel.text = emoji
+        emojiLabel.font = UIFont.systemFont(ofSize: 20)
+        emojiLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        let titleLabel = UILabel()
+        titleLabel.text = title
+        titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
+        titleLabel.textColor = ColorTheme.primaryText
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        let descriptionLabel = UILabel()
+        descriptionLabel.text = description
+        descriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        descriptionLabel.textColor = ColorTheme.secondaryText
+        descriptionLabel.numberOfLines = 0
+        descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        containerView.addSubview(emojiLabel)
+        containerView.addSubview(titleLabel)
+        containerView.addSubview(descriptionLabel)
+        
+        NSLayoutConstraint.activate([
+            containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 60),
+            
+            emojiLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            emojiLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 12),
+            emojiLabel.widthAnchor.constraint(equalToConstant: 24),
+            emojiLabel.heightAnchor.constraint(equalToConstant: 24),
+            
+            titleLabel.leadingAnchor.constraint(equalTo: emojiLabel.trailingAnchor, constant: 12),
+            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 12),
+            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            
+            descriptionLabel.leadingAnchor.constraint(equalTo: emojiLabel.trailingAnchor, constant: 12),
+            descriptionLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            descriptionLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            descriptionLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12)
+        ])
+        
+        return containerView
+    }
+    
+    private func createStepRow(step: String, index: Int) -> UIView {
+        let containerView = UIView()
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        
+        let stepNumberView = UIView()
+        stepNumberView.backgroundColor = ColorTheme.accent
+        stepNumberView.layer.cornerRadius = 12
+        stepNumberView.translatesAutoresizingMaskIntoConstraints = false
+        
+        let stepNumberLabel = UILabel()
+        stepNumberLabel.text = "\(index)"
+        stepNumberLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold)
+        stepNumberLabel.textColor = .white
+        stepNumberLabel.textAlignment = .center
+        stepNumberLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        let stepLabel = UILabel()
+        stepLabel.text = step
+        stepLabel.font = UIFont.systemFont(ofSize: 15, weight: .regular)
+        stepLabel.textColor = ColorTheme.primaryText
+        stepLabel.numberOfLines = 0
+        stepLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        stepNumberView.addSubview(stepNumberLabel)
+        containerView.addSubview(stepNumberView)
+        containerView.addSubview(stepLabel)
+        
+        NSLayoutConstraint.activate([
+            stepNumberView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            stepNumberView.topAnchor.constraint(equalTo: containerView.topAnchor),
+            stepNumberView.widthAnchor.constraint(equalToConstant: 24),
+            stepNumberView.heightAnchor.constraint(equalToConstant: 24),
+            
+            stepNumberLabel.centerXAnchor.constraint(equalTo: stepNumberView.centerXAnchor),
+            stepNumberLabel.centerYAnchor.constraint(equalTo: stepNumberView.centerYAnchor),
+            
+            stepLabel.leadingAnchor.constraint(equalTo: stepNumberView.trailingAnchor, constant: 12),
+            stepLabel.topAnchor.constraint(equalTo: containerView.topAnchor),
+            stepLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            stepLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor)
+        ])
+        
+        return containerView
+    }
     
     private func createSection(title: String, description: String, features: [String], howToUse: [String], visuals: [String]) -> UIView {
         let containerView = UIView()
@@ -550,6 +905,17 @@ class KeyboardGuideViewController: UIViewController {
         playerViewController.allowsPictureInPicturePlayback = false
         playerViewController.entersFullScreenWhenPlaybackBegins = false
         playerViewController.exitsFullScreenWhenPlaybackEnds = false
+        
+        // Audio session configuration - don't interfere with background music
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+            try AVAudioSession.sharedInstance().setActive(false)
+        } catch {
+            // If audio session configuration fails, continue without it
+        }
+        
+        // Mute the player to ensure no audio interference
+        player.isMuted = true
         
         // Set up looping with weak reference to prevent retain cycles
         NotificationCenter.default.addObserver(

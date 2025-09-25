@@ -19,7 +19,7 @@ class QRSuccessPopupViewController: UIViewController {
     private let messageLabel = UILabel()
     private let qrCodeImageView = UIImageView()
     private let qrCodeContainerView = UIView()
-    private let addressLabel = UILabel()
+    private let paymentInfoStackView = UIStackView()
     private let buttonStackView = UIStackView()
     private let shareButton = UIButton(type: .system)
     private let dismissButton = UIButton(type: .system)
@@ -111,13 +111,15 @@ class QRSuccessPopupViewController: UIViewController {
         qrCodeImageView.backgroundColor = UIColor.white
         qrCodeContainerView.addSubview(qrCodeImageView)
         
-        // Address Label
-        addressLabel.text = paymentURL
-        addressLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
-        addressLabel.textAlignment = .center
-        addressLabel.numberOfLines = 0
-        addressLabel.textColor = UIColor.secondaryLabel
-        containerView.addSubview(addressLabel)
+        // Payment Info Stack View
+        paymentInfoStackView.axis = .horizontal
+        paymentInfoStackView.spacing = 8
+        paymentInfoStackView.alignment = .center
+        paymentInfoStackView.distribution = .fillProportionally
+        containerView.addSubview(paymentInfoStackView)
+        
+        // Create payment info tags
+        createPaymentInfoTags()
         
         // Button Stack View
         buttonStackView.axis = .vertical
@@ -202,16 +204,17 @@ class QRSuccessPopupViewController: UIViewController {
             make.edges.equalToSuperview().inset(20)
         }
         
-        // Address Label
-        addressLabel.snp.makeConstraints { make in
+        // Payment Info Stack View
+        paymentInfoStackView.snp.makeConstraints { make in
             make.top.equalTo(qrCodeContainerView.snp.bottom).offset(16)
-            make.leading.equalToSuperview().offset(24)
-            make.trailing.equalToSuperview().offset(-24)
+            make.centerX.equalToSuperview()
+            make.leading.greaterThanOrEqualToSuperview().offset(24)
+            make.trailing.lessThanOrEqualToSuperview().offset(-24)
         }
         
         // Button Stack View
         buttonStackView.snp.makeConstraints { make in
-            make.top.equalTo(addressLabel.snp.bottom).offset(32)
+            make.top.equalTo(paymentInfoStackView.snp.bottom).offset(32)
             make.leading.equalToSuperview().offset(24)
             make.trailing.equalToSuperview().offset(-24)
             make.bottom.equalToSuperview().offset(-40)
@@ -234,7 +237,6 @@ class QRSuccessPopupViewController: UIViewController {
         headerView.backgroundColor = UIColor.systemBackground
         titleLabel.textColor = UIColor.label
         messageLabel.textColor = UIColor.secondaryLabel
-        addressLabel.textColor = UIColor.secondaryLabel
     }
     
     // MARK: - Animations
@@ -276,8 +278,174 @@ class QRSuccessPopupViewController: UIViewController {
         }
     }
     
+    // MARK: - Payment Info Tags
+    private func createPaymentInfoTags() {
+        // Parse the payment URL to extract cryptocurrency and amount
+        let (cryptoType, amount) = parsePaymentURL(paymentURL)
+        
+        // Create cryptocurrency tag
+        let cryptoTag = createCryptoTag(cryptoType: cryptoType)
+        paymentInfoStackView.addArrangedSubview(cryptoTag)
+        
+        // Create amount tag if amount is available
+        if let amount = amount, !amount.isEmpty {
+            let amountTag = createAmountTag(amount: amount)
+            paymentInfoStackView.addArrangedSubview(amountTag)
+        }
+    }
+    
+    private func parsePaymentURL(_ url: String) -> (cryptoType: String, amount: String?) {
+        // Handle Trust Wallet scheme
+        if url.hasPrefix("trust://") {
+            if let amount = extractAmountFromTrustWalletURL(url) {
+                let cryptoType = extractCryptoTypeFromTrustWalletURL(url)
+                return (cryptoType, amount)
+            }
+        }
+        
+        // Handle standard schemes (bitcoin:, ethereum:, etc.)
+        if let colonIndex = url.firstIndex(of: ":") {
+            let scheme = String(url[..<colonIndex])
+            let remaining = String(url[url.index(after: colonIndex)...])
+            
+            // Extract amount from query parameters
+            if let amount = extractAmountFromStandardURL(remaining) {
+                return (scheme.capitalized, amount)
+            }
+        }
+        
+        // Fallback: try to extract from URL components
+        if let urlComponents = URLComponents(string: url) {
+            let scheme = urlComponents.scheme?.capitalized ?? "Unknown"
+            let amount = urlComponents.queryItems?.first(where: { $0.name == "amount" })?.value
+            return (scheme, amount)
+        }
+        
+        return ("Unknown", nil)
+    }
+    
+    private func extractAmountFromTrustWalletURL(_ url: String) -> String? {
+        guard let urlComponents = URLComponents(string: url) else { return nil }
+        return urlComponents.queryItems?.first(where: { $0.name == "amount" })?.value
+    }
+    
+    private func extractCryptoTypeFromTrustWalletURL(_ url: String) -> String {
+        guard let urlComponents = URLComponents(string: url),
+              let coinValue = urlComponents.queryItems?.first(where: { $0.name == "coin" })?.value,
+              let coinID = Int(coinValue) else {
+            return "Unknown"
+        }
+        
+        // Map Trust Wallet coin IDs to cryptocurrency names
+        switch coinID {
+        case 0: return "Bitcoin"
+        case 60: return "Ethereum"
+        case 501: return "Solana"
+        case 3: return "Dogecoin"
+        case 144: return "XRP"
+        case 2: return "Litecoin"
+        case 1815: return "Cardano"
+        case 354: return "Polkadot"
+        default: return "Unknown"
+        }
+    }
+    
+    private func extractAmountFromStandardURL(_ url: String) -> String? {
+        if let questionIndex = url.firstIndex(of: "?") {
+            let queryString = String(url[url.index(after: questionIndex)...])
+            if let amountIndex = queryString.range(of: "amount=") {
+                let amountStart = amountIndex.upperBound
+                let amountString = String(queryString[amountStart...])
+                // Remove any additional parameters
+                if let ampersandIndex = amountString.firstIndex(of: "&") {
+                    return String(amountString[..<ampersandIndex])
+                }
+                return amountString
+            }
+        }
+        return nil
+    }
+    
+    private func createCryptoTag(cryptoType: String) -> UIView {
+        let tagView = UIView()
+        tagView.backgroundColor = UIColor.systemGray6
+        tagView.layer.cornerRadius = 16
+        tagView.layer.borderWidth = 1
+        tagView.layer.borderColor = UIColor.systemGray4.cgColor
+        
+        // Get the corresponding PaymentChain for the crypto type
+        let chain = getPaymentChain(from: cryptoType)
+        
+        // Create icon image view
+        let iconImageView = UIImageView()
+        iconImageView.contentMode = .scaleAspectFit
+        iconImageView.image = chain.systemIcon
+        iconImageView.tintColor = .white
+        
+        tagView.addSubview(iconImageView)
+        iconImageView.snp.makeConstraints { make in
+            make.centerY.equalToSuperview()
+            make.leading.equalToSuperview().offset(8)
+            make.width.height.equalTo(20)
+        }
+        
+        // Create label for the crypto type
+        let label = UILabel()
+        label.text = cryptoType
+        label.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
+        label.textColor = UIColor.label
+        label.textAlignment = .center
+        
+        tagView.addSubview(label)
+        label.snp.makeConstraints { make in
+            make.centerY.equalToSuperview()
+            make.leading.equalTo(iconImageView.snp.trailing).offset(6)
+            make.trailing.equalToSuperview().offset(-12)
+            make.top.bottom.equalToSuperview().inset(8)
+        }
+        
+        return tagView
+    }
+    
+    private func createAmountTag(amount: String) -> UIView {
+        let tagView = UIView()
+        tagView.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.1)
+        tagView.layer.cornerRadius = 16
+        tagView.layer.borderWidth = 1
+        tagView.layer.borderColor = UIColor.systemBlue.withAlphaComponent(0.3).cgColor
+        
+        let label = UILabel()
+        label.text = amount
+        label.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
+        label.textColor = UIColor.systemBlue
+        label.textAlignment = .center
+        
+        tagView.addSubview(label)
+        label.snp.makeConstraints { make in
+            make.edges.equalToSuperview().inset(UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12))
+        }
+        
+        return tagView
+    }
+    
+    // MARK: - Helper Methods
+    private func getPaymentChain(from cryptoType: String) -> PaymentChain {
+        switch cryptoType.lowercased() {
+        case "bitcoin": return .bitcoin
+        case "ethereum": return .ethereum
+        case "solana": return .solana
+        case "dogecoin": return .dogecoin
+        case "xrp": return .xrp
+        case "litecoin": return .litecoin
+        case "cardano": return .cardano
+        case "polkadot": return .polkadot
+        default: return .ethereum // Default fallback
+        }
+    }
+    
     // MARK: - Public Methods
     func show(from presentingViewController: UIViewController) {
         presentingViewController.present(self, animated: false)
     }
 }
+

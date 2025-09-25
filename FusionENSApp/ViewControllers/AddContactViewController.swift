@@ -445,12 +445,19 @@ class AddContactViewController: UIViewController {
         // Create a unique filename for the ENS name
         let filename = "\(ensName.replacingOccurrences(of: ".", with: "_"))_avatar.jpg"
         
-        // Get the documents directory
-        guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+        // Get the Application Support directory (more persistent than Documents)
+        guard let appSupportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
             return nil
         }
         
-        let fileURL = documentsDirectory.appendingPathComponent(filename)
+        // Create the directory if it doesn't exist
+        do {
+            try FileManager.default.createDirectory(at: appSupportDirectory, withIntermediateDirectories: true, attributes: nil)
+        } catch {
+            return nil
+        }
+        
+        let fileURL = appSupportDirectory.appendingPathComponent(filename)
         
         // Convert image to JPEG data with compression
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {

@@ -174,6 +174,9 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
         if let data = userDefaults.data(forKey: "savedContacts"),
            let savedContacts = try? JSONDecoder().decode([Contact].self, from: data) {
             contacts = savedContacts
+            
+            // Migrate avatar files from Documents to Application Support directory
+            migrateAvatarFilesIfNeeded()
         } else {
             contacts = []
         }
@@ -600,6 +603,15 @@ class ContactTableViewCell: UITableViewCell {
         return UIImage(data: data)
     }
     
+    private static func addToCache(_ image: UIImage, for key: String) {
+        // Remove oldest entries if cache is full
+        if avatarCache.count >= maxCacheSize {
+            let keysToRemove = Array(avatarCache.keys.prefix(avatarCache.count - maxCacheSize + 1))
+            keysToRemove.forEach { avatarCache.removeValue(forKey: $0) }
+        }
+        avatarCache[key] = image
+    }
+    
     private let cardView = UIView()
     private let profileImageView = UIImageView()
     private let nameLabel = UILabel()
@@ -761,24 +773,137 @@ class ContactTableViewCell: UITableViewCell {
             }
         }
         
-        // Set profile image without caching (always load fresh)
-        if let avatarURL = contact.avatarURL {
-            
-            // Check if already loading
-            if Self.loadingRequests.contains(avatarURL) {
+        // Set profile image with caching (same as ENS page - resolve fresh each time)
+        let baseDomain = extractBaseDomain(from: contact.ensName)
+        
+        // Check memory cache first
+        if let cachedImage = Self.avatarCache[baseDomain] {
+            DispatchQueue.main.async {
+                self.profileImageView.image = cachedImage
+            }
+            return
+        }
+        
+        // Check disk cache
+        if let diskImage = Self.loadImageFromDisk(for: baseDomain) {
+            // Add to memory cache and display
+            Self.addToCache(diskImage, for: baseDomain)
+            DispatchQueue.main.async {
+                self.profileImageView.image = diskImage
+            }
+            return
+        }
+        
+        // Check if already loading
+        if Self.loadingRequests.contains(baseDomain) {
+            return
+        }
+        
+        // Mark as loading
+        Self.loadingRequests.insert(baseDomain)
+        
+        // Load avatar fresh using ENS name (same as ENS page)
+        loadENSAvatarForContact(ensName: baseDomain) { [weak self] image in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                
+                // Remove from loading requests
+                Self.loadingRequests.remove(baseDomain)
+                
+                if let image = image {
+                    // Cache the image (memory + disk)
+                    Self.addToCache(image, for: baseDomain)
+                    Self.cacheImageToDisk(image, for: baseDomain)
+                    
+                    self.profileImageView.image = image
+                } else {
+                    // Show placeholder if all attempts fail
+                    let firstLetter = String(contact.name.prefix(1)).uppercased()
+                    self.profileImageView.image = self.createPlaceholderImage(with: firstLetter)
+                }
+            }
+        }
+    }
+    
+    private func extractBaseDomain(from ensName: String) -> String {
+        // Extract base domain (e.g., "vitalik.eth" from "vitalik.eth" or "sub.vitalik.eth")
+        let components = ensName.components(separatedBy: ".")
+        if components.count >= 2 {
+            return "\(components[components.count - 2]).\(components[components.count - 1])"
+        }
+        return ensName
+    }
+    
+    private func loadENSAvatarForContact(ensName: String, completion: @escaping (UIImage?) -> Void) {
+        // Use ENS metadata API directly with ENS name (same as ENS page)
+        let metadataURL = "https://metadata.ens.domains/mainnet/avatar/\(ensName)"
+        
+        AF.request(metadataURL).responseString { response in
+            guard let avatarURLString = response.value,
+                  !avatarURLString.isEmpty,
+                  avatarURLString != "data:image/svg+xml;base64," else {
+                // Fallback: try ENS Ideas API for avatar
+                self.loadENSAvatarFromENSIdeasForContact(baseDomain: ensName, completion: completion)
                 return
             }
             
-            // Mark as loading
-            Self.loadingRequests.insert(avatarURL)
+            // Check if the response is a JSON error message
+            if avatarURLString.hasPrefix("{") && avatarURLString.contains("message") {
+                // Fallback: try ENS Ideas API for avatar
+                self.loadENSAvatarFromENSIdeasForContact(baseDomain: ensName, completion: completion)
+                return
+            }
             
-            // Load avatar from URL without caching
-            loadAvatarWithRetry(from: avatarURL, contact: contact, retryCount: 0)
-        } else {
-            // Create a placeholder with the first letter of the ENS name
-            let firstLetter = String(contact.ensName.prefix(1)).uppercased()
-            profileImageView.image = createPlaceholderImage(with: firstLetter)
+            // Clean HTML tags if present
+            let cleanURLString = self.cleanHTMLTags(from: avatarURLString)
+            
+            // Check if it's a valid URL
+            guard !cleanURLString.isEmpty,
+                  let url = URL(string: cleanURLString) else {
+                // Fallback: try ENS Ideas API for avatar
+                self.loadENSAvatarFromENSIdeasForContact(baseDomain: ensName, completion: completion)
+                return
+            }
+            
+            // Load avatar image
+            AF.request(url).responseData { response in
+                if let data = response.data, let image = UIImage(data: data) {
+                    completion(image)
+                } else {
+                    // Fallback: try ENS Ideas API for avatar
+                    self.loadENSAvatarFromENSIdeasForContact(baseDomain: ensName, completion: completion)
+                }
+            }
         }
+    }
+    
+    private func loadENSAvatarFromENSIdeasForContact(baseDomain: String, completion: @escaping (UIImage?) -> Void) {
+        // Fallback: try ENS Ideas API for avatar (same as ENS page)
+        let ensIdeasURL = "https://api.ensideas.com/ens/resolve/\(baseDomain)"
+        
+        AF.request(ensIdeasURL).responseData { response in
+            guard let data = response.data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let avatarURLString = json["avatar"] as? String,
+                  !avatarURLString.isEmpty,
+                  let url = URL(string: avatarURLString) else {
+                completion(nil)
+                return
+            }
+            
+            // Load avatar image
+            AF.request(url).responseData { response in
+                if let data = response.data, let image = UIImage(data: data) {
+                    completion(image)
+                } else {
+                    completion(nil)
+                }
+            }
+        }
+    }
+    
+    private func cleanHTMLTags(from string: String) -> String {
+        return string.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression, range: nil)
     }
     
     private func loadAvatarWithRetry(from avatarURL: String, contact: Contact, retryCount: Int) {
@@ -817,25 +942,28 @@ class ContactTableViewCell: UITableViewCell {
             return
         }
         
-        // Handle network URL
-        APICaller.shared.fetchAvatar(from: avatarURL) { [weak self] image in
+        // Handle network URL with caching (same as ENS page)
+        AF.request(avatarURL).responseData { [weak self] response in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 
                 // Remove from loading requests
                 Self.loadingRequests.remove(avatarURL)
                 
-                if let image = image {
-                    // Don't cache - always load fresh
+                if let data = response.data, let image = UIImage(data: data) {
+                    // Cache the image (memory + disk) - same as ENS page
+                    Self.addToCache(image, for: avatarURL)
+                    Self.cacheImageToDisk(image, for: avatarURL)
+                    
                     self.profileImageView.image = image
                 } else if retryCount < maxRetries {
-                // Retry loading with exponential backoff
-                let delay = Double(retryCount + 1) * 1.0 // 1s, 2s delays
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                    self.loadAvatarWithRetry(from: avatarURL, contact: contact, retryCount: retryCount + 1)
-                }
+                    // Retry loading with exponential backoff
+                    let delay = Double(retryCount + 1) * 1.0 // 1s, 2s delays
+                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                        self.loadAvatarWithRetry(from: avatarURL, contact: contact, retryCount: retryCount + 1)
+                    }
                 } else {
-                // Final fallback to placeholder if all retries fail
+                    // Final fallback to placeholder if all retries fail
                     let firstLetter = String(contact.name.prefix(1)).uppercased()
                     self.profileImageView.image = self.createPlaceholderImage(with: firstLetter)
                 }
@@ -1301,33 +1429,12 @@ class ContactTableViewCell: UITableViewCell {
     }
     
     // MARK: - Cache Management
-    private static func addToCache(_ image: UIImage, for key: String) {
-        // Remove oldest entries if cache is full
-        if avatarCache.count >= maxCacheSize {
-            let keysToRemove = Array(avatarCache.keys.prefix(avatarCache.count - maxCacheSize + 1))
-            keysToRemove.forEach { avatarCache.removeValue(forKey: $0) }
-        }
-        avatarCache[key] = image
-    }
     
     static func clearAvatarCache() {
         avatarCache.removeAll()
         loadingRequests.removeAll()
     }
     
-    private func extractBaseDomain(from ensName: String) -> String {
-        // Handle multi-chain format (name.eth:chain) or shortcut format (name:chain)
-        let colonIndex = ensName.lastIndex(of: ":")
-        if let colonIndex = colonIndex {
-            let baseDomain = String(ensName[..<colonIndex])
-            // If it's shortcut format, add .eth
-            if !baseDomain.contains(".eth") {
-                return baseDomain + ".eth"
-            }
-            return baseDomain
-        }
-        return ensName
-    }
 }
 
 // MARK: - AddContactViewControllerDelegate
@@ -1348,6 +1455,91 @@ extension ContactsViewController {
         
         // Update UI
         tableView.reloadData()
+    }
+    
+    // MARK: - Avatar Migration
+    private func migrateAvatarFilesIfNeeded() {
+        // Check if migration has already been done
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        if userDefaults.bool(forKey: "avatarMigrationCompleted") {
+            return
+        }
+        
+        // Get directories
+        guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+              let appSupportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return
+        }
+        
+        // Create Application Support directory if it doesn't exist
+        do {
+            try FileManager.default.createDirectory(at: appSupportDirectory, withIntermediateDirectories: true, attributes: nil)
+        } catch {
+            return
+        }
+        
+        var migrationNeeded = false
+        
+        // Check each contact for avatar files that need migration
+        for (index, contact) in contacts.enumerated() {
+            guard let avatarURL = contact.avatarURL,
+                  avatarURL.hasPrefix("/") else { continue }
+            
+            // Check if this is a Documents directory path
+            if avatarURL.contains(documentsDirectory.path) {
+                let oldFileURL = URL(fileURLWithPath: avatarURL)
+                let filename = oldFileURL.lastPathComponent
+                let newFileURL = appSupportDirectory.appendingPathComponent(filename)
+                
+                // Check if old file exists and new file doesn't
+                if FileManager.default.fileExists(atPath: oldFileURL.path) && !FileManager.default.fileExists(atPath: newFileURL.path) {
+                    do {
+                        // Move file from Documents to Application Support
+                        try FileManager.default.moveItem(at: oldFileURL, to: newFileURL)
+                        
+                        // Update contact with new path
+                        let updatedContact = Contact(
+                            name: contact.name,
+                            ensName: contact.ensName,
+                            address: contact.address,
+                            avatarURL: newFileURL.path,
+                            resolvedName: contact.resolvedName
+                        )
+                        contacts[index] = updatedContact
+                        migrationNeeded = true
+                    } catch {
+                        // If move fails, try copy and then delete
+                        do {
+                            try FileManager.default.copyItem(at: oldFileURL, to: newFileURL)
+                            try FileManager.default.removeItem(at: oldFileURL)
+                            
+                            // Update contact with new path
+                            let updatedContact = Contact(
+                                name: contact.name,
+                                ensName: contact.ensName,
+                                address: contact.address,
+                                avatarURL: newFileURL.path,
+                                resolvedName: contact.resolvedName
+                            )
+                            contacts[index] = updatedContact
+                            migrationNeeded = true
+                        } catch {
+                            // Migration failed for this file, continue with others
+                            continue
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Save updated contacts if migration was performed
+        if migrationNeeded {
+            saveContacts()
+        }
+        
+        // Mark migration as completed
+        userDefaults.set(true, forKey: "avatarMigrationCompleted")
+        userDefaults.synchronize()
     }
 }
 

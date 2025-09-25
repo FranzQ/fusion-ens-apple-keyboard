@@ -22,6 +22,11 @@ class SettingsViewController: UIViewController {
     private let walletDescriptionLabel = UILabel()
     private let walletToggle = UISwitch()
     
+    private let aboutCardView = UIView()
+    private let aboutTitleLabel = UILabel()
+    private let aboutDescriptionLabel = UILabel()
+    private let aboutButton = UIButton(type: .system)
+    
     private let contactCardView = UIView()
     private let contactTitleLabel = UILabel()
     private let contactDescriptionLabel = UILabel()
@@ -101,6 +106,7 @@ class SettingsViewController: UIViewController {
         
         setupSetupInstructionsCard()
         setupWalletCard()
+        setupAboutCard()
         setupContactCard()
     }
     
@@ -134,6 +140,39 @@ class SettingsViewController: UIViewController {
         walletToggle.addTarget(self, action: #selector(walletToggleChanged), for: .valueChanged)
         walletToggle.translatesAutoresizingMaskIntoConstraints = false
         walletCardView.addSubview(walletToggle)
+    }
+    
+    private func setupAboutCard() {
+        // About Card
+        aboutCardView.backgroundColor = ColorTheme.cardBackground
+        aboutCardView.layer.cornerRadius = 12
+        aboutCardView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(aboutCardView)
+        
+        // About Title
+        aboutTitleLabel.text = "About Fusion ENS"
+        aboutTitleLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        aboutTitleLabel.textColor = ColorTheme.primaryText
+        aboutTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        aboutCardView.addSubview(aboutTitleLabel)
+        
+        // About Description
+        aboutDescriptionLabel.text = "Learn more about Fusion ENS, our mission, and the latest updates on our website."
+        aboutDescriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        aboutDescriptionLabel.textColor = ColorTheme.secondaryText
+        aboutDescriptionLabel.numberOfLines = 0
+        aboutDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
+        aboutCardView.addSubview(aboutDescriptionLabel)
+        
+        // About Button
+        aboutButton.setTitle("Visit Website", for: .normal)
+        aboutButton.setTitleColor(.white, for: .normal)
+        aboutButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        aboutButton.backgroundColor = ColorTheme.accent
+        aboutButton.layer.cornerRadius = 8
+        aboutButton.addTarget(self, action: #selector(aboutButtonTapped), for: .touchUpInside)
+        aboutButton.translatesAutoresizingMaskIntoConstraints = false
+        aboutCardView.addSubview(aboutButton)
     }
     
     private func setupContactCard() {
@@ -189,7 +228,7 @@ class SettingsViewController: UIViewController {
         setupCardView.addSubview(setupTitleLabel)
         
         // Setup Description
-        setupDescriptionLabel.text = "Re-run the initial onboarding flow"
+        setupDescriptionLabel.text = "Show the initial onboarding flow"
         setupDescriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
         setupDescriptionLabel.textColor = ColorTheme.secondaryText
         setupDescriptionLabel.numberOfLines = 0
@@ -288,8 +327,28 @@ class SettingsViewController: UIViewController {
             walletDescriptionLabel.trailingAnchor.constraint(equalTo: walletCardView.trailingAnchor, constant: -16),
             walletDescriptionLabel.bottomAnchor.constraint(equalTo: walletCardView.bottomAnchor, constant: -16),
             
+            // About Card Constraints
+            aboutCardView.topAnchor.constraint(equalTo: walletCardView.bottomAnchor, constant: 16),
+            aboutCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            aboutCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            aboutCardView.heightAnchor.constraint(equalToConstant: 140),
+            
+            aboutTitleLabel.topAnchor.constraint(equalTo: aboutCardView.topAnchor, constant: 16),
+            aboutTitleLabel.leadingAnchor.constraint(equalTo: aboutCardView.leadingAnchor, constant: 16),
+            aboutTitleLabel.trailingAnchor.constraint(equalTo: aboutCardView.trailingAnchor, constant: -16),
+            
+            aboutDescriptionLabel.topAnchor.constraint(equalTo: aboutTitleLabel.bottomAnchor, constant: 8),
+            aboutDescriptionLabel.leadingAnchor.constraint(equalTo: aboutCardView.leadingAnchor, constant: 16),
+            aboutDescriptionLabel.trailingAnchor.constraint(equalTo: aboutCardView.trailingAnchor, constant: -16),
+            
+            aboutButton.topAnchor.constraint(equalTo: aboutDescriptionLabel.bottomAnchor, constant: 16),
+            aboutButton.leadingAnchor.constraint(equalTo: aboutCardView.leadingAnchor, constant: 16),
+            aboutButton.trailingAnchor.constraint(equalTo: aboutCardView.trailingAnchor, constant: -16),
+            aboutButton.bottomAnchor.constraint(equalTo: aboutCardView.bottomAnchor, constant: -16),
+            aboutButton.heightAnchor.constraint(equalToConstant: 44),
+            
             // Contact Card Constraints
-            contactCardView.topAnchor.constraint(equalTo: walletCardView.bottomAnchor, constant: 20),
+            contactCardView.topAnchor.constraint(equalTo: aboutCardView.bottomAnchor, constant: 16),
             contactCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             contactCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             contactCardView.heightAnchor.constraint(equalToConstant: 140),
@@ -373,6 +432,32 @@ class SettingsViewController: UIViewController {
         useTrustWalletScheme = walletToggle.isOn
         
         // Provide immediate feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+    }
+    
+    @objc private func aboutButtonTapped() {
+        // Open Fusion ENS website
+        if let url = URL(string: "https://fusionens.com") {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url) { success in
+                    if !success {
+                        // Fallback: show alert
+                        DispatchQueue.main.async {
+                            self.showAlert(title: "Unable to Open Website", message: "Could not open the Fusion ENS website. Please try again later.")
+                        }
+                    }
+                }
+            } else {
+                // URL scheme not supported
+                showAlert(title: "Unable to Open Website", message: "Could not open the Fusion ENS website. Please try again later.")
+            }
+        } else {
+            // Invalid URL
+            showAlert(title: "Invalid URL", message: "The website URL is invalid. Please try again later.")
+        }
+        
+        // Provide haptic feedback
         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
         impactFeedback.impactOccurred()
     }

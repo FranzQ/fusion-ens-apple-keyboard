@@ -416,7 +416,14 @@ class PaymentRequestViewController: UIViewController {
         // Set initial ENS display
         ensNameLabel.text = ensName.name
         fullNameLabel.text = ensName.fullName ?? ensName.name // Use existing fullName or show ENS name
-        ensAddressLabel.text = ensName.address // Use existing address
+        
+        // Truncate address consistently
+        if !ensName.address.isEmpty {
+            let truncatedAddress = "\(ensName.address.prefix(6))...\(ensName.address.suffix(4))"
+            ensAddressLabel.text = truncatedAddress
+        } else {
+            ensAddressLabel.text = ensName.address
+        }
         
         // Load crypto prices
         loadCryptoPrices()
@@ -928,7 +935,14 @@ class PaymentRequestViewController: UIViewController {
         // Update the UI
         ensNameLabel.text = newENSName.name
         fullNameLabel.text = newENSName.fullName ?? newENSName.name // Use cached fullName or show ENS name
-        ensAddressLabel.text = newENSName.address // Use cached address
+        
+        // Truncate address consistently
+        if !newENSName.address.isEmpty {
+            let truncatedAddress = "\(newENSName.address.prefix(6))...\(newENSName.address.suffix(4))"
+            ensAddressLabel.text = truncatedAddress
+        } else {
+            ensAddressLabel.text = newENSName.address
+        }
         
         // Reset avatar state
         avatarImageView.isHidden = true
