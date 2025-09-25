@@ -222,7 +222,7 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
             guard let self = self else { return }
             
-            if let error = error {
+            if error != nil {
                 return
             }
             
@@ -608,7 +608,7 @@ extension ENSManagerViewController: ENSNameTableViewCellDelegate {
         }
         
         URLSession.shared.dataTask(with: url) { data, response, error in
-            if let error = error {
+            if error != nil {
                 completion(nil)
                 return
             }

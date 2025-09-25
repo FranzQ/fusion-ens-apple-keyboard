@@ -52,6 +52,9 @@
 		NEW0042A490A3600A0D0C4 /* PaymentRequestViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0041A490A3600A0D0C4 /* PaymentRequestViewController.swift */; };
 		NEW0052A490A3600A0D0C4 /* QRSuccessPopupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0051A490A3600A0D0C4 /* QRSuccessPopupViewController.swift */; };
 		NEW0062A490A3600A0D0C4 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0061A490A3600A0D0C4 /* SettingsViewController.swift */; };
+		NEW0102A490A3600A0D0C4 /* KeyboardGuideViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0101A490A3600A0D0C4 /* KeyboardGuideViewController.swift */; };
+		NEW0112A490A3600A0D0C4 /* Basic Keyboard.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = NEW0111A490A3600A0D0C4 /* Basic Keyboard.mp4 */; };
+		NEW0122A490A3600A0D0C4 /* Pro Keyboard.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = NEW0121A490A3600A0D0C4 /* Pro Keyboard.mp4 */; };
 		NEW0072A490A3600A0D0C4 /* ContactsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0071A490A3600A0D0C4 /* ContactsViewController.swift */; };
 		NEW0082A490A3600A0D0C4 /* MainTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0081A490A3600A0D0C4 /* MainTabBarController.swift */; };
 		NEW0092A490A3600A0D0C4 /* ColorTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = NEW0091A490A3600A0D0C4 /* ColorTheme.swift */; };
@@ -140,6 +143,9 @@
 		NEW0071A490A3600A0D0C4 /* ContactsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsViewController.swift; sourceTree = "<group>"; };
 		NEW0081A490A3600A0D0C4 /* MainTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabBarController.swift; sourceTree = "<group>"; };
 		NEW0091A490A3600A0D0C4 /* ColorTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorTheme.swift; sourceTree = "<group>"; };
+		NEW0101A490A3600A0D0C4 /* KeyboardGuideViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardGuideViewController.swift; sourceTree = "<group>"; };
+		NEW0111A490A3600A0D0C4 /* Basic Keyboard.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Basic Keyboard.mp4"; sourceTree = "<group>"; };
+		NEW0121A490A3600A0D0C4 /* Pro Keyboard.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Pro Keyboard.mp4"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -218,6 +224,8 @@
 			isa = PBXGroup;
 			children = (
 				A1BB89A12A5AC2720038A0E0 /* FusionENSAppRelease.entitlements */,
+				NEW0111A490A3600A0D0C4 /* Basic Keyboard.mp4 */,
+				NEW0121A490A3600A0D0C4 /* Pro Keyboard.mp4 */,
 				A1BB899C2A5A09790038A0E0 /* ViewControllers */,
 				A1BB89962A59B8200038A0E0 /* UIComponents */,
 				A1BB89912A59AA160038A0E0 /* Fonts */,
@@ -303,6 +311,7 @@
 				NEW0061A490A3600A0D0C4 /* SettingsViewController.swift */,
 				NEW0071A490A3600A0D0C4 /* ContactsViewController.swift */,
 				NEW0081A490A3600A0D0C4 /* MainTabBarController.swift */,
+				NEW0101A490A3600A0D0C4 /* KeyboardGuideViewController.swift */,
 				1EE787162E79896F000E62E3 /* SafeCopyViewController.swift */,
 			);
 			path = ViewControllers;
@@ -447,6 +456,8 @@
 				A1338FF0298ABB02007DC669 /* Main.storyboard in Resources */,
 				A1BB89942A59AA3A0038A0E0 /* Poppins-Bold.ttf in Resources */,
 				A1BB89952A59AA3A0038A0E0 /* Poppins-Regular.ttf in Resources */,
+				NEW0112A490A3600A0D0C4 /* Basic Keyboard.mp4 in Resources */,
+				NEW0122A490A3600A0D0C4 /* Pro Keyboard.mp4 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -494,6 +505,7 @@
 				NEW0062A490A3600A0D0C4 /* SettingsViewController.swift in Sources */,
 				NEW0072A490A3600A0D0C4 /* ContactsViewController.swift in Sources */,
 				NEW0082A490A3600A0D0C4 /* MainTabBarController.swift in Sources */,
+				NEW0102A490A3600A0D0C4 /* KeyboardGuideViewController.swift in Sources */,
 				NEW0092A490A3600A0D0C4 /* ColorTheme.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

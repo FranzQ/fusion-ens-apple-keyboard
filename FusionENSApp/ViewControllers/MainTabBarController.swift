@@ -40,6 +40,15 @@ class MainTabBarController: UITabBarController {
             selectedImage: UIImage(systemName: "person.2.fill")
         )
         
+        // Keyboard Guide
+        let keyboardGuideVC = KeyboardGuideViewController()
+        let keyboardNavController = UINavigationController(rootViewController: keyboardGuideVC)
+        keyboardNavController.tabBarItem = UITabBarItem(
+            title: "Keyboard",
+            image: UIImage(systemName: "keyboard"),
+            selectedImage: UIImage(systemName: "keyboard.fill")
+        )
+        
         // Settings
         let settingsVC = SettingsViewController()
         let settingsNavController = UINavigationController(rootViewController: settingsVC)
@@ -50,7 +59,7 @@ class MainTabBarController: UITabBarController {
         )
         
         // Set view controllers
-        viewControllers = [ensNavController, contactsNavController, settingsNavController]
+        viewControllers = [ensNavController, contactsNavController, keyboardNavController, settingsNavController]
         
         // Set initial selection
         selectedIndex = 0
