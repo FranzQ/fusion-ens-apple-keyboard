@@ -59,6 +59,7 @@ class KeyboardGuideViewController: UIViewController {
         // Add content sections
         addBasicKeyboardSection()
         addProKeyboardSection()
+        addDidYouKnowSection()
         addGeneralTipsSection()
         addTroubleshootingSection()
         
@@ -199,6 +200,28 @@ class KeyboardGuideViewController: UIViewController {
             ],
             hasVideo: true,
             videoName: "Pro Keyboard"
+        )
+        
+        addSectionToContentView(section)
+    }
+    
+    private func addDidYouKnowSection() {
+        let section = createEnhancedSection(
+            title: "Did You Know?",
+            subtitle: "Pro Tip",
+            description: "You can use your favorite non-ENS keyboard to continue typing, then when you want to resolve an ENS name, just highlight it and switch to any Fusion ENS keyboard - it will automatically resolve!",
+            icon: "lightbulb.circle.fill",
+            accentColor: UIColor.systemBlue,
+            features: [
+                ("⌨️", "Use Any Keyboard", "Continue typing with your preferred keyboard"),
+                ("📝", "Highlight ENS Names", "Select the ENS name you want to resolve"),
+                ("🔄", "Switch & Resolve", "Switch to Fusion ENS keyboard for instant resolution"),
+                ("↩️", "Switch Back", "Return to your favorite keyboard to continue typing")
+            ],
+            howToUse: [],
+            hasVideo: false,
+            videoName: nil,
+            showFeaturesHeading: false
         )
         
         addSectionToContentView(section)
