@@ -532,7 +532,6 @@ extension ContactsViewController: UISearchResultsUpdating {
         let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
         
         guard let url = URL(string: fusionServerURL) else {
-            print("❌ Invalid URL: \(fusionServerURL)")
             return
         }
         
@@ -785,28 +784,62 @@ class ContactTableViewCell: UITableViewCell {
     private func loadAvatarWithRetry(from avatarURL: String, contact: Contact, retryCount: Int) {
         let maxRetries = 2
         
-            APICaller.shared.fetchAvatar(from: avatarURL) { [weak self] image in
-                DispatchQueue.main.async {
-                    guard let self = self else { return }
-                    
-                    // Remove from loading requests
-                    Self.loadingRequests.remove(avatarURL)
-                    
-                    if let image = image {
-                        // Don't cache - always load fresh
-                        self.profileImageView.image = image
-                    } else if retryCount < maxRetries {
-                    // Retry loading with exponential backoff
-                    let delay = Double(retryCount + 1) * 1.0 // 1s, 2s delays
-                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                        self.loadAvatarWithRetry(from: avatarURL, contact: contact, retryCount: retryCount + 1)
-                    }
-                    } else {
-                    // Final fallback to placeholder if all retries fail
-                        let firstLetter = String(contact.name.prefix(1)).uppercased()
-                        self.profileImageView.image = self.createPlaceholderImage(with: firstLetter)
-                    }
+        // Check if this is a local file path or file URL
+        if avatarURL.hasPrefix("file://") || avatarURL.hasPrefix("/") {
+            // Handle local file
+            let fileURL: URL
+            if avatarURL.hasPrefix("file://") {
+                guard let url = URL(string: avatarURL) else {
+                    // Invalid file URL, use placeholder
+                    let firstLetter = String(contact.name.prefix(1)).uppercased()
+                    self.profileImageView.image = self.createPlaceholderImage(with: firstLetter)
+                    return
                 }
+                fileURL = url
+            } else {
+                // It's a file path
+                fileURL = URL(fileURLWithPath: avatarURL)
+            }
+            
+            guard let imageData = try? Data(contentsOf: fileURL),
+                  let image = UIImage(data: imageData) else {
+                // File doesn't exist or can't be loaded, use placeholder
+                let firstLetter = String(contact.name.prefix(1)).uppercased()
+                self.profileImageView.image = self.createPlaceholderImage(with: firstLetter)
+                return
+            }
+            
+            // Remove from loading requests
+            Self.loadingRequests.remove(avatarURL)
+            
+            // Display the local image
+            self.profileImageView.image = image
+            return
+        }
+        
+        // Handle network URL
+        APICaller.shared.fetchAvatar(from: avatarURL) { [weak self] image in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                
+                // Remove from loading requests
+                Self.loadingRequests.remove(avatarURL)
+                
+                if let image = image {
+                    // Don't cache - always load fresh
+                    self.profileImageView.image = image
+                } else if retryCount < maxRetries {
+                // Retry loading with exponential backoff
+                let delay = Double(retryCount + 1) * 1.0 // 1s, 2s delays
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                    self.loadAvatarWithRetry(from: avatarURL, contact: contact, retryCount: retryCount + 1)
+                }
+                } else {
+                // Final fallback to placeholder if all retries fail
+                    let firstLetter = String(contact.name.prefix(1)).uppercased()
+                    self.profileImageView.image = self.createPlaceholderImage(with: firstLetter)
+                }
+            }
         }
     }
     
@@ -949,7 +982,8 @@ class ContactTableViewCell: UITableViewCell {
     
     private func openDeeplinkWithAddress(address: String, ensName: String, chain: PaymentChain) {
         // Check wallet preference setting
-        let useTrustWallet = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.bool(forKey: "useTrustWalletScheme") ?? true
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        let useTrustWallet = userDefaults.bool(forKey: "useTrustWalletScheme")
         
         // For Trust Wallet, use ENS name in deeplink (since mapping exists)
         // For other wallets, use the resolved address

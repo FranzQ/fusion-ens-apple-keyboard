@@ -296,7 +296,6 @@ class AddContactViewController: UIViewController {
         let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
         
         guard let url = URL(string: fusionServerURL) else {
-            print("❌ Invalid URL: \(fusionServerURL)")
             return
         }
         
@@ -338,7 +337,6 @@ class AddContactViewController: UIViewController {
         let metadataURL = "https://metadata.ens.domains/mainnet/avatar/\(ensName)"
         
         guard let metadataURL = URL(string: metadataURL) else {
-            print("❌ Invalid metadata URL: \(metadataURL)")
             return
         }
         
@@ -462,7 +460,8 @@ class AddContactViewController: UIViewController {
         // Save to disk
         do {
             try imageData.write(to: fileURL)
-            return fileURL.absoluteString
+            // Return the file path (not file:// URL) for local files
+            return fileURL.path
         } catch {
             return nil
         }
@@ -505,7 +504,6 @@ class AddContactViewController: UIViewController {
         let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
         
         guard let url = URL(string: fusionServerURL) else {
-            print("❌ Invalid URL: \(fusionServerURL)")
             return
         }
         

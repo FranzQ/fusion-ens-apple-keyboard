@@ -226,22 +226,23 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         }
         
         suggestionBar?.addSubview(suggestionStackView)
-        containerView.addSubview(suggestionBar!)
+        guard let suggestionBar = suggestionBar else { return }
+        containerView.addSubview(suggestionBar)
         
         // Set up constraints
         NSLayoutConstraint.activate([
             // Suggestion bar constraints
-            suggestionBar!.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 8),
-            suggestionBar!.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
-            suggestionBar!.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 8),
-            suggestionBar!.heightAnchor.constraint(equalToConstant: 40),
+            suggestionBar.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 8),
+            suggestionBar.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
+            suggestionBar.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 8),
+            suggestionBar.heightAnchor.constraint(equalToConstant: 40),
             
             // Suggestion stack view constraints
-            suggestionStackView.leadingAnchor.constraint(equalTo: suggestionBar!.leadingAnchor),
-            suggestionStackView.trailingAnchor.constraint(equalTo: suggestionBar!.trailingAnchor),
-            suggestionStackView.topAnchor.constraint(equalTo: suggestionBar!.topAnchor),
-            suggestionStackView.bottomAnchor.constraint(equalTo: suggestionBar!.bottomAnchor),
-            suggestionStackView.heightAnchor.constraint(equalTo: suggestionBar!.heightAnchor)
+            suggestionStackView.leadingAnchor.constraint(equalTo: suggestionBar.leadingAnchor),
+            suggestionStackView.trailingAnchor.constraint(equalTo: suggestionBar.trailingAnchor),
+            suggestionStackView.topAnchor.constraint(equalTo: suggestionBar.topAnchor),
+            suggestionStackView.bottomAnchor.constraint(equalTo: suggestionBar.bottomAnchor),
+            suggestionStackView.heightAnchor.constraint(equalTo: suggestionBar.heightAnchor)
         ])
         
     }
@@ -1508,7 +1509,8 @@ textDocumentProxy.insertText("\n")
                 currentRowStackView?.distribution = .fillEqually
                 currentRowStackView?.spacing = 8
                 currentRowStackView?.translatesAutoresizingMaskIntoConstraints = false
-                mainStackView.addArrangedSubview(currentRowStackView!)
+                guard let currentRowStackView = currentRowStackView else { return }
+                mainStackView.addArrangedSubview(currentRowStackView)
             }
             
             let button = UIButton(type: .system)
@@ -1895,7 +1897,10 @@ textDocumentProxy.insertText("\n")
         let session = URLSession(configuration: config)
         
         // Make API call to resolve text record
-        session.dataTask(with: URL(string: apiURL)!) { data, response, error in
+        guard let url = URL(string: apiURL) else {
+            return
+        }
+        session.dataTask(with: url) { data, response, error in
             // Check for timeout or network error
             if error != nil {
                 DispatchQueue.main.async {
@@ -1954,7 +1959,13 @@ textDocumentProxy.insertText("\n")
             }
             
             // Convert text record to appropriate URL
-            let resolvedURL = self.convertTextRecordToURL(recordType: recordType, value: recordValue!)
+            guard let recordValue = recordValue else {
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+            let resolvedURL = self.convertTextRecordToURL(recordType: recordType, value: recordValue)
             DispatchQueue.main.async {
                 completion(resolvedURL)
             }

@@ -250,7 +250,8 @@ class AddENSNameViewController: UIViewController {
     
     private func isDuplicateENSName(_ name: String) -> Bool {
         // Check if the ENS name already exists in My ENS Names
-        if let data = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.data(forKey: "savedENSNamesData"),
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        if let data = userDefaults.data(forKey: "savedENSNamesData"),
            let savedNames = try? JSONDecoder().decode([ENSName].self, from: data) {
             return savedNames.contains { $0.name.lowercased() == name.lowercased() }
         }

@@ -216,7 +216,6 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
         let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
         
         guard let url = URL(string: fusionServerURL) else {
-            print("❌ Invalid URL: \(fusionServerURL)")
             return
         }
         
@@ -224,12 +223,10 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
             guard let self = self else { return }
             
             if let error = error {
-                print("❌ Network error loading full name for \(ensName.name): \(error.localizedDescription)")
                 return
             }
             
             guard let data = data else {
-                print("❌ No data received for full name: \(ensName.name)")
                 return
             }
             
@@ -606,20 +603,17 @@ extension ENSManagerViewController: ENSNameTableViewCellDelegate {
         let fusionServerURL = "https://api.fusionens.com/resolve/\(baseDomain):name?network=mainnet&source=ios-app"
         
         guard let url = URL(string: fusionServerURL) else {
-            print("❌ Invalid URL: \(fusionServerURL)")
             completion(nil)
             return
         }
         
         URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
-                print("❌ Network error in loadFullName: \(error.localizedDescription)")
                 completion(nil)
                 return
             }
             
             guard let data = data else {
-                print("❌ No data received in loadFullName")
                 completion(nil)
                 return
             }

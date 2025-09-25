@@ -63,8 +63,12 @@ struct SettingsView: View {
                 }
                 
                 Section(header: Text("Support")) {
-                    Link("Visit Website", destination: URL(string: "https://fusionens.com")!)
-                    Link("Contact Support", destination: URL(string: "mailto:hello@fusionens.com")!)
+                    if let websiteURL = URL(string: "https://fusionens.com") {
+                        Link("Visit Website", destination: websiteURL)
+                    }
+                    if let supportURL = URL(string: "mailto:hello@fusionens.com") {
+                        Link("Contact Support", destination: supportURL)
+                    }
                 }
             }
             .navigationTitle("Settings")
@@ -76,16 +80,19 @@ struct SettingsView: View {
     }
     
     private func loadHapticFeedbackSetting() {
-        hapticFeedbackEnabled = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.bool(forKey: hapticFeedbackKey) ?? true
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        hapticFeedbackEnabled = userDefaults.bool(forKey: hapticFeedbackKey)
     }
     
     private func saveHapticFeedbackSetting(_ enabled: Bool) {
-        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.set(enabled, forKey: hapticFeedbackKey)
-        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.synchronize()
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        userDefaults.set(enabled, forKey: hapticFeedbackKey)
+        userDefaults.synchronize()
     }
     
     private func loadKeyboardTypeSetting() {
-        if let savedType = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.string(forKey: keyboardTypeKey),
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        if let savedType = userDefaults.string(forKey: keyboardTypeKey),
            let type = KeyboardType(rawValue: savedType) {
             keyboardType = type
         } else {
@@ -94,8 +101,9 @@ struct SettingsView: View {
     }
     
     private func saveKeyboardTypeSetting(_ type: KeyboardType) {
-        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.set(type.rawValue, forKey: keyboardTypeKey)
-        UserDefaults(suiteName: "group.com.fusionens.keyboard")?.synchronize()
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        userDefaults.set(type.rawValue, forKey: keyboardTypeKey)
+        userDefaults.synchronize()
     }
 }
 

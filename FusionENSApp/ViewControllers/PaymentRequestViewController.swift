@@ -606,7 +606,8 @@ class PaymentRequestViewController: UIViewController {
     
     private func createPaymentURL() -> String {
         // Check wallet preference setting
-        let useTrustWallet = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.bool(forKey: "useTrustWalletScheme") ?? true
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        let useTrustWallet = userDefaults.bool(forKey: "useTrustWalletScheme")
         
         if useTrustWallet {
             // Use Trust Wallet scheme for all cryptocurrencies
@@ -886,7 +887,8 @@ class PaymentRequestViewController: UIViewController {
     
     private func showENSNameSelector() {
         // Get all saved ENS names from UserDefaults
-        guard let data = UserDefaults(suiteName: "group.com.fusionens.keyboard")?.data(forKey: "savedENSNamesData"),
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        guard let data = userDefaults.data(forKey: "savedENSNamesData"),
               let savedENSNames = try? JSONDecoder().decode([ENSName].self, from: data) else {
             showAlert(title: "No ENS Names", message: "You don't have any saved ENS names yet.")
             return
