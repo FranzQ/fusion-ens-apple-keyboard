@@ -257,7 +257,7 @@ class KeyboardGuideViewController: UIViewController {
             icon: "wrench.and.screwdriver.fill",
             accentColor: UIColor.systemRed,
             features: [
-                ("🌐", "Connection Issues", "Check your internet connection for ENS resolution"),
+                ("🔌", "Connection Issues", "Check your internet connection for ENS resolution"),
                 ("✅", "ENS Validity", "Ensure the ENS name exists and is properly configured"),
                 ("📳", "Haptic Settings", "Verify haptic feedback is enabled in device settings"),
                 ("🏷️", "Subdomain Rules", "Parent domain must allow subdomain creation")

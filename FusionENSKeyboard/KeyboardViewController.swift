@@ -33,6 +33,9 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // Setup accessibility
+        setupAccessibility()
+        
         // Let the system handle the keyboard layout - we just provide ENS resolution
         setupKeyboardView()
     }
@@ -81,6 +84,45 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         isKeyboardViewSetup = true
     }
     
+    // MARK: - Accessibility Support
+    
+    private func setupAccessibility() {
+        // Set up accessibility for the basic keyboard view
+        view.accessibilityLabel = "Fusion ENS Basic Keyboard"
+        view.accessibilityHint = "Basic keyboard with ENS resolution capabilities"
+        
+        // Register for accessibility notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(accessibilityVoiceOverStatusChanged),
+            name: UIAccessibility.voiceOverStatusDidChangeNotification,
+            object: nil
+        )
+    }
+    
+    @objc private func accessibilityVoiceOverStatusChanged() {
+        // Update UI when VoiceOver status changes
+        DispatchQueue.main.async {
+            self.updateAccessibilityForVoiceOver()
+        }
+    }
+    
+    private func updateAccessibilityForVoiceOver() {
+        // Update accessibility when VoiceOver is enabled
+        if UIAccessibility.isVoiceOverRunning {
+            // Basic keyboard doesn't have custom UI elements, but we can announce ENS resolution
+        }
+    }
+    
+    private func announceAccessibilityMessage(_ message: String) {
+        // Announce messages to VoiceOver users
+        if UIAccessibility.isVoiceOverRunning {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                UIAccessibility.post(notification: .announcement, argument: message)
+            }
+        }
+    }
+    
     // MARK: - KeyboardController Protocol Methods
     
     override func insertText(_ text: String) {
@@ -96,10 +138,13 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         if let selectedText = textDocumentProxy.selectedText, !selectedText.isEmpty {
             // Only resolve if it's an ENS domain
             if HelperClass.checkFormat(selectedText) {
+                announceAccessibilityMessage("Resolving ENS name: \(selectedText)")
                 handleSelectedText(selectedText)
             } else {
+                announceAccessibilityMessage("Selected text is not a valid ENS name")
             }
         } else {
+            announceAccessibilityMessage("No text selected for ENS resolution")
         }
     }
     
@@ -119,8 +164,14 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
                             self?.smartReplaceENS(selectedText, with: resolvedAddress)
                         }
                         
+                        // Announce successful resolution
+                        self?.announceAccessibilityMessage("ENS name \(selectedText) resolved to address \(resolvedAddress)")
+                        
                         // Trigger success haptic feedback
                     } else {
+                        // Announce failed resolution
+                        self?.announceAccessibilityMessage("Failed to resolve ENS name: \(selectedText)")
+                        
                         // Trigger error haptic feedback
                     }
                 }

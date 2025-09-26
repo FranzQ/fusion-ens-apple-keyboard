@@ -79,6 +79,9 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         // Load ENS usage data
         loadENSUsageData()
         
+        // Setup accessibility
+        setupAccessibility()
+        
         // Delay setup to ensure proper view dimensions
         DispatchQueue.main.async {
             self.setupKeyboardView()
@@ -271,6 +274,15 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
         }
         
+        // Add accessibility support for suggestion buttons
+        button.accessibilityLabel = "Suggestion: \(title)"
+        button.accessibilityHint = "Double tap to insert this suggestion"
+        button.isAccessibilityElement = true
+        button.accessibilityTraits = [.button]
+        
+        // Support Dynamic Type
+        button.titleLabel?.font = UIFont.preferredFont(forTextStyle: .body, compatibleWith: traitCollection)
+        
         button.addTarget(self, action: #selector(suggestionButtonTouchDown), for: .touchDown)
         button.addTarget(self, action: #selector(suggestionButtonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
         
@@ -403,44 +415,11 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         }
         button.titleLabel?.font = UIFont.systemFont(ofSize: fontSize, weight: .regular)
         
-        // iPhone keyboard styling - adapts to dark/light mode
-        if title == "return" {
-            // Blue return key
-            button.backgroundColor = UIColor(red: 0.0, green: 0.48, blue: 1.0, alpha: 1.0)
-            button.setTitleColor(UIColor.white, for: .normal)
-        } else if title == ":btc" {
-            // Orange crypto ticker key
-            button.backgroundColor = UIColor(red: 1.0, green: 0.58, blue: 0.0, alpha: 1.0) // Orange color
-            button.setTitleColor(UIColor.white, for: .normal)
-        } else if title == ".eth" {
-            // Blue .eth key
-            button.backgroundColor = UIColor(red: 0.0, green: 0.5, blue: 0.74, alpha: 1.0) // #0080BC
-            button.setTitleColor(UIColor.white, for: .normal)
-        } else if title == "⇧" || title == "⌫" || title == "123" || title == "ABC" || title == "#+=" || title == "🙂" {
-            // Function keys - adapt to dark/light mode
-            if traitCollection.userInterfaceStyle == .dark {
-                button.backgroundColor = UIColor(red: 0.27, green: 0.27, blue: 0.30, alpha: 1.0) // Dark mode gray
-                button.setTitleColor(UIColor.white, for: .normal)
-            } else {
-                button.backgroundColor = UIColor(red: 0.68, green: 0.68, blue: 0.70, alpha: 1.0) // Light mode gray
-                button.setTitleColor(UIColor.black, for: .normal)
-            }
-            
-            // Special styling for caps lock
-            if title == "⇧" && isCapsLock {
-                button.backgroundColor = UIColor.systemBlue
-                button.setTitleColor(UIColor.white, for: .normal)
-            }
-        } else {
-            // Letter/number keys - adapt to dark/light mode
-            if traitCollection.userInterfaceStyle == .dark {
-                button.backgroundColor = UIColor(red: 0.20, green: 0.20, blue: 0.22, alpha: 1.0) // Dark mode
-                button.setTitleColor(UIColor.white, for: .normal)
-            } else {
-                button.backgroundColor = UIColor.white // Light mode
-                button.setTitleColor(UIColor.black, for: .normal)
-            }
-        }
+        // Add accessibility support
+        setupAccessibilityForButton(button, title: title)
+        
+        // iPhone keyboard styling - adapts to dark/light mode and high contrast
+        applyButtonStyling(button, title: title)
         
         // iPhone keyboard corner radius
         button.layer.cornerRadius = 5
@@ -504,6 +483,199 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         }
         
         return button
+    }
+    
+    // MARK: - Accessibility Support
+    
+    private func setupAccessibilityForButton(_ button: UIButton, title: String) {
+        // Set accessibility label based on button function
+        switch title {
+        case "⇧":
+            button.accessibilityLabel = isCapsLock ? "Caps Lock" : "Shift"
+            button.accessibilityHint = isCapsLock ? "Double tap to turn off caps lock" : "Double tap to enable caps lock"
+        case "⌫":
+            button.accessibilityLabel = "Delete"
+            button.accessibilityHint = "Double tap to delete character, long press for continuous deletion"
+        case "123":
+            button.accessibilityLabel = "Numbers"
+            button.accessibilityHint = "Double tap to switch to numbers keyboard, long press to switch to emoji keyboard"
+        case "ABC":
+            button.accessibilityLabel = "Letters"
+            button.accessibilityHint = "Double tap to switch to letters keyboard"
+        case "#+=":
+            button.accessibilityLabel = "Symbols"
+            button.accessibilityHint = "Double tap to switch to symbols keyboard"
+        case "🙂":
+            button.accessibilityLabel = "Emoji"
+            button.accessibilityHint = "Double tap to switch to emoji keyboard"
+        case "space":
+            button.accessibilityLabel = "Space"
+            button.accessibilityHint = "Double tap to insert space, long press to resolve ENS names"
+        case "return":
+            button.accessibilityLabel = "Return"
+            button.accessibilityHint = "Double tap to insert new line"
+        case ".eth":
+            button.accessibilityLabel = "Ethereum domain"
+            button.accessibilityHint = "Double tap to insert .eth, long press for ENS resolution options"
+        case ":btc":
+            button.accessibilityLabel = "Bitcoin address"
+            button.accessibilityHint = "Double tap to insert :btc, long press for cryptocurrency options"
+        default:
+            // For letter and number keys
+            if title.count == 1 {
+                button.accessibilityLabel = "\(title) key"
+                button.accessibilityHint = "Double tap to insert \(title)"
+            } else {
+                button.accessibilityLabel = title
+                button.accessibilityHint = "Double tap to activate"
+            }
+        }
+        
+        // Enable accessibility
+        button.isAccessibilityElement = true
+        button.accessibilityTraits = [.keyboardKey]
+        
+        // Support Dynamic Type
+        if let font = button.titleLabel?.font {
+            button.titleLabel?.font = UIFont.preferredFont(forTextStyle: .body, compatibleWith: traitCollection)
+        }
+    }
+    
+    private func setupAccessibility() {
+        // Set up accessibility for the main keyboard view
+        view.accessibilityLabel = "Fusion ENS Keyboard"
+        view.accessibilityHint = "Custom keyboard with ENS resolution capabilities"
+        
+        // Register for accessibility notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(accessibilityVoiceOverStatusChanged),
+            name: UIAccessibility.voiceOverStatusDidChangeNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(accessibilityReduceMotionStatusChanged),
+            name: UIAccessibility.reduceMotionStatusDidChangeNotification,
+            object: nil
+        )
+    }
+    
+    @objc private func accessibilityVoiceOverStatusChanged() {
+        // Update UI when VoiceOver status changes
+        DispatchQueue.main.async {
+            self.updateAccessibilityForVoiceOver()
+        }
+    }
+    
+    @objc private func accessibilityReduceMotionStatusChanged() {
+        // Update animations when reduce motion preference changes
+        DispatchQueue.main.async {
+            self.updateAnimationsForReduceMotion()
+        }
+    }
+    
+    private func updateAccessibilityForVoiceOver() {
+        // Update button accessibility when VoiceOver is enabled
+        if UIAccessibility.isVoiceOverRunning {
+            // Make sure all buttons are properly accessible
+            updateAllButtonAccessibility()
+        }
+    }
+    
+    private func updateAnimationsForReduceMotion() {
+        // Reduce or disable animations if user prefers reduced motion
+        if UIAccessibility.isReduceMotionEnabled {
+            // Disable or reduce animations
+            UIView.setAnimationsEnabled(false)
+        } else {
+            UIView.setAnimationsEnabled(true)
+        }
+    }
+    
+    private func updateAllButtonAccessibility() {
+        // Update accessibility for all existing buttons
+        for button in suggestionButtons {
+            if let title = button.title(for: .normal) {
+                setupAccessibilityForButton(button, title: title)
+            }
+        }
+    }
+    
+    private func announceAccessibilityMessage(_ message: String) {
+        // Announce messages to VoiceOver users
+        if UIAccessibility.isVoiceOverRunning {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                UIAccessibility.post(notification: .announcement, argument: message)
+            }
+        }
+    }
+    
+    private func applyButtonStyling(_ button: UIButton, title: String) {
+        // Check for high contrast mode
+        let isHighContrast = UIAccessibility.isDarkerSystemColorsEnabled
+        
+        if title == "return" {
+            // Blue return key
+            if isHighContrast {
+                button.backgroundColor = UIColor.systemBlue
+                button.setTitleColor(UIColor.white, for: .normal)
+            } else {
+                button.backgroundColor = UIColor(red: 0.0, green: 0.48, blue: 1.0, alpha: 1.0)
+                button.setTitleColor(UIColor.white, for: .normal)
+            }
+        } else if title == ":btc" {
+            // Orange crypto ticker key
+            if isHighContrast {
+                button.backgroundColor = UIColor.systemOrange
+                button.setTitleColor(UIColor.white, for: .normal)
+            } else {
+                button.backgroundColor = UIColor(red: 1.0, green: 0.58, blue: 0.0, alpha: 1.0)
+                button.setTitleColor(UIColor.white, for: .normal)
+            }
+        } else if title == ".eth" {
+            // Blue .eth key
+            if isHighContrast {
+                button.backgroundColor = UIColor.systemBlue
+                button.setTitleColor(UIColor.white, for: .normal)
+            } else {
+                button.backgroundColor = UIColor(red: 0.0, green: 0.5, blue: 0.74, alpha: 1.0)
+                button.setTitleColor(UIColor.white, for: .normal)
+            }
+        } else if title == "⇧" || title == "⌫" || title == "123" || title == "ABC" || title == "#+=" || title == "🙂" {
+            // Function keys - adapt to dark/light mode and high contrast
+            if isHighContrast {
+                button.backgroundColor = UIColor.systemGray
+                button.setTitleColor(UIColor.label, for: .normal)
+            } else if traitCollection.userInterfaceStyle == .dark {
+                button.backgroundColor = UIColor(red: 0.27, green: 0.27, blue: 0.30, alpha: 1.0)
+                button.setTitleColor(UIColor.white, for: .normal)
+            } else {
+                button.backgroundColor = UIColor(red: 0.68, green: 0.68, blue: 0.70, alpha: 1.0)
+                button.setTitleColor(UIColor.black, for: .normal)
+            }
+            
+            // Special styling for caps lock
+            if title == "⇧" && isCapsLock {
+                button.backgroundColor = UIColor.systemBlue
+                button.setTitleColor(UIColor.white, for: .normal)
+            }
+        } else {
+            // Letter/number keys - adapt to dark/light mode and high contrast
+            if isHighContrast {
+                button.backgroundColor = UIColor.systemBackground
+                button.setTitleColor(UIColor.label, for: .normal)
+                button.layer.borderWidth = 1.0
+                button.layer.borderColor = UIColor.label.cgColor
+            } else if traitCollection.userInterfaceStyle == .dark {
+                button.backgroundColor = UIColor(red: 0.20, green: 0.20, blue: 0.22, alpha: 1.0)
+                button.setTitleColor(UIColor.white, for: .normal)
+            } else {
+                button.backgroundColor = UIColor.white
+                button.setTitleColor(UIColor.black, for: .normal)
+            }
+        }
     }
     
     // MARK: - Button Actions
@@ -647,6 +819,7 @@ textDocumentProxy.insertText("\n")
         switch key {
         case "⌫":
             deleteBackward()
+            announceAccessibilityMessage("Deleted character")
             // Update last typed word when deleting
             if !lastTypedWord.isEmpty {
                 lastTypedWord = String(lastTypedWord.dropLast())
@@ -659,31 +832,38 @@ textDocumentProxy.insertText("\n")
             }
         case "space":
             handleSpaceKeyPress()
+            announceAccessibilityMessage("Space inserted")
         case "return":
             // Check if we're in a browser address bar and handle auto-resolve
             let isBrowser = isInBrowserAddressBar()
             if isBrowser {
                 // Show loading indicator on return key
                 updateReturnKeyToLoading()
+                announceAccessibilityMessage("Resolving ENS name")
                 handleReturnKeyInAddressBar()
             } else {
                 insertText("\n")
+                announceAccessibilityMessage("New line inserted")
                 // Clear last typed word when return is pressed
                 lastTypedWord = ""
             }
         case "123":
             // Switch to numbers layout OR next keyboard (long press)
             switchToNumbersLayout()
+            announceAccessibilityMessage("Switched to numbers keyboard")
         case "ABC":
             // Switch back to letters layout
             switchToLettersLayout()
+            announceAccessibilityMessage("Switched to letters keyboard")
         case "#+=":
             // Switch to secondary symbols layout
             switchToSecondarySymbolsLayout()
+            announceAccessibilityMessage("Switched to symbols keyboard")
         case ".eth":
             // .eth key - insert .eth at cursor position
             insertText(".eth")
             lastTypedWord += ".eth"
+            announceAccessibilityMessage("Ethereum domain suffix inserted")
             // Turn off shift after key press (unless caps lock is on)
             if isShiftPressed && !isCapsLock {
                 isShiftPressed = false
@@ -858,12 +1038,18 @@ textDocumentProxy.insertText("\n")
             for _ in 0..<charactersToDeleteFromEnd {
                 textDocumentProxy.deleteBackward()
             }
+            
+            // Announce successful resolution
+            announceAccessibilityMessage("ENS name \(ensDomain) resolved to address \(resolvedAddress)")
         } else {
             // Fallback: just delete the ENS domain length and insert
             for _ in 0..<ensDomain.count {
                 textDocumentProxy.deleteBackward()
             }
             textDocumentProxy.insertText(resolvedAddress)
+            
+            // Announce successful resolution
+            announceAccessibilityMessage("ENS name \(ensDomain) resolved to address \(resolvedAddress)")
         }
     }
     
@@ -1616,9 +1802,12 @@ textDocumentProxy.insertText("\n")
         // Prevent normal 123 key action by consuming the gesture
         gesture.cancelsTouchesInView = true
         
-        // Add haptic feedback
+        // Add haptic feedback to indicate keyboard switch
+        let notificationFeedback = UINotificationFeedbackGenerator()
+        notificationFeedback.notificationOccurred(.success)
         
-        // Switch to next keyboard - required by Apple
+        // Switch to Apple's emoji keyboard
+        // advanceToNextInputMode() cycles through all available keyboards including emoji
         advanceToNextInputMode()
     }
     
