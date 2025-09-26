@@ -42,6 +42,9 @@ class AddContactViewController: UIViewController {
         return indicator
     }()
     
+    // Timeout handling for loading state
+    private var loadingTimeoutTimer: Timer?
+    
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -66,6 +69,10 @@ class AddContactViewController: UIViewController {
         // Cancel all pending network requests
         dataTasks.forEach { $0.cancel() }
         dataTasks.removeAll()
+        
+        // Cancel timeout timer
+        loadingTimeoutTimer?.invalidate()
+        loadingTimeoutTimer = nil
     }
     
     // MARK: - UI Setup
@@ -216,6 +223,9 @@ class AddContactViewController: UIViewController {
     }
     
     @objc private func addButtonTapped() {
+        // Prevent multiple taps while processing
+        guard addButton.isEnabled else { return }
+        
         guard let ensName = ensNameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
               !ensName.isEmpty else {
             return
@@ -230,7 +240,7 @@ class AddContactViewController: UIViewController {
             return
         }
         
-        // Show loading state
+        // Show loading state immediately to prevent multiple taps
         showLoadingState()
         
         // Check if we're editing or adding
@@ -277,13 +287,13 @@ class AddContactViewController: UIViewController {
         // Validate ENS name using APICaller
         APICaller.shared.resolveENSName(name: ensName) { [weak self] resolvedAddress in
             DispatchQueue.main.async {
-                self?.hideLoadingState()
-                
                 if !resolvedAddress.isEmpty {
                     // ENS name is valid, now fetch the resolved name (like My ENS Names does)
+                    // Keep loading state active until entire process is complete
                     self?.fetchResolvedName(for: ensName, address: resolvedAddress)
                 } else {
-                    // ENS name is invalid
+                    // ENS name is invalid - only now hide loading state
+                    self?.hideLoadingState()
                     self?.showErrorAlert(message: "Invalid ENS name: \(ensName)\n\nPlease check the ENS name and try again.")
                 }
             }
@@ -345,6 +355,7 @@ class AddContactViewController: UIViewController {
                 guard let data = data else {
                     // No data received, create contact without avatar
                     let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: nil, resolvedName: resolvedName)
+                    self?.hideLoadingState()
                     self?.delegate?.didAddContact(contact)
                     self?.dismiss(animated: true)
                     return
@@ -359,6 +370,7 @@ class AddContactViewController: UIViewController {
                     let localAvatarURL = self?.saveResizedImageLocally(resizedImage, for: ensName)
                     
                     let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: localAvatarURL, resolvedName: resolvedName)
+                    self?.hideLoadingState()
                     self?.delegate?.didAddContact(contact)
                     self?.dismiss(animated: true)
                     return
@@ -370,6 +382,7 @@ class AddContactViewController: UIViewController {
                       avatarURLString != "data:image/svg+xml;base64," else {
                     // No valid avatar data, create contact without avatar
                     let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: nil, resolvedName: resolvedName)
+                    self?.hideLoadingState()
                     self?.delegate?.didAddContact(contact)
                     self?.dismiss(animated: true)
                     return
@@ -380,6 +393,7 @@ class AddContactViewController: UIViewController {
                 if avatarURLString.hasPrefix("{") && avatarURLString.contains("message") {
                     // No avatar URL found, create contact without avatar
                     let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: nil, resolvedName: resolvedName)
+                    self?.hideLoadingState()
                     self?.delegate?.didAddContact(contact)
                     self?.dismiss(animated: true)
                     return
@@ -393,6 +407,7 @@ class AddContactViewController: UIViewController {
                       let _ = URL(string: cleanURLString) else {
                     // Invalid avatar URL, create contact without avatar
                     let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: nil, resolvedName: resolvedName)
+                    self?.hideLoadingState()
                     self?.delegate?.didAddContact(contact)
                     self?.dismiss(animated: true)
                     return
@@ -400,6 +415,7 @@ class AddContactViewController: UIViewController {
                 
                 // Create contact with all data (address, resolved name, and avatar URL)
                 let contact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: cleanURLString, resolvedName: resolvedName)
+                self?.hideLoadingState()
                 self?.delegate?.didAddContact(contact)
                 self?.dismiss(animated: true)
             }
@@ -486,13 +502,13 @@ class AddContactViewController: UIViewController {
             
             APICaller.shared.resolveENSName(name: ensName) { [weak self] resolvedAddress in
                 DispatchQueue.main.async {
-                    self?.hideLoadingState()
-                    
                     if !resolvedAddress.isEmpty {
                         // ENS name is valid, now fetch the resolved name
+                        // Keep loading state active until entire process is complete
                         self?.fetchResolvedNameForUpdate(for: ensName, address: resolvedAddress, originalContact: originalContact, at: indexPath)
                     } else {
-                        // ENS name is invalid
+                        // ENS name is invalid - only now hide loading state
+                        self?.hideLoadingState()
                         self?.showErrorAlert(message: "Invalid ENS name: \(ensName)\n\nPlease check the ENS name and try again.")
                     }
                 }
@@ -500,6 +516,7 @@ class AddContactViewController: UIViewController {
         } else {
             // ENS name didn't change, just update the display name
             let updatedContact = Contact(name: ensName, ensName: ensName, address: originalContact.address, avatarURL: originalContact.avatarURL, resolvedName: originalContact.resolvedName)
+            hideLoadingState()
             delegate?.didUpdateContact(updatedContact, at: indexPath)
             dismiss(animated: true)
         }
@@ -519,6 +536,7 @@ class AddContactViewController: UIViewController {
                 DispatchQueue.main.async {
                     // Update contact without resolved name
                     let updatedContact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: originalContact.avatarURL, resolvedName: nil)
+                    self?.hideLoadingState()
                     self?.delegate?.didUpdateContact(updatedContact, at: indexPath)
                     self?.dismiss(animated: true)
                 }
@@ -535,6 +553,7 @@ class AddContactViewController: UIViewController {
                     DispatchQueue.main.async {
                         // Update contact without resolved name
                         let updatedContact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: originalContact.avatarURL, resolvedName: nil)
+                        self?.hideLoadingState()
                         self?.delegate?.didUpdateContact(updatedContact, at: indexPath)
                         self?.dismiss(animated: true)
                     }
@@ -547,6 +566,7 @@ class AddContactViewController: UIViewController {
                 DispatchQueue.main.async {
                     // Update contact with resolved name
                     let updatedContact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: originalContact.avatarURL, resolvedName: cleanName.isEmpty ? nil : cleanName)
+                    self?.hideLoadingState()
                     self?.delegate?.didUpdateContact(updatedContact, at: indexPath)
                     self?.dismiss(animated: true)
                 }
@@ -554,6 +574,7 @@ class AddContactViewController: UIViewController {
                 DispatchQueue.main.async {
                     // Update contact without resolved name
                     let updatedContact = Contact(name: ensName, ensName: ensName, address: address, avatarURL: originalContact.avatarURL, resolvedName: nil)
+                    self?.hideLoadingState()
                     self?.delegate?.didUpdateContact(updatedContact, at: indexPath)
                     self?.dismiss(animated: true)
                 }
@@ -580,17 +601,57 @@ class AddContactViewController: UIViewController {
     
     // MARK: - Loading State
     private func showLoadingState() {
+        // Disable button immediately to prevent multiple taps
         addButton.isEnabled = false
         addButton.alpha = 0.6
+        
+        // Show loading indicator
         loadingIndicator.startAnimating()
-        addButton.setTitle("", for: .normal)
+        loadingIndicator.isHidden = false
+        
+        // Update button title to show processing state
+        let buttonTitle = contactToEdit == nil ? "Adding..." : "Updating..."
+        addButton.setTitle(buttonTitle, for: .normal)
+        
+        // Disable text field to prevent changes during processing
+        ensNameTextField.isEnabled = false
+        
+        // Set up timeout timer (30 seconds)
+        loadingTimeoutTimer?.invalidate()
+        loadingTimeoutTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: false) { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.handleLoadingTimeout()
+            }
+        }
     }
     
     private func hideLoadingState() {
+        // Cancel timeout timer
+        loadingTimeoutTimer?.invalidate()
+        loadingTimeoutTimer = nil
+        
+        // Re-enable button
         addButton.isEnabled = true
         addButton.alpha = 1.0
+        
+        // Hide loading indicator
         loadingIndicator.stopAnimating()
-        addButton.setTitle("Add Contact", for: .normal)
+        loadingIndicator.isHidden = true
+        
+        // Restore button title
+        let buttonTitle = contactToEdit == nil ? "Add Contact" : "Update Contact"
+        addButton.setTitle(buttonTitle, for: .normal)
+        
+        // Re-enable text field
+        ensNameTextField.isEnabled = true
+    }
+    
+    private func handleLoadingTimeout() {
+        // Hide loading state
+        hideLoadingState()
+        
+        // Show timeout error
+        showErrorAlert(message: "The request is taking longer than expected. Please check your internet connection and try again.")
     }
     
     // MARK: - Validation
