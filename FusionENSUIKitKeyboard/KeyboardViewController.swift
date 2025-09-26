@@ -536,7 +536,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         button.accessibilityTraits = [.keyboardKey]
         
         // Support Dynamic Type
-        if let font = button.titleLabel?.font {
+        if button.titleLabel?.font != nil {
             button.titleLabel?.font = UIFont.preferredFont(forTextStyle: .body, compatibleWith: traitCollection)
         }
     }
