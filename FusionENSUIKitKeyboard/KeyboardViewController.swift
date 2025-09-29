@@ -48,6 +48,11 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
     private var lastShiftPressTime: TimeInterval = 0
     private var lastSpacePressTime: TimeInterval = 0
     
+    // MARK: - iPad Detection
+    private var isIPad: Bool {
+        return UIDevice.current.userInterfaceIdiom == .pad
+    }
+    
     // Default ENS suggestions
     private let defaultENSSuggestions = ["linea.eth", "base.eth", "vitalik.eth"]
     
@@ -297,14 +302,14 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                     ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="],
                     ["-", "\\", "|", "~", "<", ">", "€", "£", "¥", "•"],
                     ["123", ".", ",", "?", "!", "'", "⌫"],
-                    ["ABC", ".eth", "space", ":btc", "return"]
+                    isIPad ? ["ABC", "🌐", ".eth", "space", ":btc", "return"] : ["ABC", ".eth", "space", ":btc", "return"]
                 ]
             } else {
                 rows = [
                     ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
                     ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""],
                     ["#+=", ".", ",", "?", "!", "'", "⌫"],
-                    ["ABC", ".eth", "space", ":btc", "return"]
+                    isIPad ? ["ABC", "🌐", ".eth", "space", ":btc", "return"] : ["ABC", ".eth", "space", ":btc", "return"]
                 ]
             }
         } else {
@@ -313,14 +318,14 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                     ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
                     ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
                     ["⇧", "Z", "X", "C", "V", "B", "N", "M", "⌫"],
-                    ["123", ".eth", "space", ":btc", "return"]
+                    isIPad ? ["123", "🌐", ".eth", "space", ":btc", "return"] : ["123", ".eth", "space", ":btc", "return"]
                 ]
             } else {
                 rows = [
                     ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
                     ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
                     ["⇧", "z", "x", "c", "v", "b", "n", "m", "⌫"],
-                    ["123", ".eth", "space", ":btc", "return"]
+                    isIPad ? ["123", "🌐", ".eth", "space", ":btc", "return"] : ["123", ".eth", "space", ":btc", "return"]
                 ]
             }
         }
@@ -408,7 +413,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         
         // Use smaller font for bottom row keys
         let fontSize: CGFloat
-        if title == "123" || title == "ABC" || title == ".eth" || title == ":btc" || title == "space" || title == "return" {
+        if title == "123" || title == "ABC" || title == ".eth" || title == ":btc" || title == "space" || title == "return" || title == "🌐" {
             fontSize = 16  // Smaller font for bottom row
         } else {
             fontSize = 22  // Standard font for other keys
@@ -455,6 +460,11 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
             // Special handling for space bar with long press
             button.addTarget(self, action: #selector(spaceButtonTouchDown), for: .touchDown)
             button.addTarget(self, action: #selector(spaceButtonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
+        } else if title == "🌐" {
+            // Globe key for keyboard switching (iPad only)
+            button.addAction(UIAction { _ in
+                self.handleGlobeKeyPress()
+            }, for: .touchUpInside)
         } else {
             // Standard button handling
             button.addAction(UIAction { _ in
@@ -520,6 +530,9 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
         case ":btc":
             button.accessibilityLabel = "Bitcoin address"
             button.accessibilityHint = "Double tap to insert :btc, long press for cryptocurrency options"
+        case "🌐":
+            button.accessibilityLabel = "Globe"
+            button.accessibilityHint = "Double tap to switch keyboards"
         default:
             // For letter and number keys
             if title.count == 1 {
@@ -643,7 +656,7 @@ class KeyboardViewController: UIInputViewController, KeyboardController {
                 button.backgroundColor = UIColor(red: 0.0, green: 0.5, blue: 0.74, alpha: 1.0)
                 button.setTitleColor(UIColor.white, for: .normal)
             }
-        } else if title == "⇧" || title == "⌫" || title == "123" || title == "ABC" || title == "#+=" || title == "🙂" {
+        } else if title == "⇧" || title == "⌫" || title == "123" || title == "ABC" || title == "#+=" || title == "🙂" || title == "🌐" {
             // Function keys - adapt to dark/light mode and high contrast
             if isHighContrast {
                 button.backgroundColor = UIColor.systemGray
@@ -855,6 +868,9 @@ textDocumentProxy.insertText("\n")
             // Switch back to letters layout
             switchToLettersLayout()
             announceAccessibilityMessage("Switched to letters keyboard")
+        case "🌐":
+            // Globe key - switch to next keyboard (iPad only)
+            handleGlobeKeyPress()
         case "#+=":
             // Switch to secondary symbols layout
             switchToSecondarySymbolsLayout()
@@ -1166,12 +1182,12 @@ textDocumentProxy.insertText("\n")
             return availableWidthForKeys * 0.4 // Space bar takes 40% of available width
         case "return":
             return availableWidthForKeys * 0.15 // Return key
-        case "123", "ABC", ".eth", "⇧", "⌫", "#+=", "🙂":
+        case "123", "ABC", ".eth", "⇧", "⌫", "#+=", "🙂", "🌐":
             return availableWidthForKeys * 0.12 // Function keys
         default:
             // Regular keys - distribute remaining space equally
-            let functionKeys = row.filter { ["space", "return", "123", "ABC", ".eth", "⇧", "⌫", "#+=", "🙂"].contains($0) }
-            let regularKeys = row.filter { !["space", "return", "123", "ABC", ".eth", "⇧", "⌫", "#+=", "🙂"].contains($0) }
+            let functionKeys = row.filter { ["space", "return", "123", "ABC", ".eth", "⇧", "⌫", "#+=", "🙂", "🌐"].contains($0) }
+            let regularKeys = row.filter { !["space", "return", "123", "ABC", ".eth", "⇧", "⌫", "#+=", "🙂", "🌐"].contains($0) }
             
             // Calculate function key widths without recursion
             let functionKeyWidth = functionKeys.reduce(0) { total, functionKey in
@@ -1180,7 +1196,7 @@ textDocumentProxy.insertText("\n")
                     return total + (availableWidthForKeys * 0.4)
                 case "return":
                     return total + (availableWidthForKeys * 0.15)
-                case "123", "ABC", ".eth", "⇧", "⌫", "#+=", "🙂":
+                case "123", "ABC", ".eth", "⇧", "⌫", "#+=", "🙂", "🌐":
                     return total + (availableWidthForKeys * 0.12)
                 default:
                     return total
@@ -2251,6 +2267,23 @@ textDocumentProxy.insertText("\n")
             }
         }
         return nil
+    }
+    
+    // MARK: - Globe Key Handling (iPad Only)
+    
+    private func handleGlobeKeyPress() {
+        // Only available on iPad
+        guard isIPad else { return }
+        
+        // Add haptic feedback
+        let notificationFeedback = UINotificationFeedbackGenerator()
+        notificationFeedback.notificationOccurred(.success)
+        
+        // Announce accessibility message
+        announceAccessibilityMessage("Switching keyboards")
+        
+        // Switch to next keyboard
+        advanceToNextInputMode()
     }
     
 }

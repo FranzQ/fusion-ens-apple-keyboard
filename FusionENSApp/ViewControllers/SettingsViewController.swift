@@ -157,7 +157,7 @@ class SettingsViewController: UIViewController {
         aboutCardView.addSubview(aboutTitleLabel)
         
         // About Description
-        aboutDescriptionLabel.text = "Learn more about Fusion ENS, our mission, and the latest updates on our website."
+        aboutDescriptionLabel.text = "Learn more about Fusion ENS on our website."
         aboutDescriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
         aboutDescriptionLabel.textColor = ColorTheme.secondaryText
         aboutDescriptionLabel.numberOfLines = 0
@@ -190,7 +190,7 @@ class SettingsViewController: UIViewController {
         contactCardView.addSubview(contactTitleLabel)
         
         // Contact Description
-        contactDescriptionLabel.text = "Need help or have feedback? Send us an email and we'll get back to you as soon as possible."
+        contactDescriptionLabel.text = "Need help or have feedback?"
         contactDescriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
         contactDescriptionLabel.textColor = ColorTheme.secondaryText
         contactDescriptionLabel.numberOfLines = 0

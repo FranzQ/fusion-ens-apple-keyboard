@@ -379,14 +379,9 @@ class GettingStartedVC: UIViewController {
     }
     
     private func setupDoneButton() {
-        // Set button title and action based on context
-        if isFromSettings {
-            doneButton.setTitle("Done", for: .normal)
-            doneButton.addTarget(self, action: #selector(doneButtonTapped), for: .touchUpInside)
-        } else {
-            doneButton.setTitle("Open Settings", for: .normal)
-            doneButton.addTarget(self, action: #selector(openKeyboardSettings), for: .touchUpInside)
-        }
+        // Always show "Open Settings" button that opens keyboard settings
+        doneButton.setTitle("Open Settings", for: .normal)
+        doneButton.addTarget(self, action: #selector(openKeyboardSettings), for: .touchUpInside)
         
         doneButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
         doneButton.backgroundColor = UIColor.systemBlue
@@ -563,15 +558,6 @@ class GettingStartedVC: UIViewController {
         }
     }
     
-    @objc private func doneButtonTapped() {
-        if isFromSettings {
-            // Close the popover/modal when from settings
-            dismiss(animated: true, completion: nil)
-        } else {
-            // Navigate to keyboard settings when from initial onboarding
-            openKeyboardSettings()
-        }
-    }
     
     @objc private func closeButtonTapped() {
         // Close the popover/modal
