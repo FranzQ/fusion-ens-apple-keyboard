@@ -6,18 +6,12 @@
 //
 
 import UIKit
-import AVKit
-import AVFoundation
 
 class KeyboardGuideViewController: UIViewController {
     
     // MARK: - UI Components
     private let scrollView = UIScrollView()
     private let contentView = UIView()
-    
-    // MARK: - Video Player Management
-    private var videoPlayer: AVPlayer?
-    private var videoPlayerViewController: AVPlayerViewController?
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -27,10 +21,6 @@ class KeyboardGuideViewController: UIViewController {
     }
     
     deinit {
-        // Clean up video player to prevent memory leaks
-        videoPlayer?.pause()
-        videoPlayer = nil
-        videoPlayerViewController = nil
         NotificationCenter.default.removeObserver(self)
     }
     
@@ -55,6 +45,9 @@ class KeyboardGuideViewController: UIViewController {
         
         // Add header section
         addHeaderSection()
+        
+        // Add documentation button
+        addDocumentationButton()
         
         // Add content sections
         addBasicKeyboardSection()
@@ -158,6 +151,52 @@ class KeyboardGuideViewController: UIViewController {
         addSectionToContentView(headerContainer)
     }
     
+    private func addDocumentationButton() {
+        let buttonContainer = UIView()
+        buttonContainer.backgroundColor = ColorTheme.cardBackground
+        buttonContainer.layer.cornerRadius = 12
+        buttonContainer.translatesAutoresizingMaskIntoConstraints = false
+        
+        let documentationButton = UIButton(type: .system)
+        documentationButton.setTitle("📖 View Complete Documentation", for: .normal)
+        documentationButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
+        documentationButton.setTitleColor(ColorTheme.accent, for: .normal)
+        documentationButton.backgroundColor = ColorTheme.accentSecondary
+        documentationButton.layer.cornerRadius = 8
+        documentationButton.translatesAutoresizingMaskIntoConstraints = false
+        documentationButton.addTarget(self, action: #selector(documentationButtonTapped), for: .touchUpInside)
+        
+        let descriptionLabel = UILabel()
+        descriptionLabel.text = "Get detailed guides, videos, and troubleshooting tips on our website"
+        descriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        descriptionLabel.textColor = ColorTheme.secondaryText
+        descriptionLabel.numberOfLines = 0
+        descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        buttonContainer.addSubview(documentationButton)
+        buttonContainer.addSubview(descriptionLabel)
+        
+        NSLayoutConstraint.activate([
+            documentationButton.topAnchor.constraint(equalTo: buttonContainer.topAnchor, constant: 16),
+            documentationButton.leadingAnchor.constraint(equalTo: buttonContainer.leadingAnchor, constant: 16),
+            documentationButton.trailingAnchor.constraint(equalTo: buttonContainer.trailingAnchor, constant: -16),
+            documentationButton.heightAnchor.constraint(equalToConstant: 44),
+            
+            descriptionLabel.topAnchor.constraint(equalTo: documentationButton.bottomAnchor, constant: 8),
+            descriptionLabel.leadingAnchor.constraint(equalTo: buttonContainer.leadingAnchor, constant: 16),
+            descriptionLabel.trailingAnchor.constraint(equalTo: buttonContainer.trailingAnchor, constant: -16),
+            descriptionLabel.bottomAnchor.constraint(equalTo: buttonContainer.bottomAnchor, constant: -16)
+        ])
+        
+        addSectionToContentView(buttonContainer)
+    }
+    
+    @objc private func documentationButtonTapped() {
+        if let url = URL(string: "https://fusionens.com/ios-keyboard") {
+            UIApplication.shared.open(url)
+        }
+    }
+    
     private func addBasicKeyboardSection() {
         let section = createEnhancedSection(
             title: "Basic Keyboard",
@@ -174,8 +213,8 @@ class KeyboardGuideViewController: UIViewController {
                 "Select 'Basic — Fusion ENS' from your keyboards",
                 "Type any ENS name and highlight it to resolve"
             ],
-            hasVideo: true,
-            videoName: "Basic Keyboard"
+            hasVideo: false,
+            videoName: nil
         )
         
         addSectionToContentView(section)
@@ -198,8 +237,8 @@ class KeyboardGuideViewController: UIViewController {
                 "Select 'Pro — Fusion ENS' from your keyboards",
                 "Use long-press gestures for advanced features",
             ],
-            hasVideo: true,
-            videoName: "Pro Keyboard"
+            hasVideo: false,
+            videoName: nil
         )
         
         addSectionToContentView(section)
@@ -397,19 +436,7 @@ class KeyboardGuideViewController: UIViewController {
             }
         }
         
-        // Video section
-        if hasVideo, let videoName = videoName {
-            let videoContainer = createVideoContainer(for: videoName)
-            containerView.addSubview(videoContainer)
-            
-            NSLayoutConstraint.activate([
-                videoContainer.topAnchor.constraint(equalTo: lastView.bottomAnchor, constant: 20),
-                videoContainer.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-                videoContainer.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16)
-            ])
-            
-            lastView = videoContainer
-        }
+        // Video section removed - videos now on website
         
         // Layout constraints
         NSLayoutConstraint.activate([
@@ -578,22 +605,7 @@ class KeyboardGuideViewController: UIViewController {
             howToUseSection.trailingAnchor.constraint(equalTo: containerView.trailingAnchor).isActive = true
             lastView = howToUseSection
             
-            // Add video directly after "How to Use" for Basic and Pro Keyboard
-            if title == "Basic Keyboard" {
-                let videoContainer = createVideoContainer(for: "Basic Keyboard")
-                containerView.addSubview(videoContainer)
-                videoContainer.topAnchor.constraint(equalTo: lastView.bottomAnchor, constant: 16).isActive = true
-                videoContainer.leadingAnchor.constraint(equalTo: containerView.leadingAnchor).isActive = true
-                videoContainer.trailingAnchor.constraint(equalTo: containerView.trailingAnchor).isActive = true
-                lastView = videoContainer
-            } else if title == "Pro Keyboard" {
-                let videoContainer = createVideoContainer(for: "Pro Keyboard")
-                containerView.addSubview(videoContainer)
-                videoContainer.topAnchor.constraint(equalTo: lastView.bottomAnchor, constant: 16).isActive = true
-                videoContainer.leadingAnchor.constraint(equalTo: containerView.leadingAnchor).isActive = true
-                videoContainer.trailingAnchor.constraint(equalTo: containerView.trailingAnchor).isActive = true
-                lastView = videoContainer
-            }
+            // Videos removed - now available on website documentation
         }
         
         // Visuals (only for other sections, not Basic or Pro Keyboard as videos are handled above)
@@ -731,37 +743,8 @@ class KeyboardGuideViewController: UIViewController {
         
         var lastView: UIView = subsectionTitle
         
-        // If items is empty but this is the Basic Keyboard section, show video directly
-        if items.isEmpty && title == "Visuals" {
-            // Add video player for Basic Keyboard demo
-            let mediaContainer = UIView()
-            mediaContainer.backgroundColor = ColorTheme.cardBackground
-            mediaContainer.layer.cornerRadius = 8
-            mediaContainer.layer.borderWidth = 1
-            mediaContainer.layer.borderColor = ColorTheme.border.cgColor
-            mediaContainer.translatesAutoresizingMaskIntoConstraints = false
-            
-            let videoPlayerView = createVideoPlayerView(for: "Basic Keyboard")
-            mediaContainer.addSubview(videoPlayerView)
-            
-            NSLayoutConstraint.activate([
-                videoPlayerView.topAnchor.constraint(equalTo: mediaContainer.topAnchor),
-                videoPlayerView.leadingAnchor.constraint(equalTo: mediaContainer.leadingAnchor),
-                videoPlayerView.trailingAnchor.constraint(equalTo: mediaContainer.trailingAnchor),
-                videoPlayerView.bottomAnchor.constraint(equalTo: mediaContainer.bottomAnchor)
-            ])
-            
-            containerView.addSubview(mediaContainer)
-            
-            NSLayoutConstraint.activate([
-                mediaContainer.topAnchor.constraint(equalTo: lastView.bottomAnchor, constant: 8),
-                mediaContainer.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-                mediaContainer.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-                mediaContainer.heightAnchor.constraint(equalToConstant: 400) // Reduced height for better fit
-            ])
-            
-            lastView = mediaContainer
-        } else {
+        // Videos removed - now available on website documentation
+        if !items.isEmpty {
             // Visual items with placeholders
             for (index, item) in items.enumerated() {
             // Description label
@@ -782,33 +765,21 @@ class KeyboardGuideViewController: UIViewController {
             mediaContainer.layer.borderColor = ColorTheme.border.cgColor
             mediaContainer.translatesAutoresizingMaskIntoConstraints = false
             
-            if item == "Video: Basic Keyboard Demo" {
-                // Add video player for Basic Keyboard demo
-                let videoPlayerView = createVideoPlayerView(for: "Basic Keyboard")
-                mediaContainer.addSubview(videoPlayerView)
-                
-                NSLayoutConstraint.activate([
-                    videoPlayerView.topAnchor.constraint(equalTo: mediaContainer.topAnchor),
-                    videoPlayerView.leadingAnchor.constraint(equalTo: mediaContainer.leadingAnchor),
-                    videoPlayerView.trailingAnchor.constraint(equalTo: mediaContainer.trailingAnchor),
-                    videoPlayerView.bottomAnchor.constraint(equalTo: mediaContainer.bottomAnchor)
-                ])
-            } else {
-                // Placeholder label for other items
-                let placeholderLabel = UILabel()
-                placeholderLabel.text = item.contains("GIF") ? "🎬 GIF Placeholder" : "📱 Image Placeholder"
-                placeholderLabel.font = UIFont.systemFont(ofSize: 12)
-                placeholderLabel.textColor = ColorTheme.placeholderText
-                placeholderLabel.textAlignment = .center
-                placeholderLabel.translatesAutoresizingMaskIntoConstraints = false
-                
-                mediaContainer.addSubview(placeholderLabel)
-                
-                NSLayoutConstraint.activate([
-                    placeholderLabel.centerXAnchor.constraint(equalTo: mediaContainer.centerXAnchor),
-                    placeholderLabel.centerYAnchor.constraint(equalTo: mediaContainer.centerYAnchor)
-                ])
-            }
+            // Videos removed - now available on website documentation
+            // Placeholder label for other items
+            let placeholderLabel = UILabel()
+            placeholderLabel.text = item.contains("GIF") ? "🎬 GIF Placeholder" : "📱 Image Placeholder"
+            placeholderLabel.font = UIFont.systemFont(ofSize: 12)
+            placeholderLabel.textColor = ColorTheme.placeholderText
+            placeholderLabel.textAlignment = .center
+            placeholderLabel.translatesAutoresizingMaskIntoConstraints = false
+            
+            mediaContainer.addSubview(placeholderLabel)
+            
+            NSLayoutConstraint.activate([
+                placeholderLabel.centerXAnchor.constraint(equalTo: mediaContainer.centerXAnchor),
+                placeholderLabel.centerYAnchor.constraint(equalTo: mediaContainer.centerYAnchor)
+            ])
             
             containerView.addSubview(mediaContainer)
             
@@ -839,134 +810,9 @@ class KeyboardGuideViewController: UIViewController {
         return containerView
     }
     
-    private func createVideoContainer(for videoName: String) -> UIView {
-        let containerView = UIView()
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        
-        // Media container
-        let mediaContainer = UIView()
-        mediaContainer.backgroundColor = ColorTheme.cardBackground
-        mediaContainer.layer.cornerRadius = 8
-        mediaContainer.layer.borderWidth = 1
-        mediaContainer.layer.borderColor = ColorTheme.border.cgColor
-        mediaContainer.translatesAutoresizingMaskIntoConstraints = false
-        
-        // Add video player
-        let videoPlayerView = createVideoPlayerView(for: videoName)
-        mediaContainer.addSubview(videoPlayerView)
-        
-        NSLayoutConstraint.activate([
-            videoPlayerView.topAnchor.constraint(equalTo: mediaContainer.topAnchor),
-            videoPlayerView.leadingAnchor.constraint(equalTo: mediaContainer.leadingAnchor),
-            videoPlayerView.trailingAnchor.constraint(equalTo: mediaContainer.trailingAnchor),
-            videoPlayerView.bottomAnchor.constraint(equalTo: mediaContainer.bottomAnchor)
-        ])
-        
-        containerView.addSubview(mediaContainer)
-        
-        NSLayoutConstraint.activate([
-            mediaContainer.topAnchor.constraint(equalTo: containerView.topAnchor),
-            mediaContainer.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            mediaContainer.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            mediaContainer.heightAnchor.constraint(equalToConstant: 800), // Increased height for better visibility
-            mediaContainer.bottomAnchor.constraint(equalTo: containerView.bottomAnchor)
-        ])
-        
-        return containerView
-    }
+    // Video container method removed - videos now available on website documentation
     
-    private func createVideoPlayerView(for videoName: String) -> UIView {
-        let containerView = UIView()
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        
-        // Create AVPlayerViewController
-        let playerViewController = AVPlayerViewController()
-        
-        // Get the video file path
-        guard let videoPath = Bundle.main.path(forResource: videoName, ofType: "mp4") else {
-            // Fallback if video not found
-            let fallbackLabel = UILabel()
-            fallbackLabel.text = "📹 Video not found: \(videoName).mp4"
-            fallbackLabel.font = UIFont.systemFont(ofSize: 12)
-            fallbackLabel.textColor = ColorTheme.placeholderText
-            fallbackLabel.textAlignment = .center
-            fallbackLabel.numberOfLines = 0
-            fallbackLabel.translatesAutoresizingMaskIntoConstraints = false
-            containerView.addSubview(fallbackLabel)
-            
-            NSLayoutConstraint.activate([
-                fallbackLabel.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
-                fallbackLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-                fallbackLabel.leadingAnchor.constraint(greaterThanOrEqualTo: containerView.leadingAnchor, constant: 16),
-                fallbackLabel.trailingAnchor.constraint(lessThanOrEqualTo: containerView.trailingAnchor, constant: -16)
-            ])
-            
-            return containerView
-        }
-        
-        let videoURL = URL(fileURLWithPath: videoPath)
-        let player = AVPlayer(url: videoURL)
-        playerViewController.player = player
-        
-        // Store references for cleanup
-        self.videoPlayer = player
-        self.videoPlayerViewController = playerViewController
-        
-        // Add as child view controller
-        addChild(playerViewController)
-        containerView.addSubview(playerViewController.view)
-        playerViewController.view.translatesAutoresizingMaskIntoConstraints = false
-        playerViewController.didMove(toParent: self)
-        
-        // Configure player for performance and vertical video
-        playerViewController.showsPlaybackControls = false
-        playerViewController.videoGravity = .resizeAspect // Scale to fit within the container
-        
-        // Set clear background to avoid black space
-        playerViewController.view.backgroundColor = UIColor.clear
-        containerView.backgroundColor = UIColor.clear
-        
-        // Performance optimizations
-        playerViewController.allowsPictureInPicturePlayback = false
-        playerViewController.entersFullScreenWhenPlaybackBegins = false
-        playerViewController.exitsFullScreenWhenPlaybackEnds = false
-        
-        // Audio session configuration - don't interfere with background music
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default, options: [.mixWithOthers])
-            try AVAudioSession.sharedInstance().setActive(false)
-        } catch {
-            // If audio session configuration fails, continue without it
-        }
-        
-        // Mute the player to ensure no audio interference
-        player.isMuted = true
-        
-        // Set up looping with weak reference to prevent retain cycles
-        NotificationCenter.default.addObserver(
-            forName: .AVPlayerItemDidPlayToEndTime,
-            object: player.currentItem,
-            queue: .main
-        ) { [weak player] _ in
-            player?.seek(to: .zero)
-            player?.play()
-        }
-        
-        // Start playing automatically
-        player.play()
-        
-        NSLayoutConstraint.activate([
-            playerViewController.view.topAnchor.constraint(equalTo: containerView.topAnchor),
-            playerViewController.view.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
-            playerViewController.view.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            playerViewController.view.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
-            // Ensure video fills the container properly
-            playerViewController.view.widthAnchor.constraint(equalTo: containerView.widthAnchor),
-            playerViewController.view.heightAnchor.constraint(equalTo: containerView.heightAnchor)
-        ])
-        
-        return containerView
-    }
+    // Video methods removed - videos now available on website documentation
     
     private func addSectionToContentView(_ section: UIView) {
         contentView.addSubview(section)
