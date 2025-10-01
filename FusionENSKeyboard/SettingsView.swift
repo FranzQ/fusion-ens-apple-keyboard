@@ -10,8 +10,10 @@ import SwiftUI
 struct SettingsView: View {
     @State private var hapticFeedbackEnabled: Bool = true
     @State private var keyboardType: KeyboardType = .uikit
+    @State private var defaultBrowserAction: DefaultBrowserAction = .url
     private let hapticFeedbackKey = "hapticFeedbackEnabled"
     private let keyboardTypeKey = "keyboardType"
+    private let defaultBrowserActionKey = "defaultBrowserAction"
     
     enum KeyboardType: String, CaseIterable {
         case uikit = "UIKit"
@@ -23,6 +25,39 @@ struct SettingsView: View {
                 return "UIKit (Default)"
             case .swiftui:
                 return "SwiftUI (Modern)"
+            }
+        }
+    }
+    
+    enum DefaultBrowserAction: String, CaseIterable {
+        case url = "url"
+        case github = "github"
+        case x = "x"
+        case etherscan = "etherscan"
+        
+        var displayName: String {
+            switch self {
+            case .url:
+                return "Open Website"
+            case .github:
+                return "Open GitHub"
+            case .x:
+                return "Open X/Twitter"
+            case .etherscan:
+                return "Open Etherscan"
+            }
+        }
+        
+        var description: String {
+            switch self {
+            case .url:
+                return "Opens the ENS name's website when available"
+            case .github:
+                return "Opens the ENS name's GitHub profile when available"
+            case .x:
+                return "Opens the ENS name's X/Twitter profile when available"
+            case .etherscan:
+                return "Opens the ENS name's address on Etherscan"
             }
         }
     }
@@ -43,6 +78,23 @@ struct SettingsView: View {
                     }
                     .onChange(of: keyboardType) { newValue in
                         saveKeyboardTypeSetting(newValue)
+                    }
+                }
+                
+                Section(header: Text("Browser Actions"), footer: Text("Choose what happens when you highlight or press Enter on ENS names in browsers")) {
+                    Picker("Default Action", selection: $defaultBrowserAction) {
+                        ForEach(DefaultBrowserAction.allCases, id: \.self) { action in
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(action.displayName)
+                                Text(action.description)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .tag(action)
+                        }
+                    }
+                    .onChange(of: defaultBrowserAction) { newValue in
+                        saveDefaultBrowserActionSetting(newValue)
                     }
                 }
                 
@@ -75,6 +127,7 @@ struct SettingsView: View {
             .onAppear {
                 loadHapticFeedbackSetting()
                 loadKeyboardTypeSetting()
+                loadDefaultBrowserActionSetting()
             }
         }
     }
@@ -103,6 +156,22 @@ struct SettingsView: View {
     private func saveKeyboardTypeSetting(_ type: KeyboardType) {
         let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
         userDefaults.set(type.rawValue, forKey: keyboardTypeKey)
+        userDefaults.synchronize()
+    }
+    
+    private func loadDefaultBrowserActionSetting() {
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        if let savedAction = userDefaults.string(forKey: defaultBrowserActionKey),
+           let action = DefaultBrowserAction(rawValue: savedAction) {
+            defaultBrowserAction = action
+        } else {
+            defaultBrowserAction = .url // Default to URL
+        }
+    }
+    
+    private func saveDefaultBrowserActionSetting(_ action: DefaultBrowserAction) {
+        let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        userDefaults.set(action.rawValue, forKey: defaultBrowserActionKey)
         userDefaults.synchronize()
     }
 }

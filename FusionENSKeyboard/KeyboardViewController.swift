@@ -154,18 +154,22 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
             APICaller.shared.resolveENSName(name: selectedText) { [weak self] resolvedAddress in
                 DispatchQueue.main.async {
                     if !resolvedAddress.isEmpty {
+                        // In non-browser context, always resolve to the Ethereum address
+                        // Base subdomain detection only applies in browser context when Etherscan would be used
+                        let finalResult = resolvedAddress
+                        
                         // Check if we have selected text (proper selection)
                         if let currentSelectedText = self?.textDocumentProxy.selectedText, currentSelectedText == selectedText {
                             // We have proper selected text, so we can replace it directly
                             // The text document proxy will handle the replacement correctly
-                            self?.textDocumentProxy.insertText(resolvedAddress)
+                            self?.textDocumentProxy.insertText(finalResult)
                         } else {
                             // For cases where text is not properly selected, use smart replacement
-                            self?.smartReplaceENS(selectedText, with: resolvedAddress)
+                            self?.smartReplaceENS(selectedText, with: finalResult)
                         }
                         
                         // Announce successful resolution
-                        self?.announceAccessibilityMessage("ENS name \(selectedText) resolved to address \(resolvedAddress)")
+                        self?.announceAccessibilityMessage("ENS name \(selectedText) resolved to address \(finalResult)")
                         
                         // Trigger success haptic feedback
                     } else {
@@ -276,20 +280,17 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
         let afterText = textDocumentProxy.documentContextAfterInput ?? ""
         let fullText = beforeText + afterText
         
-        // Check return key type for browser-like behavior
+        // Check return key type for browser-like behavior (more restrictive)
         if let returnKeyType = textDocumentProxy.returnKeyType {
-            // Look for browser-like return key types
-            if returnKeyType == .go || returnKeyType == .search || returnKeyType == .done {
+            // Only look for specific browser return key types
+            if returnKeyType == .go {
                 return true
             }
         }
         
-        // Check for clear browser indicators in the text context
+        // Check for clear browser indicators in the text context (more restrictive)
         if beforeText.contains("http://") || beforeText.contains("https://") || 
-           beforeText.contains("www.") || 
-           beforeText.contains("google.com") || beforeText.contains("search") ||
-           fullText.contains("q=") || fullText.contains("&q=") ||
-           afterText.contains(".com") || afterText.contains(".org") || afterText.contains(".net") {
+           beforeText.contains("www.") {
             return true
         }
         
@@ -405,7 +406,7 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
     
     private func resolveENSToExplorer(_ input: String, completion: @escaping (String?) -> Void) {
         if input.contains(":") {
-            // ENS text record (e.g., name.eth:x, name.eth:url)
+            // ENS text record (e.g., name.eth:x, name.eth:url) - always use explicit request
             let components = input.components(separatedBy: ":")
             if components.count == 2 {
                 let _ = components[0] // baseName
@@ -417,7 +418,7 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
                     APICaller.shared.resolveENSName(name: input) { resolvedValue in
                         if !resolvedValue.isEmpty {
                             // Convert text record to appropriate URL
-                            let resolvedURL = self.convertTextRecordToURL(recordType: recordType, value: resolvedValue)
+                            let resolvedURL = HelperClass.convertTextRecordToURL(recordType: recordType, value: resolvedValue)
                             completion(resolvedURL)
                         } else {
                             completion(nil)
@@ -428,54 +429,76 @@ class KeyboardViewController: KeyboardInputViewController, KeyboardController {
             }
             completion(nil)
         } else {
-            // Plain ENS name - resolve to Etherscan URL using shared APICaller
-            APICaller.shared.resolveENSName(name: input) { resolvedAddress in
-                if !resolvedAddress.isEmpty {
-                    // Create Etherscan URL
-                    let etherscanURL = "https://etherscan.io/address/\(resolvedAddress)"
-                    completion(etherscanURL)
+            // Plain ENS name - use user's default browser action
+            resolveENSWithDefaultAction(input, completion: completion)
+        }
+    }
+    
+    private func resolveENSWithDefaultAction(_ ensName: String, completion: @escaping (String?) -> Void) {
+        let defaultAction = HelperClass.getDefaultBrowserAction()
+        
+        // Try to resolve the user's preferred action first
+        let preferredRecordType = defaultAction.rawValue
+        
+        // Check if this is a supported record type for default actions
+        if ["url", "github", "x"].contains(preferredRecordType) {
+            // Try to resolve the preferred text record
+            let textRecordRequest = "\(ensName):\(preferredRecordType)"
+            APICaller.shared.resolveENSName(name: textRecordRequest) { resolvedValue in
+                if !resolvedValue.isEmpty {
+                    // Convert to URL using the preferred action
+                    let resolvedURL = HelperClass.convertTextRecordToURL(recordType: preferredRecordType, value: resolvedValue)
+                    completion(resolvedURL)
                 } else {
-                    completion(nil)
+                    // Fallback to Etherscan if preferred action not available
+                    // Check if this is an L2 subdomain for Etherscan fallback
+                    if HelperClass.isL2ChainDetectionEnabled() && HelperClass.isL2Subdomain(ensName) {
+                        // Need to resolve the address first to create proper L2 Explorer URL
+                        APICaller.shared.resolveENSName(name: ensName) { resolvedAddress in
+                            if !resolvedAddress.isEmpty {
+                                let l2ExplorerURL = HelperClass.resolveL2SubdomainToExplorer(ensName, resolvedAddress: resolvedAddress)
+                                completion(l2ExplorerURL)
+                            } else {
+                                // Fallback to regular Etherscan if address resolution fails
+                                self.resolveToEtherscan(ensName, completion: completion)
+                            }
+                        }
+                    } else {
+                        self.resolveToEtherscan(ensName, completion: completion)
+                    }
                 }
             }
+        } else {
+            // Default action is Etherscan, check if this is an L2 subdomain
+            if HelperClass.isL2ChainDetectionEnabled() && HelperClass.isL2Subdomain(ensName) {
+                // Need to resolve the address first to create proper L2 Explorer URL
+                APICaller.shared.resolveENSName(name: ensName) { resolvedAddress in
+                    if !resolvedAddress.isEmpty {
+                        let l2ExplorerURL = HelperClass.resolveL2SubdomainToExplorer(ensName, resolvedAddress: resolvedAddress)
+                        completion(l2ExplorerURL)
+                    } else {
+                        // Fallback to regular Etherscan if address resolution fails
+                        self.resolveToEtherscan(ensName, completion: completion)
+                    }
+                }
+            } else {
+                resolveToEtherscan(ensName, completion: completion)
+            }
         }
     }
     
-    
-    private func convertTextRecordToURL(recordType: String, value: String) -> String {
-        switch recordType {
-        case "x":
-            // Twitter/X handle
-            if value.hasPrefix("@") {
-                return "https://x.com/\(String(value.dropFirst()))"
+    private func resolveToEtherscan(_ ensName: String, completion: @escaping (String?) -> Void) {
+        APICaller.shared.resolveENSName(name: ensName) { resolvedAddress in
+            if !resolvedAddress.isEmpty {
+                // Create Etherscan URL
+                let etherscanURL = "https://etherscan.io/address/\(resolvedAddress)"
+                completion(etherscanURL)
             } else {
-                return "https://x.com/\(value)"
+                completion(nil)
             }
-        case "url":
-            // Direct URL
-            if value.hasPrefix("http://") || value.hasPrefix("https://") {
-                return value
-            } else {
-                return "https://\(value)"
-            }
-        case "github":
-            // GitHub profile
-            if value.hasPrefix("@") {
-                return "https://github.com/\(String(value.dropFirst()))"
-            } else {
-                return "https://github.com/\(value)"
-            }
-        case "name":
-            // Name - could be a search or profile
-            return "https://google.com/search?q=\(value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? value)"
-        case "bio":
-            // Bio - could be a search
-            return "https://google.com/search?q=\(value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? value)"
-        default:
-            // Default to search
-            return "https://google.com/search?q=\(value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? value)"
         }
     }
+    
     
     private func replaceSelectedText(with newText: String) {
         // Replace the selected text with the new text

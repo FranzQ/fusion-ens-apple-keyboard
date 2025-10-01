@@ -1,4 +1,0 @@
-module KeyboardKit {
-header "KeyboardKit-Swift.h"
-export *
-}

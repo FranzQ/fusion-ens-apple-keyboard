@@ -998,16 +998,47 @@ textDocumentProxy.insertText("\n")
     }
     
     private func replaceENSInText(_ ensDomain: String) {
-        // Trigger haptic feedback when starting resolution
-        
-        APICaller.shared.resolveENSName(name: ensDomain) { mappedAddress in
+        // Use the same logic as handleSelectedText for consistency
+        if HelperClass.checkFormat(ensDomain) {
+            // Check if we're in a browser context for default action
+            if isInBrowserAddressBar() {
+                // In browser context - use user's default action
+                resolveENSWithDefaultAction(ensDomain) { [weak self] resolvedURL in
+                    DispatchQueue.main.async {
+                        if let url = resolvedURL, !url.isEmpty {
+                            // Smart approach: find the ENS domain position and replace it properly
+                            self?.smartReplaceENS(ensDomain, with: url)
+                            
+                            // Add ENS name to suggestions for future use
+                            self?.addENSNameToSuggestions(ensDomain)
+                        } else {
+                            // Fallback to address resolution if default action fails
+                            self?.resolveToAddressForSpacebar(ensDomain)
+                        }
+                    }
+                }
+            } else {
+                // Not in browser context - resolve to address
+                resolveToAddressForSpacebar(ensDomain)
+            }
+        } else {
+            // Trigger error haptic feedback for invalid format
+        }
+    }
+    
+    private func resolveToAddressForSpacebar(_ selectedText: String) {
+        APICaller.shared.resolveENSName(name: selectedText) { mappedAddress in
             DispatchQueue.main.async { [weak self] in
                 if !mappedAddress.isEmpty {
+                    // In non-browser context, always resolve to the Ethereum address
+                    // Base subdomain detection only applies in browser context when Etherscan would be used
+                    let finalResult = mappedAddress
+                    
                     // Smart approach: find the ENS domain position and replace it properly
-                    self?.smartReplaceENS(ensDomain, with: mappedAddress)
+                    self?.smartReplaceENS(selectedText, with: finalResult)
                     
                     // Add ENS name to suggestions for future use
-                    self?.addENSNameToSuggestions(ensDomain)
+                    self?.addENSNameToSuggestions(selectedText)
                     
                     // Trigger success haptic feedback
                 } else {
@@ -1096,32 +1127,64 @@ textDocumentProxy.insertText("\n")
     
     private func handleSelectedText(_ selectedText: String) {
         if HelperClass.checkFormat(selectedText) {
-            // Trigger haptic feedback when starting resolution
-            
-            APICaller.shared.resolveENSName(name: selectedText) { mappedAddress in
-                DispatchQueue.main.async { [weak self] in
-                    if !mappedAddress.isEmpty {
-                        // Check if we have selected text (proper selection)
-                        if let currentSelectedText = self?.textDocumentProxy.selectedText, currentSelectedText == selectedText {
-                            // We have proper selected text, so we can replace it directly
-                            // The text document proxy will handle the replacement correctly
-                            self?.textDocumentProxy.insertText(mappedAddress)
+            // Check if we're in a browser context for default action
+            if isInBrowserAddressBar() {
+                // In browser context - use user's default action
+                resolveENSWithDefaultAction(selectedText) { [weak self] resolvedURL in
+                    DispatchQueue.main.async {
+                        if let url = resolvedURL, !url.isEmpty {
+                            // Check if we have selected text (proper selection)
+                            if let currentSelectedText = self?.textDocumentProxy.selectedText, currentSelectedText == selectedText {
+                                // We have proper selected text, so we can replace it directly
+                                self?.textDocumentProxy.insertText(url)
+                            } else {
+                                // For spacebar long-press or other cases, we need to find and replace the text
+                                self?.replaceTextInDocument(selectedText, with: url)
+                            }
+                            
+                            // Add ENS name to suggestions for future use
+                            self?.addENSNameToSuggestions(selectedText)
                         } else {
-                            // For spacebar long-press or other cases, we need to find and replace the text
-                            self?.replaceTextInDocument(selectedText, with: mappedAddress)
+                            // Fallback to address resolution if default action fails
+                            self?.resolveToAddress(selectedText)
                         }
-                        
-                        // Add ENS name to suggestions for future use
-                        self?.addENSNameToSuggestions(selectedText)
-                        
-                        // Trigger success haptic feedback
-                    } else {
-                        // Trigger error haptic feedback
                     }
                 }
+            } else {
+                // Not in browser context - resolve to address
+                resolveToAddress(selectedText)
             }
         } else {
             // Trigger error haptic feedback for invalid format
+        }
+    }
+    
+    private func resolveToAddress(_ selectedText: String) {
+        APICaller.shared.resolveENSName(name: selectedText) { mappedAddress in
+            DispatchQueue.main.async { [weak self] in
+                if !mappedAddress.isEmpty {
+                    // In non-browser context, always resolve to the Ethereum address
+                    // Base subdomain detection only applies in browser context when Etherscan would be used
+                    let finalResult = mappedAddress
+                    
+                    // Check if we have selected text (proper selection)
+                    if let currentSelectedText = self?.textDocumentProxy.selectedText, currentSelectedText == selectedText {
+                        // We have proper selected text, so we can replace it directly
+                        // The text document proxy will handle the replacement correctly
+                        self?.textDocumentProxy.insertText(finalResult)
+                    } else {
+                        // For spacebar long-press or other cases, we need to find and replace the text
+                        self?.replaceTextInDocument(selectedText, with: finalResult)
+                    }
+                    
+                    // Add ENS name to suggestions for future use
+                    self?.addENSNameToSuggestions(selectedText)
+                    
+                    // Trigger success haptic feedback
+                } else {
+                    // Trigger error haptic feedback
+                }
+            }
         }
     }
     
@@ -1836,22 +1899,17 @@ textDocumentProxy.insertText("\n")
         let fullText = beforeText + afterText
         
         
-        // Check return key type for browser-like behavior
-        if textDocumentProxy.keyboardType != nil {
-        }
+        // Check return key type for browser-like behavior (more restrictive)
         if let returnKeyType = textDocumentProxy.returnKeyType {
-            // Look for browser-like return key types
-            if returnKeyType == .go || returnKeyType == .search || returnKeyType == .done {
+            // Only look for specific browser return key types
+            if returnKeyType == .go {
                 return true
             }
         }
         
-        // Check for clear browser indicators in the text context
+        // Check for clear browser indicators in the text context (more restrictive)
         if beforeText.contains("http://") || beforeText.contains("https://") || 
-           beforeText.contains("www.") || 
-           beforeText.contains("google.com") || beforeText.contains("search") ||
-           fullText.contains("q=") || fullText.contains("&q=") ||
-           afterText.contains(".com") || afterText.contains(".org") || afterText.contains(".net") {
+           beforeText.contains("www.") {
             return true
         }
         
@@ -2062,6 +2120,61 @@ textDocumentProxy.insertText("\n")
             }
         }
         
+        // Plain ENS name - use user's default browser action
+        resolveENSWithDefaultAction(ensName, completion: completion)
+    }
+    
+    private func resolveENSWithDefaultAction(_ ensName: String, completion: @escaping (String?) -> Void) {
+        let defaultAction = HelperClass.getDefaultBrowserAction()
+        
+        // Try to resolve the user's preferred action first
+        let preferredRecordType = defaultAction.rawValue
+        
+        // Check if this is a supported record type for default actions
+        if ["url", "github", "x"].contains(preferredRecordType) {
+            // Try to resolve the preferred text record
+            resolveTextRecord(baseName: ensName, recordType: preferredRecordType) { resolvedURL in
+                if let url = resolvedURL, !url.isEmpty {
+                    completion(url)
+                   } else {
+                       // Fallback to Etherscan if preferred action not available
+                       // Check if this is an L2 subdomain for Etherscan fallback
+                       if HelperClass.isL2ChainDetectionEnabled() && HelperClass.isL2Subdomain(ensName) {
+                           // Need to resolve the address first to create proper L2 Explorer URL
+                           APICaller.shared.resolveENSName(name: ensName) { resolvedAddress in
+                               if !resolvedAddress.isEmpty {
+                                   let l2ExplorerURL = HelperClass.resolveL2SubdomainToExplorer(ensName, resolvedAddress: resolvedAddress)
+                                   completion(l2ExplorerURL)
+                               } else {
+                                   // Fallback to regular Etherscan if address resolution fails
+                                   self.resolveToEtherscan(ensName, completion: completion)
+                               }
+                           }
+                       } else {
+                           self.resolveToEtherscan(ensName, completion: completion)
+                       }
+                   }
+            }
+        } else {
+            // Default action is Etherscan, check if this is an L2 subdomain
+            if HelperClass.isL2ChainDetectionEnabled() && HelperClass.isL2Subdomain(ensName) {
+                // Need to resolve the address first to create proper L2 Explorer URL
+                APICaller.shared.resolveENSName(name: ensName) { resolvedAddress in
+                    if !resolvedAddress.isEmpty {
+                        let l2ExplorerURL = HelperClass.resolveL2SubdomainToExplorer(ensName, resolvedAddress: resolvedAddress)
+                        completion(l2ExplorerURL)
+                    } else {
+                        // Fallback to regular Etherscan if address resolution fails
+                        self.resolveToEtherscan(ensName, completion: completion)
+                    }
+                }
+            } else {
+                resolveToEtherscan(ensName, completion: completion)
+            }
+        }
+    }
+    
+    private func resolveToEtherscan(_ ensName: String, completion: @escaping (String?) -> Void) {
         // Add timeout mechanism for ENS resolution
         let timeoutWorkItem = DispatchWorkItem {
             completion(nil)
@@ -2170,28 +2283,13 @@ textDocumentProxy.insertText("\n")
                 }
                 return
             }
-            let resolvedURL = self.convertTextRecordToURL(recordType: recordType, value: recordValue)
+            let resolvedURL = HelperClass.convertTextRecordToURL(recordType: recordType, value: recordValue)
             DispatchQueue.main.async {
                 completion(resolvedURL)
             }
         }.resume()
     }
     
-    private func convertTextRecordToURL(recordType: String, value: String) -> String {
-        switch recordType {
-        case "url":
-            return ensureProperURL(value)
-        case "x":
-            return "https://x.com/\(value)"
-        case "github":
-            return "https://github.com/\(value)"
-        case "name", "bio":
-            // For name/bio, just return the value as is (could be copied to clipboard)
-            return value
-        default:
-            return value
-        }
-    }
     
     private func ensureProperURL(_ url: String) -> String {
         if url.hasPrefix("http://") || url.hasPrefix("https://") {

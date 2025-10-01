@@ -6,22 +6,40 @@
 //
 
 import UIKit
+import FusionENSShared
 
 class SettingsViewController: UIViewController {
     
     // MARK: - UI Components
+    private let scrollView = UIScrollView()
     private let contentView = UIView()
     
+    // Setup Section
     private let setupCardView = UIView()
     private let setupTitleLabel = UILabel()
     private let setupDescriptionLabel = UILabel()
     private let setupChevronImageView = UIImageView()
     
+    // Keyboard Settings Section
+    private let keyboardSettingsSectionLabel = UILabel()
     private let walletCardView = UIView()
     private let walletTitleLabel = UILabel()
     private let walletDescriptionLabel = UILabel()
     private let walletToggle = UISwitch()
     
+    private let browserActionCardView = UIView()
+    private let browserActionTitleLabel = UILabel()
+    private let browserActionDescriptionLabel = UILabel()
+    private let browserActionValueLabel = UILabel()
+    private let browserActionChevronImageView = UIImageView()
+    
+    private let l2ChainCardView = UIView()
+    private let l2ChainTitleLabel = UILabel()
+    private let l2ChainDescriptionLabel = UILabel()
+    private let l2ChainToggle = UISwitch()
+    
+    // App Information Section
+    private let appInfoSectionLabel = UILabel()
     private let aboutCardView = UIView()
     private let aboutTitleLabel = UILabel()
     private let aboutDescriptionLabel = UILabel()
@@ -101,15 +119,42 @@ class SettingsViewController: UIViewController {
     }
     
     private func setupContent() {
+        // Scroll View
+        scrollView.backgroundColor = ColorTheme.primaryBackground
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.showsVerticalScrollIndicator = true
+        scrollView.alwaysBounceVertical = true
+        view.addSubview(scrollView)
+        
+        // Content View
+        contentView.backgroundColor = ColorTheme.primaryBackground
         contentView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(contentView)
+        scrollView.addSubview(contentView)
         
         setupSetupInstructionsCard()
+        setupSectionLabels()
+        setupBrowserActionCard()
+        setupL2ChainCard()
         setupWalletCard()
         setupAboutCard()
         setupContactCard()
     }
     
+    private func setupSectionLabels() {
+        // Keyboard Settings Section Label
+        keyboardSettingsSectionLabel.text = "KEYBOARD SETTINGS"
+        keyboardSettingsSectionLabel.font = UIFont.systemFont(ofSize: 13, weight: .semibold)
+        keyboardSettingsSectionLabel.textColor = ColorTheme.secondaryText
+        keyboardSettingsSectionLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(keyboardSettingsSectionLabel)
+        
+        // App Information Section Label
+        appInfoSectionLabel.text = "APP INFORMATION"
+        appInfoSectionLabel.font = UIFont.systemFont(ofSize: 13, weight: .semibold)
+        appInfoSectionLabel.textColor = ColorTheme.secondaryText
+        appInfoSectionLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(appInfoSectionLabel)
+    }
     
     private func setupWalletCard() {
         // Wallet Card
@@ -140,6 +185,77 @@ class SettingsViewController: UIViewController {
         walletToggle.addTarget(self, action: #selector(walletToggleChanged), for: .valueChanged)
         walletToggle.translatesAutoresizingMaskIntoConstraints = false
         walletCardView.addSubview(walletToggle)
+    }
+    
+    private func setupBrowserActionCard() {
+        // Browser Action Card
+        browserActionCardView.backgroundColor = ColorTheme.cardBackground
+        browserActionCardView.layer.cornerRadius = 12
+        browserActionCardView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(browserActionCardView)
+        
+        // Add tap gesture for navigation
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(browserActionCardTapped))
+        browserActionCardView.addGestureRecognizer(tapGesture)
+        browserActionCardView.isUserInteractionEnabled = true
+        
+        // Browser Action Title
+        browserActionTitleLabel.text = "Default Browser Action"
+        browserActionTitleLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        browserActionTitleLabel.textColor = ColorTheme.primaryText
+        browserActionTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        browserActionCardView.addSubview(browserActionTitleLabel)
+        
+        // Browser Action Description
+        browserActionDescriptionLabel.text = "Choose what happens when you highlight or press Enter on ENS names in browsers"
+        browserActionDescriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        browserActionDescriptionLabel.textColor = ColorTheme.secondaryText
+        browserActionDescriptionLabel.numberOfLines = 0
+        browserActionDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
+        browserActionCardView.addSubview(browserActionDescriptionLabel)
+        
+        // Browser Action Value
+        browserActionValueLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        browserActionValueLabel.textColor = ColorTheme.accent
+        browserActionValueLabel.translatesAutoresizingMaskIntoConstraints = false
+        browserActionCardView.addSubview(browserActionValueLabel)
+        
+        // Chevron
+        browserActionChevronImageView.image = UIImage(systemName: "chevron.right")
+        browserActionChevronImageView.tintColor = ColorTheme.secondaryText
+        browserActionChevronImageView.translatesAutoresizingMaskIntoConstraints = false
+        browserActionCardView.addSubview(browserActionChevronImageView)
+    }
+    
+    private func setupL2ChainCard() {
+        // L2 Chain Detection Card
+        l2ChainCardView.backgroundColor = ColorTheme.cardBackground
+        l2ChainCardView.layer.cornerRadius = 12
+        l2ChainCardView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(l2ChainCardView)
+        
+        // L2 Chain Title
+        l2ChainTitleLabel.text = "L2 Chain Detection"
+        l2ChainTitleLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        l2ChainTitleLabel.textColor = ColorTheme.primaryText
+        l2ChainTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        l2ChainCardView.addSubview(l2ChainTitleLabel)
+        
+        // L2 Chain Description
+        l2ChainDescriptionLabel.text = "Automatically resolve L2 subdomains (.base.eth, .polygon.eth, .arbitrum.eth, .optimism.eth) to their respective explorers when appropriate"
+        l2ChainDescriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        l2ChainDescriptionLabel.textColor = ColorTheme.secondaryText
+        l2ChainDescriptionLabel.numberOfLines = 0
+        l2ChainDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
+        l2ChainCardView.addSubview(l2ChainDescriptionLabel)
+        
+        // L2 Chain Toggle
+        l2ChainToggle.onTintColor = ColorTheme.accent
+        l2ChainToggle.backgroundColor = ColorTheme.accentSecondary
+        l2ChainToggle.layer.cornerRadius = 16
+        l2ChainToggle.addTarget(self, action: #selector(l2ChainToggleChanged), for: .valueChanged)
+        l2ChainToggle.translatesAutoresizingMaskIntoConstraints = false
+        l2ChainCardView.addSubview(l2ChainToggle)
     }
     
     private func setupAboutCard() {
@@ -280,12 +396,19 @@ class SettingsViewController: UIViewController {
     }
     
     private func setupConstraints() {
-        // Content Constraints
+        // Scroll View Constraints
         NSLayoutConstraint.activate([
-            contentView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            contentView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            contentView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            contentView.bottomAnchor.constraint(equalTo: bottomNavView.topAnchor),
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            // Content View Constraints
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
             // Setup Instructions Card Constraints
             setupCardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
@@ -307,8 +430,57 @@ class SettingsViewController: UIViewController {
             setupDescriptionLabel.trailingAnchor.constraint(equalTo: setupCardView.trailingAnchor, constant: -16),
             setupDescriptionLabel.bottomAnchor.constraint(equalTo: setupCardView.bottomAnchor, constant: -16),
             
+            // Keyboard Settings Section Label
+            keyboardSettingsSectionLabel.topAnchor.constraint(equalTo: setupCardView.bottomAnchor, constant: 32),
+            keyboardSettingsSectionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            keyboardSettingsSectionLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
+            // Browser Action Card Constraints
+            browserActionCardView.topAnchor.constraint(equalTo: keyboardSettingsSectionLabel.bottomAnchor, constant: 12),
+            browserActionCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            browserActionCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            browserActionCardView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100),
+            
+            browserActionTitleLabel.topAnchor.constraint(equalTo: browserActionCardView.topAnchor, constant: 16),
+            browserActionTitleLabel.leadingAnchor.constraint(equalTo: browserActionCardView.leadingAnchor, constant: 16),
+            browserActionTitleLabel.trailingAnchor.constraint(equalTo: browserActionChevronImageView.leadingAnchor, constant: -16),
+            
+            browserActionChevronImageView.centerYAnchor.constraint(equalTo: browserActionTitleLabel.centerYAnchor),
+            browserActionChevronImageView.trailingAnchor.constraint(equalTo: browserActionCardView.trailingAnchor, constant: -16),
+            browserActionChevronImageView.widthAnchor.constraint(equalToConstant: 12),
+            browserActionChevronImageView.heightAnchor.constraint(equalToConstant: 12),
+            
+            browserActionDescriptionLabel.topAnchor.constraint(equalTo: browserActionTitleLabel.bottomAnchor, constant: 8),
+            browserActionDescriptionLabel.leadingAnchor.constraint(equalTo: browserActionCardView.leadingAnchor, constant: 16),
+            browserActionDescriptionLabel.trailingAnchor.constraint(equalTo: browserActionCardView.trailingAnchor, constant: -16),
+            
+            browserActionValueLabel.topAnchor.constraint(equalTo: browserActionDescriptionLabel.bottomAnchor, constant: 8),
+            browserActionValueLabel.leadingAnchor.constraint(equalTo: browserActionCardView.leadingAnchor, constant: 16),
+            browserActionValueLabel.trailingAnchor.constraint(equalTo: browserActionCardView.trailingAnchor, constant: -16),
+            browserActionValueLabel.bottomAnchor.constraint(equalTo: browserActionCardView.bottomAnchor, constant: -16),
+            
+            // L2 Chain Detection Card Constraints
+            l2ChainCardView.topAnchor.constraint(equalTo: browserActionCardView.bottomAnchor, constant: 16),
+            l2ChainCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            l2ChainCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            l2ChainCardView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100),
+            
+            l2ChainTitleLabel.topAnchor.constraint(equalTo: l2ChainCardView.topAnchor, constant: 16),
+            l2ChainTitleLabel.leadingAnchor.constraint(equalTo: l2ChainCardView.leadingAnchor, constant: 16),
+            l2ChainTitleLabel.trailingAnchor.constraint(equalTo: l2ChainToggle.leadingAnchor, constant: -16),
+            
+            l2ChainToggle.centerYAnchor.constraint(equalTo: l2ChainTitleLabel.centerYAnchor),
+            l2ChainToggle.trailingAnchor.constraint(equalTo: l2ChainCardView.trailingAnchor, constant: -16),
+            l2ChainToggle.widthAnchor.constraint(equalToConstant: 51),
+            l2ChainToggle.heightAnchor.constraint(equalToConstant: 31),
+            
+            l2ChainDescriptionLabel.topAnchor.constraint(equalTo: l2ChainTitleLabel.bottomAnchor, constant: 8),
+            l2ChainDescriptionLabel.leadingAnchor.constraint(equalTo: l2ChainCardView.leadingAnchor, constant: 16),
+            l2ChainDescriptionLabel.trailingAnchor.constraint(equalTo: l2ChainCardView.trailingAnchor, constant: -16),
+            l2ChainDescriptionLabel.bottomAnchor.constraint(equalTo: l2ChainCardView.bottomAnchor, constant: -16),
+            
             // Wallet Card Constraints
-            walletCardView.topAnchor.constraint(equalTo: setupCardView.bottomAnchor, constant: 16),
+            walletCardView.topAnchor.constraint(equalTo: l2ChainCardView.bottomAnchor, constant: 16),
             walletCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             walletCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             walletCardView.heightAnchor.constraint(greaterThanOrEqualToConstant: 140),
@@ -327,8 +499,13 @@ class SettingsViewController: UIViewController {
             walletDescriptionLabel.trailingAnchor.constraint(equalTo: walletCardView.trailingAnchor, constant: -16),
             walletDescriptionLabel.bottomAnchor.constraint(equalTo: walletCardView.bottomAnchor, constant: -16),
             
+            // App Information Section Label
+            appInfoSectionLabel.topAnchor.constraint(equalTo: walletCardView.bottomAnchor, constant: 32),
+            appInfoSectionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            appInfoSectionLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
             // About Card Constraints
-            aboutCardView.topAnchor.constraint(equalTo: walletCardView.bottomAnchor, constant: 16),
+            aboutCardView.topAnchor.constraint(equalTo: appInfoSectionLabel.bottomAnchor, constant: 12),
             aboutCardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             aboutCardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             aboutCardView.heightAnchor.constraint(equalToConstant: 140),
@@ -365,7 +542,11 @@ class SettingsViewController: UIViewController {
             contactButton.leadingAnchor.constraint(equalTo: contactCardView.leadingAnchor, constant: 16),
             contactButton.trailingAnchor.constraint(equalTo: contactCardView.trailingAnchor, constant: -16),
             contactButton.bottomAnchor.constraint(equalTo: contactCardView.bottomAnchor, constant: -16),
-            contactButton.heightAnchor.constraint(equalToConstant: 44)
+            contactButton.heightAnchor.constraint(equalToConstant: 44),
+            
+            // Content View Bottom Constraint (for scrolling)
+            // Add padding to ensure content is visible above bottom navigation bar
+            contentView.bottomAnchor.constraint(equalTo: contactCardView.bottomAnchor, constant: 100)
         ])
         
         // Bottom Navigation Constraints
@@ -432,6 +613,49 @@ class SettingsViewController: UIViewController {
         useTrustWalletScheme = walletToggle.isOn
         
         // Provide immediate feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+    }
+    
+    @objc private func l2ChainToggleChanged() {
+        HelperClass.setL2ChainDetectionEnabled(l2ChainToggle.isOn)
+        
+        // Provide immediate feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+    }
+    
+    @objc private func browserActionCardTapped() {
+        let alert = UIAlertController(title: "Default Browser Action", message: "Choose what happens when you highlight or press Enter on ENS names in browsers", preferredStyle: .actionSheet)
+        
+        // Add actions for each browser action option
+        for action in BrowserAction.allCases {
+            let alertAction = UIAlertAction(title: action.displayName, style: .default) { [weak self] _ in
+                self?.setDefaultBrowserAction(action)
+            }
+            alert.addAction(alertAction)
+        }
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        // For iPad
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = browserActionCardView
+            popover.sourceRect = browserActionCardView.bounds
+        }
+        
+        present(alert, animated: true)
+    }
+    
+    private func setDefaultBrowserAction(_ action: BrowserAction) {
+        let defaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        defaults.set(action.rawValue, forKey: "defaultBrowserAction")
+        defaults.synchronize()
+        
+        // Update UI
+        browserActionValueLabel.text = action.displayName
+        
+        // Provide feedback
         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
         impactFeedback.impactOccurred()
     }
@@ -539,6 +763,15 @@ class SettingsViewController: UIViewController {
     // MARK: - Helper Methods
     private func loadSettings() {
         walletToggle.isOn = useTrustWalletScheme
+        
+        // Load browser action setting
+        let defaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
+        let rawValue = defaults.string(forKey: "defaultBrowserAction") ?? "etherscan"
+        let currentAction = BrowserAction(rawValue: rawValue) ?? .etherscan
+        browserActionValueLabel.text = currentAction.displayName
+        
+        // Load L2 chain detection setting
+        l2ChainToggle.isOn = HelperClass.isL2ChainDetectionEnabled()
     }
     
     private func showAlert(title: String, message: String) {
