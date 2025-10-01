@@ -158,14 +158,14 @@ public class HelperClass {
     }
     
     /// Get the user's default browser action setting
-    /// - Returns: The default browser action, defaults to .url
+    /// - Returns: The default browser action, defaults to .etherscan
     public static func getDefaultBrowserAction() -> DefaultBrowserAction {
         let userDefaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
         if let savedAction = userDefaults.string(forKey: "defaultBrowserAction"),
            let action = DefaultBrowserAction(rawValue: savedAction) {
             return action
         }
-        return .url // Default to URL
+        return .etherscan // Default to Etherscan
     }
     
     /// Set the user's default browser action setting
