@@ -274,7 +274,7 @@ class KeyboardGuideViewController: UIViewController {
             icon: "lightbulb.fill",
             accentColor: UIColor.systemOrange,
             features: [
-                ("🏷️", "L2 Chain Support", "Works with L2 subdomains (.base.eth, .polygon.eth, .arbitrum.eth, .optimism.eth)"),
+                ("🏷️", "Base Chain Support", "Works with Base subdomains (.base.eth)"),
                 ("🌐", "Smart Browser Detection", "Different behavior in browsers vs other apps - check Settings to customize"),
                 ("⚙️", "Default Actions", "Set your preferred action (Etherscan, Website, GitHub, X) in Settings"),
                 ("🔤", "Case Insensitive", "Type ENS names in any case - it just works"),

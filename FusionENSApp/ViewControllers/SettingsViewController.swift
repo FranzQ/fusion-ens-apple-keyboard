@@ -235,14 +235,14 @@ class SettingsViewController: UIViewController {
         contentView.addSubview(l2ChainCardView)
         
         // L2 Chain Title
-        l2ChainTitleLabel.text = "L2 Chain Detection"
+        l2ChainTitleLabel.text = "Base Chain Detection"
         l2ChainTitleLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
         l2ChainTitleLabel.textColor = ColorTheme.primaryText
         l2ChainTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         l2ChainCardView.addSubview(l2ChainTitleLabel)
         
         // L2 Chain Description
-        l2ChainDescriptionLabel.text = "Automatically resolve L2 subdomains (.base.eth, .polygon.eth, .arbitrum.eth, .optimism.eth) to their respective explorers when appropriate"
+        l2ChainDescriptionLabel.text = "Automatically resolve Base subdomains (.base.eth) to BaseScan explorer when appropriate"
         l2ChainDescriptionLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
         l2ChainDescriptionLabel.textColor = ColorTheme.secondaryText
         l2ChainDescriptionLabel.numberOfLines = 0

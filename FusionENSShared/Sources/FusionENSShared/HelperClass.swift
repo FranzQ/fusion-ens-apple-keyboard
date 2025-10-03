@@ -54,35 +54,28 @@ public class HelperClass {
         return checkFormat(text)
     }
     
-    /// Checks if the given ENS name is an L2 subdomain
+    /// Checks if the given ENS name is a Base subdomain
     /// - Parameter ensName: The ENS name to check
-    /// - Returns: True if it's an L2 subdomain (.base.eth, .polygon.eth, .arbitrum.eth, .optimism.eth)
+    /// - Returns: True if it's a Base subdomain (.base.eth)
     public static func isL2Subdomain(_ ensName: String) -> Bool {
-        let l2Suffixes = [".base.eth", ".polygon.eth", ".arbitrum.eth", ".optimism.eth"]
-        return l2Suffixes.contains { ensName.hasSuffix($0) }
+        return ensName.hasSuffix(".base.eth")
     }
     
-    /// Gets the L2 network type from an ENS subdomain
+    /// Gets the Base network type from an ENS subdomain
     /// - Parameter ensName: The ENS name to check
-    /// - Returns: The L2 network type, or nil if not an L2 subdomain
+    /// - Returns: The Base network type, or nil if not a Base subdomain
     public static func getL2NetworkType(_ ensName: String) -> L2NetworkType? {
         if ensName.hasSuffix(".base.eth") {
             return .base
-        } else if ensName.hasSuffix(".polygon.eth") {
-            return .polygon
-        } else if ensName.hasSuffix(".arbitrum.eth") {
-            return .arbitrum
-        } else if ensName.hasSuffix(".optimism.eth") {
-            return .optimism
         }
         return nil
     }
     
-    /// Resolves an L2 subdomain to its explorer URL using the resolved address
+    /// Resolves a Base subdomain to its explorer URL using the resolved address
     /// - Parameters:
-    ///   - ensName: The L2 subdomain (e.g., "jessie.base.eth", "alice.polygon.eth")
+    ///   - ensName: The Base subdomain (e.g., "jessie.base.eth")
     ///   - resolvedAddress: The resolved Ethereum address
-    /// - Returns: The explorer URL for the address
+    /// - Returns: The BaseScan explorer URL for the address
     public static func resolveL2SubdomainToExplorer(_ ensName: String, resolvedAddress: String) -> String {
         guard let networkType = getL2NetworkType(ensName) else {
             return "https://etherscan.io/address/\(resolvedAddress)" // Fallback to Etherscan
@@ -91,32 +84,17 @@ public class HelperClass {
         switch networkType {
         case .base:
             return "https://basescan.org/address/\(resolvedAddress)"
-        case .polygon:
-            return "https://polygonscan.com/address/\(resolvedAddress)"
-        case .arbitrum:
-            return "https://arbiscan.io/address/\(resolvedAddress)"
-        case .optimism:
-            return "https://optimistic.etherscan.io/address/\(resolvedAddress)"
         }
     }
     
-    /// L2 Network types supported for subdomain detection
+    /// Base Network type supported for subdomain detection
     public enum L2NetworkType: String, CaseIterable {
         case base = "base"
-        case polygon = "polygon"
-        case arbitrum = "arbitrum"
-        case optimism = "optimism"
         
         public var displayName: String {
             switch self {
             case .base:
                 return "Base"
-            case .polygon:
-                return "Polygon"
-            case .arbitrum:
-                return "Arbitrum"
-            case .optimism:
-                return "Optimism"
             }
         }
         
@@ -124,12 +102,6 @@ public class HelperClass {
             switch self {
             case .base:
                 return "BaseScan"
-            case .polygon:
-                return "PolygonScan"
-            case .arbitrum:
-                return "Arbiscan"
-            case .optimism:
-                return "Optimistic Etherscan"
             }
         }
     }
@@ -176,15 +148,15 @@ public class HelperClass {
         userDefaults.synchronize()
     }
     
-    /// Gets whether L2 chain detection is enabled
-    /// - Returns: True if L2 chain detection is enabled
+    /// Gets whether Base chain detection is enabled
+    /// - Returns: True if Base chain detection is enabled
     public static func isL2ChainDetectionEnabled() -> Bool {
         let defaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
         return defaults.bool(forKey: "l2ChainDetectionEnabled")
     }
     
-    /// Sets whether L2 chain detection is enabled
-    /// - Parameter enabled: Whether to enable L2 chain detection
+    /// Sets whether Base chain detection is enabled
+    /// - Parameter enabled: Whether to enable Base chain detection
     public static func setL2ChainDetectionEnabled(_ enabled: Bool) {
         let defaults = UserDefaults(suiteName: "group.com.fusionens.keyboard") ?? UserDefaults.standard
         defaults.set(enabled, forKey: "l2ChainDetectionEnabled")
