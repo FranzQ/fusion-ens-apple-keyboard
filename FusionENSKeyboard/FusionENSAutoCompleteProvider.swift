@@ -12,8 +12,8 @@ class FusionENSAutoCompleteProvider {
     // API base URL - same as Chrome extension
     private let API_BASE_URL = "https://api.fusionens.com"
     
-    // Multi-chain regex - same as Chrome extension
-    private let multiChainRegex = try! NSRegularExpression(pattern: "^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](\\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*(\\.[a-zA-Z0-9]+)?(:[a-zA-Z0-9]+)?$")
+    // Multi-chain regex - same as Chrome extension, now supports emoji characters
+    private let multiChainRegex = try! NSRegularExpression(pattern: "^[\\p{L}\\p{N}\\p{M}\\p{S}\\p{P}\\p{Z}][\\p{L}\\p{N}\\p{M}\\p{S}\\p{P}\\p{Z}-]{0,61}[\\p{L}\\p{N}\\p{M}\\p{S}\\p{P}\\p{Z}](\\.[\\p{L}\\p{N}\\p{M}\\p{S}\\p{P}\\p{Z}][\\p{L}\\p{N}\\p{M}\\p{S}\\p{P}\\p{Z}-]{0,61}[\\p{L}\\p{N}\\p{M}\\p{S}\\p{P}\\p{Z}])*(\\.[\\p{L}\\p{N}\\p{M}\\p{S}\\p{P}\\p{Z}]+)?(:[\\p{L}\\p{N}\\p{M}\\p{S}\\p{P}\\p{Z}]+)?$")
     
     // Supported text record types
     private let textRecordTypes = ["x", "url", "github", "name", "bio", "description", "avatar", "header"]

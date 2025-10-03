@@ -240,9 +240,9 @@ class AddENSNameViewController: UIViewController {
     
     // MARK: - Validation
     private func isValidENSName(_ name: String) -> Bool {
-        // Enhanced ENS name validation supporting subdomains
-        // Supports: jessie.base.eth, uni.eth, name.eth:chain, etc.
-        let ensPattern = "^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](\\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*(\\.eth)?(:[a-zA-Z0-9]+)?$"
+        // Enhanced ENS name validation supporting subdomains and emoji characters
+        // Supports: jessie.base.eth, uni.eth, name.eth:chain, 1️⃣1️⃣1️⃣.eth, etc.
+        let ensPattern = "^[\\p{L}\\p{N}\\p{M}\\p{S}\\p{P}\\p{Z}][\\p{L}\\p{N}\\p{M}\\p{S}\\p{P}\\p{Z}-]{0,61}[\\p{L}\\p{N}\\p{M}\\p{S}\\p{P}\\p{Z}](\\.[\\p{L}\\p{N}\\p{M}\\p{S}\\p{P}\\p{Z}][\\p{L}\\p{N}\\p{M}\\p{S}\\p{P}\\p{Z}-]{0,61}[\\p{L}\\p{N}\\p{M}\\p{S}\\p{P}\\p{Z}])*(\\.eth)?(:[\\p{L}\\p{N}\\p{M}\\p{S}\\p{P}\\p{Z}]+)?$"
         let regex = try? NSRegularExpression(pattern: ensPattern)
         let range = NSRange(location: 0, length: name.utf16.count)
         return regex?.firstMatch(in: name, options: [], range: range) != nil

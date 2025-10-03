@@ -15,8 +15,8 @@ public class HelperClass {
     public static func checkFormat(_ text: String) -> Bool {
         let range = NSRange(location: 0, length: text.utf16.count)
         
-        // Check for ENS domains (.eth) - now supports subdomains like jessie.base.eth
-        let ensRegex = #"^[a-zA-Z0-9.-]+\.eth$"#
+        // Check for ENS domains (.eth) - now supports subdomains like jessie.base.eth and emoji characters
+        let ensRegex = #"^[\p{L}\p{N}\p{M}\p{S}\p{P}\p{Z}.-]+\.eth$"#
         if let regex = try? NSRegularExpression(pattern: ensRegex) {
             let matches = regex.matches(in: text, options: [], range: range)
             if matches.count > 0 {
@@ -24,8 +24,8 @@ public class HelperClass {
             }
         }
         
-        // Check for multi-chain domains (old format: name.chain) - now supports subdomains
-        let multiChainRegex = #"^[a-zA-Z0-9.-]+\.(btc|sol|doge|xrp|ltc|ada|base|arbi|polygon|avax|bsc|op|zora|linea|scroll|mantle|celo|gnosis|fantom)$"#
+        // Check for multi-chain domains (old format: name.chain) - now supports subdomains and emoji characters
+        let multiChainRegex = #"^[\p{L}\p{N}\p{M}\p{S}\p{P}\p{Z}.-]+\.(btc|sol|doge|xrp|ltc|ada|base|arbi|polygon|avax|bsc|op|zora|linea|scroll|mantle|celo|gnosis|fantom)$"#
         if let regex = try? NSRegularExpression(pattern: multiChainRegex) {
             let matches = regex.matches(in: text, options: [], range: range)
             if matches.count > 0 {
@@ -33,8 +33,8 @@ public class HelperClass {
             }
         }
         
-        // Check for text record domains (old format: name.textrecord) - now supports subdomains
-        let textRecordRegex = #"^[a-zA-Z0-9.-]+\.(x|url|github|name|bio|description|avatar|header)$"#
+        // Check for text record domains (old format: name.textrecord) - now supports subdomains and emoji characters
+        let textRecordRegex = #"^[\p{L}\p{N}\p{M}\p{S}\p{P}\p{Z}.-]+\.(x|url|github|name|bio|description|avatar|header)$"#
         if let regex = try? NSRegularExpression(pattern: textRecordRegex) {
             let matches = regex.matches(in: text, options: [], range: range)
             if matches.count > 0 {
@@ -42,8 +42,8 @@ public class HelperClass {
             }
         }
         
-        // Check for new format (name.eth:chain or name.eth:textrecord) - now supports subdomains
-        let newFormatRegex = #"^[a-zA-Z0-9.-]+\.eth:(btc|sol|doge|xrp|ltc|ada|base|arbi|polygon|avax|bsc|op|zora|linea|scroll|mantle|celo|gnosis|fantom|x|url|github|name|bio|description|avatar|header)$"#
+        // Check for new format (name.eth:chain or name.eth:textrecord) - now supports subdomains and emoji characters
+        let newFormatRegex = #"^[\p{L}\p{N}\p{M}\p{S}\p{P}\p{Z}.-]+\.eth:(btc|sol|doge|xrp|ltc|ada|base|arbi|polygon|avax|bsc|op|zora|linea|scroll|mantle|celo|gnosis|fantom|x|url|github|name|bio|description|avatar|header)$"#
         if let regex = try? NSRegularExpression(pattern: newFormatRegex) {
             let matches = regex.matches(in: text, options: [], range: range)
             if matches.count > 0 {
