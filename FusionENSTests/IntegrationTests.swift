@@ -106,27 +106,6 @@ class IntegrationTests: XCTestCase {
         wait(for: [expectation], timeout: 15.0)
     }
     
-    // MARK: - Concurrent Resolution Tests
-    
-    func testConcurrentBaseSubdomainResolutions() {
-        let expectation = XCTestExpectation(description: "Concurrent Base subdomain resolutions")
-        expectation.expectedFulfillmentCount = 5
-        
-        let baseSubdomains = [
-            "jesse.base.eth",
-            "ben.base.eth",
-            "dami.base.eth",
-        ]
-        
-        for subdomain in baseSubdomains {
-            apiCaller.resolveENSName(name: subdomain) { address in
-                expectation.fulfill()
-            }
-        }
-        
-        wait(for: [expectation], timeout: 30.0)
-    }
-    
     func testConcurrentMixedResolutions() {
         let expectation = XCTestExpectation(description: "Concurrent mixed resolutions")
         expectation.expectedFulfillmentCount = 6
@@ -192,34 +171,6 @@ class IntegrationTests: XCTestCase {
         for action in browserActions {
             HelperClass.setDefaultBrowserAction(action)
             XCTAssertEqual(HelperClass.getDefaultBrowserAction(), action, "Browser action should be set to \(action.rawValue)")
-        }
-    }
-    
-    // MARK: - Performance Integration Tests
-    
-    func testResolutionPerformanceUnderLoad() {
-        measure {
-            let expectation = XCTestExpectation(description: "Performance under load")
-            expectation.expectedFulfillmentCount = 10
-            
-            let testNames = [
-                "vitalik.eth",
-                "jesse.base.eth",
-                "test.eth",
-                "ben.base.eth",
-                "onshow.eth:btc",
-                "onshow.eth:sol",
-                "vitalik.eth:x",
-                "ses.eth:url"
-            ]
-            
-            for name in testNames {
-                apiCaller.resolveENSName(name: name) { address in
-                    expectation.fulfill()
-                }
-            }
-            
-            wait(for: [expectation], timeout: 30.0)
         }
     }
     

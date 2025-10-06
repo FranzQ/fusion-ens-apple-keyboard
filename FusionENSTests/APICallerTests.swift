@@ -69,7 +69,7 @@ class APICallerTests: XCTestCase {
     func testResolveInvalidENSName() {
         let expectation = XCTestExpectation(description: "Resolve invalid ENS name")
         
-        apiCaller.resolveENSName(name: "invalidname.eth") { address in
+        apiCaller.resolveENSName(name: "notavalidnameoo.eth") { address in
             // Should return empty string for invalid names
             XCTAssertTrue(address.isEmpty, "Invalid ENS name should return empty address")
             expectation.fulfill()

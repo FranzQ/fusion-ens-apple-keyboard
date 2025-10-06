@@ -13,6 +13,11 @@ public class HelperClass {
     /// - Parameter text: The text to validate
     /// - Returns: True if the text is a valid ENS domain format
     public static func checkFormat(_ text: String) -> Bool {
+        // First check for invalid patterns (double dots, etc.)
+        if text.contains("..") {
+            return false
+        }
+        
         // Check for ENS domains (.eth) - now supports subdomains like jessie.base.eth and emoji characters
         let ensRegex = #"^[\p{L}\p{N}\p{M}\p{S}\p{P}\p{Z}.-]+\.eth$"#
         let range = NSRange(location: 0, length: text.utf16.count)

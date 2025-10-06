@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		1E4B86E42E844C82000D679C /* FusionENSShared in Frameworks */ = {isa = PBXBuildFile; productRef = 1E4B86E32E844C82000D679C /* FusionENSShared */; };
 		1E4B86E62E844C8A000D679C /* FusionENSShared in Frameworks */ = {isa = PBXBuildFile; productRef = 1E4B86E52E844C8A000D679C /* FusionENSShared */; };
-		1E770F5A2E93C1D100801033 /* FusionENSShared in Frameworks */ = {isa = PBXBuildFile; productRef = 1E770F592E93C1D100801033 /* FusionENSShared */; };
 		1E770F5C2E93C20000801033 /* FusionENSShared in Frameworks */ = {isa = PBXBuildFile; productRef = 1E770F5B2E93C20000801033 /* FusionENSShared */; };
 		1E7715832E6579B3005914E9 /* UIHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BB89972A59B85B0038A0E0 /* UIHelpers.swift */; };
 		1E9AA2042E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E9AA1FD2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -63,13 +62,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		1E770F3D2E93B70100801033 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = A1338FDD298ABB02007DC669 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = A1338FE4298ABB02007DC669;
-			remoteInfo = "Fusion ENS";
-		};
 		1E770F4A2E93B76D00801033 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = A1338FDD298ABB02007DC669 /* Project object */;
@@ -119,7 +111,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		1E770F372E93B70100801033 /* FusionENSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FusionENSUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E770F462E93B76D00801033 /* FusionENSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FusionENSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E9AA1FD2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FusionENSUIKitKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E9AA2152E7AD8B800FEA0D4 /* FusionENSKeyboard.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FusionENSKeyboard.entitlements; sourceTree = "<group>"; };
@@ -178,20 +169,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		1E770F382E93B70100801033 /* FusionENSUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = FusionENSUITests; sourceTree = "<group>"; };
 		1E770F472E93B76D00801033 /* FusionENSTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = FusionENSTests; sourceTree = "<group>"; };
 		1E9AA1FE2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (1E9AA2052E7ACF6900FEA0D4 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = FusionENSUIKitKeyboard; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		1E770F342E93B70100801033 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				1E770F5A2E93C1D100801033 /* FusionENSShared in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		1E770F432E93B76D00801033 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -243,7 +225,6 @@
 				A1338FE7298ABB02007DC669 /* FusionENSApp */,
 				A1339001298ABB64007DC669 /* FusionENSKeyboard */,
 				1E9AA1FE2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard */,
-				1E770F382E93B70100801033 /* FusionENSUITests */,
 				1E770F472E93B76D00801033 /* FusionENSTests */,
 				A1338FE6298ABB02007DC669 /* Products */,
 				A133900F298ABC90007DC669 /* Frameworks */,
@@ -256,7 +237,6 @@
 				A1338FE5298ABB02007DC669 /* Fusion ENS.app */,
 				A1339000298ABB64007DC669 /* FusionENSKeyboard.appex */,
 				1E9AA1FD2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard.appex */,
-				1E770F372E93B70100801033 /* FusionENSUITests.xctest */,
 				1E770F462E93B76D00801033 /* FusionENSTests.xctest */,
 			);
 			name = Products;
@@ -362,30 +342,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1E770F362E93B70100801033 /* FusionENSUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 1E770F3F2E93B70100801033 /* Build configuration list for PBXNativeTarget "FusionENSUITests" */;
-			buildPhases = (
-				1E770F332E93B70100801033 /* Sources */,
-				1E770F342E93B70100801033 /* Frameworks */,
-				1E770F352E93B70100801033 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				1E770F3E2E93B70100801033 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				1E770F382E93B70100801033 /* FusionENSUITests */,
-			);
-			name = FusionENSUITests;
-			packageProductDependencies = (
-				1E770F592E93C1D100801033 /* FusionENSShared */,
-			);
-			productName = FusionENSUITests;
-			productReference = 1E770F372E93B70100801033 /* FusionENSUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 		1E770F452E93B76D00801033 /* FusionENSTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1E770F4C2E93B76D00801033 /* Build configuration list for PBXNativeTarget "FusionENSTests" */;
@@ -492,10 +448,6 @@
 				LastSwiftUpdateCheck = 2600;
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
-					1E770F362E93B70100801033 = {
-						CreatedOnToolsVersion = 26.0.1;
-						TestTargetID = A1338FE4298ABB02007DC669;
-					};
 					1E770F452E93B76D00801033 = {
 						CreatedOnToolsVersion = 26.0.1;
 						TestTargetID = A1338FE4298ABB02007DC669;
@@ -534,19 +486,11 @@
 				A1338FFF298ABB64007DC669 /* FusionENSKeyboard */,
 				1E9AA1FC2E7ACF6800FEA0D4 /* FusionENSUIKitKeyboard */,
 				1E770F452E93B76D00801033 /* FusionENSTests */,
-				1E770F362E93B70100801033 /* FusionENSUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		1E770F352E93B70100801033 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		1E770F442E93B76D00801033 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -585,13 +529,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		1E770F332E93B70100801033 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		1E770F422E93B76D00801033 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -657,11 +594,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		1E770F3E2E93B70100801033 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = A1338FE4298ABB02007DC669 /* Fusion ENS */;
-			targetProxy = 1E770F3D2E93B70100801033 /* PBXContainerItemProxy */;
-		};
 		1E770F4B2E93B76D00801033 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A1338FE4298ABB02007DC669 /* Fusion ENS */;
@@ -699,53 +631,6 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		1E770F402E93B70100801033 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = WC7S9A7PR9;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.FusionENSUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = "Fusion ENS";
-			};
-			name = Debug;
-		};
-		1E770F412E93B70100801033 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = WC7S9A7PR9;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.fusionens.FusionENSUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = "Fusion ENS";
-			};
-			name = Release;
-		};
 		1E770F4D2E93B76D00801033 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1123,15 +1008,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1E770F3F2E93B70100801033 /* Build configuration list for PBXNativeTarget "FusionENSUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				1E770F402E93B70100801033 /* Debug */,
-				1E770F412E93B70100801033 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		1E770F4C2E93B76D00801033 /* Build configuration list for PBXNativeTarget "FusionENSTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -1220,11 +1096,6 @@
 			productName = FusionENSShared;
 		};
 		1E4B86E52E844C8A000D679C /* FusionENSShared */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 1E4B86E22E844C79000D679C /* XCLocalSwiftPackageReference "FusionENSShared" */;
-			productName = FusionENSShared;
-		};
-		1E770F592E93C1D100801033 /* FusionENSShared */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 1E4B86E22E844C79000D679C /* XCLocalSwiftPackageReference "FusionENSShared" */;
 			productName = FusionENSShared;
