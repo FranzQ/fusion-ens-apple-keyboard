@@ -278,64 +278,8 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
         // Mark as loading
         Self.loadingRequests.insert(baseDomain)
         
-        // Use ENS metadata API directly with ENS name (1 API call instead of 3)
-        let metadataURL = "https://metadata.ens.domains/mainnet/avatar/\(baseDomain)"
-        
-        // Cancel any existing request
-        currentRequest?.cancel()
-        
-        currentRequest = AF.request(metadataURL).responseString { [weak self] response in
-            guard let self = self else { 
-                Self.loadingRequests.remove(baseDomain)
-                return 
-            }
-            
-            // Remove from loading requests
-            Self.loadingRequests.remove(baseDomain)
-            
-            guard let avatarURLString = response.value,
-                  !avatarURLString.isEmpty,
-                  avatarURLString != "data:image/svg+xml;base64," else {
-                // Fallback: try ENSData API for avatar
-                self.loadENSAvatarFromENSData(baseDomain: baseDomain)
-                return
-            }
-            
-            // Check if the response is a JSON error message
-            if avatarURLString.hasPrefix("{") && avatarURLString.contains("message") {
-                // Fallback: try ENSData API for avatar
-                self.loadENSAvatarFromENSData(baseDomain: baseDomain)
-                return
-            }
-            
-            // Clean HTML tags if present
-            let cleanURLString = self.cleanHTMLTags(from: avatarURLString)
-            
-            // Check if it's a valid URL
-            guard !cleanURLString.isEmpty,
-                  let url = URL(string: cleanURLString) else {
-                // Fallback: try ENSData API for avatar
-                self.loadENSAvatarFromENSData(baseDomain: baseDomain)
-                return
-            }
-            
-            // Load avatar image (this is the only image loading call needed)
-            self.loadImage(from: url) { [weak self] image in
-                DispatchQueue.main.async {
-                    guard let self = self else { return }
-                    
-                    if let image = image {
-                        // Cache the image (memory + disk)
-                        Self.addToCache(image, for: baseDomain)
-                        Self.cacheImageToDisk(image, for: baseDomain)
-                        
-                        self.avatarImageView.image = image
-                        self.avatarImageView.isHidden = false
-                        self.globeIcon.isHidden = true
-                    }
-                }
-            }
-        }
+        // Use ENSData API first for avatar (same as resolution)
+        self.loadENSAvatarFromENSData(baseDomain: baseDomain)
     }
     
     private func loadENSAvatarFromENSData(baseDomain: String) {
@@ -349,13 +293,12 @@ class ENSNameTableViewCell: UITableViewCell, UIContextMenuInteractionDelegate {
             guard let self = self,
                   let data = response.data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let avatarURLString = json["avatar"] as? String,
+                  let avatarURLString = json["avatar_small"] as? String,
                   !avatarURLString.isEmpty else {
                 // Remove from loading requests
                 Self.loadingRequests.remove(baseDomain)
                 return
             }
-            
             
             // Load avatar image
             if let url = URL(string: avatarURLString) {

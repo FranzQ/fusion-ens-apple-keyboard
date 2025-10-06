@@ -835,46 +835,8 @@ class ContactTableViewCell: UITableViewCell {
     }
     
     private func loadENSAvatarForContact(ensName: String, completion: @escaping (UIImage?) -> Void) {
-        // Use ENS metadata API directly with ENS name (same as ENS page)
-        let metadataURL = "https://metadata.ens.domains/mainnet/avatar/\(ensName)"
-        
-        AF.request(metadataURL).responseString { response in
-            guard let avatarURLString = response.value,
-                  !avatarURLString.isEmpty,
-                  avatarURLString != "data:image/svg+xml;base64," else {
-                // Fallback: try ENSData API for avatar
-                self.loadENSAvatarFromENSDataForContact(baseDomain: ensName, completion: completion)
-                return
-            }
-            
-            // Check if the response is a JSON error message
-            if avatarURLString.hasPrefix("{") && avatarURLString.contains("message") {
-                // Fallback: try ENSData API for avatar
-                self.loadENSAvatarFromENSDataForContact(baseDomain: ensName, completion: completion)
-                return
-            }
-            
-            // Clean HTML tags if present
-            let cleanURLString = self.cleanHTMLTags(from: avatarURLString)
-            
-            // Check if it's a valid URL
-            guard !cleanURLString.isEmpty,
-                  let url = URL(string: cleanURLString) else {
-                // Fallback: try ENSData API for avatar
-                self.loadENSAvatarFromENSDataForContact(baseDomain: ensName, completion: completion)
-                return
-            }
-            
-            // Load avatar image
-            AF.request(url).responseData { response in
-                if let data = response.data, let image = UIImage(data: data) {
-                    completion(image)
-                } else {
-                    // Fallback: try ENSData API for avatar
-                    self.loadENSAvatarFromENSDataForContact(baseDomain: ensName, completion: completion)
-                }
-            }
-        }
+        // Use ENSData API first for avatar (same as resolution)
+        self.loadENSAvatarFromENSDataForContact(baseDomain: ensName, completion: completion)
     }
     
     private func loadENSAvatarFromENSDataForContact(baseDomain: String, completion: @escaping (UIImage?) -> Void) {
@@ -884,9 +846,13 @@ class ContactTableViewCell: UITableViewCell {
         AF.request(ensDataURL).responseData { response in
             guard let data = response.data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let avatarURLString = json["avatar"] as? String,
-                  !avatarURLString.isEmpty,
-                  let url = URL(string: avatarURLString) else {
+                  let avatarURLString = json["avatar_small"] as? String,
+                  !avatarURLString.isEmpty else {
+                completion(nil)
+                return
+            }
+            
+            guard let url = URL(string: avatarURLString) else {
                 completion(nil)
                 return
             }

@@ -794,57 +794,8 @@ class PaymentRequestViewController: UIViewController {
         }
         
         // If no cached image, proceed with API loading
-        // Use the same approach as Chrome extension: ENS metadata API with Ethereum address
-        
-        // First get the Ethereum address for avatar lookup (use full ENS name like keyboards)
-        APICaller.shared.resolveENSName(name: ensName.name) { [weak self] ethAddress in
-            guard let self = self, !ethAddress.isEmpty else { return }
-            
-            // Use ENS metadata API with Ethereum address (same as Chrome extension)
-            let metadataURL = "https://metadata.ens.domains/mainnet/\(ethAddress)/avatar"
-            
-            AF.request(metadataURL).responseString { [weak self] response in
-                guard let self = self else { return }
-                
-                guard let avatarURLString = response.value,
-                      !avatarURLString.isEmpty,
-                      avatarURLString != "data:image/svg+xml;base64," else {
-                    // Fallback: try ENSData API for avatar
-                    self.loadENSAvatarFromENSData(baseDomain: baseDomain)
-                    return
-                }
-                
-                // Check if the response is a JSON error message
-                if avatarURLString.hasPrefix("{") && avatarURLString.contains("message") {
-                    // Fallback: try ENSData API for avatar
-                    self.loadENSAvatarFromENSData(baseDomain: baseDomain)
-                    return
-                }
-                
-                // Clean HTML tags if present
-                let cleanURLString = self.cleanHTMLTags(from: avatarURLString)
-                
-                // Check if it's a valid URL
-                guard !cleanURLString.isEmpty,
-                      let url = URL(string: cleanURLString) else {
-                    // Fallback: try ENSData API for avatar
-                    self.loadENSAvatarFromENSData(baseDomain: baseDomain)
-                    return
-                }
-                
-                // Load avatar image
-                self.loadImage(from: url) { [weak self] image in
-                    DispatchQueue.main.async {
-                        guard let self = self else { return }
-                        if let image = image {
-                            self.avatarImageView.image = image
-                            self.avatarImageView.isHidden = false
-                            self.globeIconImageView.isHidden = true
-                        }
-                    }
-                }
-            }
-        }
+        // Use ENSData API first for avatar (same as resolution)
+        self.loadENSAvatarFromENSData(baseDomain: baseDomain)
     }
     
     private func loadENSAvatarFromENSData(baseDomain: String) {
@@ -855,7 +806,7 @@ class PaymentRequestViewController: UIViewController {
             guard let self = self,
                   let data = response.data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let avatarURLString = json["avatar"] as? String,
+                  let avatarURLString = json["avatar_small"] as? String,
                   !avatarURLString.isEmpty else {
                 return
             }
