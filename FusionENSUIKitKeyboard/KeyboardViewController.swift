@@ -2234,9 +2234,6 @@ textDocumentProxy.insertText("\n")
                 return
             }
             
-            // Debug: Print raw response
-            if String(data: data, encoding: .utf8) != nil {
-            }
             
             guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                 DispatchQueue.main.async {

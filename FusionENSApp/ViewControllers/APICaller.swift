@@ -54,21 +54,29 @@ class APICaller {
         } else {
             // Check if this is an ETH subdomain (.base.eth, .uni.eth, etc.)
             let isEthSubdomain = name.hasSuffix(".eth") && name.contains(".")
-            
             if isEthSubdomain {
-                // For ETH subdomains (.base.eth, .uni.eth, etc.), use ENS Ideas API only
-                resolveWithENSIdeasAPI(name: name, completion: completion)
+                // For ETH subdomains (.base.eth, .uni.eth, etc.), use ENSData API
+                resolveWithENSDataAPI(name: name) { address in
+                    completion(address)
+                }
             } else if chain == "eth" {
-                // For .eth domains, use Fusion API
-                resolveWithFusionAPI(name: name, completion: completion)
+                // For .eth domains, use Fusion API with ENSData fallback
+                resolveWithFusionAPI(name: name) { address in
+                    if !address.isEmpty {
+                        completion(address)
+                    } else {
+                        // Fallback to ENSData API
+                        self.resolveWithENSDataAPI(name: name, completion: completion)
+                    }
+                }
             } else {
                 // For multi-chain domains (.btc, .sol, .doge, etc.), use Fusion API first
                 resolveWithFusionAPI(name: name) { address in
                     if !address.isEmpty {
                         completion(address)
                     } else {
-                        // Fallback to ENS Ideas API
-                        self.resolveWithENSIdeasAPI(name: name, completion: completion)
+                        // Fallback to ENSData API
+                        self.resolveWithENSDataAPI(name: name, completion: completion)
                     }
                 }
             }
@@ -138,70 +146,28 @@ class APICaller {
         }
     }
     
-    private func resolveWithENSIdeasAPI(name: String, completion: @escaping (String) -> Void) {
-        guard let url = URL(string: "\(URLS.ensIdeasResolver(name: name))") else {
+    
+    private func resolveWithENSDataAPI(name: String, completion: @escaping (String) -> Void) {
+        let urlString = "https://api.ensdata.net/\(name)"
+        guard let url = URL(string: urlString) else {
             completion("")
             return
         }
         
-        let request = session.request(url)
-        activeRequests[name] = request
-        
-        request.response { [weak self] response in
-            // Remove from active requests
-            self?.activeRequests.removeValue(forKey: name)
-            
-            // Handle network errors
-            if let error = response.error {
+        session.request(url).response { response in
+            guard let data = response.data,
+                  let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+            else {
                 completion("")
                 return
             }
             
-            guard let data = response.data else {
-                completion("")
-                return
-            }
-            
-            do {
-                guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
-                    completion("")
-                    return
-                }
-                
-                // Handle ENS Ideas API response format
-                if let address = json["address"] as? String, !address.isEmpty {
-                    // Cache the successful resolution
-                    self.cacheResolution(name: name, address: address)
-                    completion(address)
-                } else if let address = json["result"] as? String, !address.isEmpty {
-                    // Cache the successful resolution
-                    self.cacheResolution(name: name, address: address)
-                    completion(address)
-                } else if let address = json["data"] as? String, !address.isEmpty {
-                    // Cache the successful resolution
-                    self.cacheResolution(name: name, address: address)
-                    completion(address)
-                } else {
-                    // Try to find any field that might contain the address
-                    let possibleAddressFields = ["address", "result", "data", "mappedAddress", "resolvedAddress"]
-                    var foundAddress: String?
-                    
-                    for field in possibleAddressFields {
-                        if let value = json[field] as? String, !value.isEmpty {
-                            foundAddress = value
-                            break
-                        }
-                    }
-                    
-                    if let address = foundAddress {
-                        // Cache the successful resolution
-                        self.cacheResolution(name: name, address: address)
-                        completion(address)
-                    } else {
-                        completion("")
-                    }
-                }
-            } catch {
+            // Handle ENSData API response format
+            if let address = json["address"] as? String, !address.isEmpty {
+                // Cache the successful resolution
+                self.cacheResolution(name: name, address: address)
+                completion(address)
+            } else {
                 completion("")
             }
         }
@@ -225,7 +191,7 @@ class APICaller {
         } else if name.hasSuffix(".bio") {
             return "bio"
         } else if name.contains(":") {
-            // Handle new format like vitalik.eth:btc
+            // Handle new format like onshow.eth:btc
             let parts = name.components(separatedBy: ":")
             if parts.count == 2 {
                 return parts[1]
@@ -282,16 +248,16 @@ class APICaller {
 
 struct URLS {
     static let FUSION_BASEURL = "https://api.fusionens.com/"
-    static let ENSIDEAS_BASEURL = "https://api.ensideas.com/"
+    static let ENSDATA_BASEURL = "https://api.ensdata.net/"
     static let fusionResolve = FUSION_BASEURL + "resolve/"
-    static let ensIdeasResolve = ENSIDEAS_BASEURL + "ens/resolve/"
+    static let ensDataResolve = ENSDATA_BASEURL
     
     static func fusionNameResolver(name: String) -> String {
         return fusionResolve + name
     }
     
-    static func ensIdeasResolver(name: String) -> String {
-        return ensIdeasResolve + name
+    static func ensDataResolver(name: String) -> String {
+        return ensDataResolve + name
     }
     
     static func ensNameResolver(name: String) -> String {

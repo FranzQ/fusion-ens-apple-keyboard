@@ -13,7 +13,7 @@ This package provides shared functionality for both the SwiftUI and UIKit versio
 - **Features**: 
   - Multi-chain support (.eth, .btc, .sol, .doge, etc.)
   - Text record support (.x, .url, .github, .bio)
-  - Fallback between Fusion API and ENS Ideas API
+  - Fallback between Fusion API and ENSData API
   - Singleton pattern for shared usage
 
 ### HelperClass
@@ -21,13 +21,13 @@ This package provides shared functionality for both the SwiftUI and UIKit versio
 - **Features**:
   - ENS format validation
   - Multi-chain domain validation
-  - New format support (e.g., vitalik.eth:btc)
+  - New format support (e.g., onshow.eth:btc)
 
 ### URLS
 - **Purpose**: Centralized URL configuration for API endpoints
 - **Features**:
   - Fusion API endpoints
-  - ENS Ideas API endpoints
+  - ENSData API endpoints
   - Dynamic URL generation
 
 ## Usage
@@ -53,9 +53,9 @@ let isValid = HelperClass.isValidENS("vitalik.eth")
 - Standard ENS: `vitalik.eth`
 - Multi-chain: `vitalik.btc`, `vitalik.sol`, `vitalik.doge`
 - Text records: `vitalik.x`, `vitalik.url`, `vitalik.github`
-- New format: `vitalik.eth:btc`
+- New format: `onshow.eth:btc`
 
 ## API Endpoints
 
 - **Fusion API**: `https://api.fusionens.com/resolve/`
-- **ENS Ideas API**: `https://api.ensideas.com/ens/resolve/`
+- **ENSData API**: `https://api.ensdata.net/`

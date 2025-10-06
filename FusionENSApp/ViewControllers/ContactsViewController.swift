@@ -342,15 +342,15 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
                     guard let avatarURLString = response.value,
                           !avatarURLString.isEmpty,
                           avatarURLString != "data:image/svg+xml;base64," else {
-                        // Fallback: try ENS Ideas API for avatar
-                        self.loadContactAvatarFromENSIdeas(baseDomain: baseDomain, index: index)
+                        // Fallback: try ENSData API for avatar
+                        self.loadContactAvatarFromENSData(baseDomain: baseDomain, index: index)
                         return
                     }
                     
                     // Check if the response is a JSON error message
                     if avatarURLString.hasPrefix("{") && avatarURLString.contains("message") {
-                        // Fallback: try ENS Ideas API for avatar
-                        self.loadContactAvatarFromENSIdeas(baseDomain: baseDomain, index: index)
+                        // Fallback: try ENSData API for avatar
+                        self.loadContactAvatarFromENSData(baseDomain: baseDomain, index: index)
                         return
                     }
                     
@@ -360,8 +360,8 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
                     // Check if it's a valid URL
                     guard !cleanURLString.isEmpty,
                           let _ = URL(string: cleanURLString) else {
-                        // Fallback: try ENS Ideas API for avatar
-                        self.loadContactAvatarFromENSIdeas(baseDomain: baseDomain, index: index)
+                        // Fallback: try ENSData API for avatar
+                        self.loadContactAvatarFromENSData(baseDomain: baseDomain, index: index)
                         return
                     }
                     
@@ -392,11 +392,11 @@ class ContactsViewController: UIViewController, AddContactViewControllerDelegate
         }
     }
     
-    private func loadContactAvatarFromENSIdeas(baseDomain: String, index: Int) {
-        // Fallback: try ENS Ideas API for avatar (same as ENS list)
-        let ensIdeasURL = "https://api.ensideas.com/ens/resolve/\(baseDomain)"
+    private func loadContactAvatarFromENSData(baseDomain: String, index: Int) {
+        // Fallback: try ENSData API for avatar (same as ENS list)
+        let ensDataURL = "https://api.ensdata.net/\(baseDomain)"
         
-        let request = AF.request(ensIdeasURL)
+        let request = AF.request(ensDataURL)
         activeRequests["avatar_ideas_\(baseDomain)"] = request
         request.response { [weak self] response in
             DispatchQueue.main.async {
@@ -842,15 +842,15 @@ class ContactTableViewCell: UITableViewCell {
             guard let avatarURLString = response.value,
                   !avatarURLString.isEmpty,
                   avatarURLString != "data:image/svg+xml;base64," else {
-                // Fallback: try ENS Ideas API for avatar
-                self.loadENSAvatarFromENSIdeasForContact(baseDomain: ensName, completion: completion)
+                // Fallback: try ENSData API for avatar
+                self.loadENSAvatarFromENSDataForContact(baseDomain: ensName, completion: completion)
                 return
             }
             
             // Check if the response is a JSON error message
             if avatarURLString.hasPrefix("{") && avatarURLString.contains("message") {
-                // Fallback: try ENS Ideas API for avatar
-                self.loadENSAvatarFromENSIdeasForContact(baseDomain: ensName, completion: completion)
+                // Fallback: try ENSData API for avatar
+                self.loadENSAvatarFromENSDataForContact(baseDomain: ensName, completion: completion)
                 return
             }
             
@@ -860,8 +860,8 @@ class ContactTableViewCell: UITableViewCell {
             // Check if it's a valid URL
             guard !cleanURLString.isEmpty,
                   let url = URL(string: cleanURLString) else {
-                // Fallback: try ENS Ideas API for avatar
-                self.loadENSAvatarFromENSIdeasForContact(baseDomain: ensName, completion: completion)
+                // Fallback: try ENSData API for avatar
+                self.loadENSAvatarFromENSDataForContact(baseDomain: ensName, completion: completion)
                 return
             }
             
@@ -870,18 +870,18 @@ class ContactTableViewCell: UITableViewCell {
                 if let data = response.data, let image = UIImage(data: data) {
                     completion(image)
                 } else {
-                    // Fallback: try ENS Ideas API for avatar
-                    self.loadENSAvatarFromENSIdeasForContact(baseDomain: ensName, completion: completion)
+                    // Fallback: try ENSData API for avatar
+                    self.loadENSAvatarFromENSDataForContact(baseDomain: ensName, completion: completion)
                 }
             }
         }
     }
     
-    private func loadENSAvatarFromENSIdeasForContact(baseDomain: String, completion: @escaping (UIImage?) -> Void) {
-        // Fallback: try ENS Ideas API for avatar (same as ENS page)
-        let ensIdeasURL = "https://api.ensideas.com/ens/resolve/\(baseDomain)"
+    private func loadENSAvatarFromENSDataForContact(baseDomain: String, completion: @escaping (UIImage?) -> Void) {
+        // Fallback: try ENSData API for avatar (same as ENS page)
+        let ensDataURL = "https://api.ensdata.net/\(baseDomain)"
         
-        AF.request(ensIdeasURL).responseData { response in
+        AF.request(ensDataURL).responseData { response in
             guard let data = response.data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let avatarURLString = json["avatar"] as? String,

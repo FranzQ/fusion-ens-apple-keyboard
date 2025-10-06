@@ -259,7 +259,7 @@ class ENSManagerViewController: UIViewController, UISearchResultsUpdating {
     }
     
     private func extractBaseDomain(from ensName: String) -> String {
-        // Handle new format like vitalik.eth:btc
+        // Handle new format like onshow.eth:btc
         if ensName.contains(":") {
             let parts = ensName.components(separatedBy: ":")
             if parts.count == 2 {

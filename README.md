@@ -7,7 +7,7 @@ A custom iOS keyboard that resolves ENS names (like `vitalik.eth`) to blockchain
 ## ✨ **Key Features**
 
 - **ENS Resolution**: Type `vitalik.eth` → get Ethereum address
-- **Multi-Chain Support**: `vitalik.eth:btc` → Bitcoin address, `vitalik.eth:sol` → Solana address
+- **Multi-Chain Support**: `onshow.eth:btc` → Bitcoin address, `onshow.eth:sol` → Solana address
 - **Contact Management**: Save ENS names as contacts with avatars
 - **Send Crypto**: Direct deeplinks to Trust Wallet, MetaMask, Coinbase Wallet
 - **Payment Requests**: Generate QR codes for receiving crypto
@@ -25,7 +25,7 @@ A custom iOS keyboard that resolves ENS names (like `vitalik.eth`) to blockchain
 
 1. **Install** the app and enable keyboard in iOS Settings
 2. **Switch** to Fusion ENS Keyboard in any text field
-3. **Type** ENS names like `vitalik.eth` or `vitalik.eth:btc`
+3. **Type** ENS names like `vitalik.eth` or `onshow.eth:btc`
 4. **Get** resolved addresses automatically inserted
 
 ## 🔗 **Supported Chains**

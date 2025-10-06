@@ -8,19 +8,20 @@
 import Foundation
 
 /// URL configuration for ENS resolution APIs
-/// Provides endpoints for both Fusion API and ENS Ideas API
+/// Provides endpoints for Fusion API and ENSData API
 struct URLS {
     static let FUSION_BASEURL = "https://api.fusionens.com/"
-    static let ENSIDEAS_BASEURL = "https://api.ensideas.com/"
+    static let ENSDATA_BASEURL = "https://api.ensdata.net/"
     static let fusionResolve = FUSION_BASEURL + "resolve/"
-    static let ensIdeasResolve = ENSIDEAS_BASEURL + "ens/resolve/"
+    static let ensDataResolve = ENSDATA_BASEURL
     
     static func fusionNameResolver(name: String) -> String {
         return fusionResolve + name
     }
     
-    static func ensIdeasResolver(name: String) -> String {
-        return ensIdeasResolve + name
+    
+    static func ensDataResolver(name: String) -> String {
+        return ensDataResolve + name
     }
     
     static func ensNameResolver(name: String) -> String {

@@ -34,7 +34,7 @@ public class HelperClass {
             }
         }
         
-        // Check for new format like vitalik.eth:btc - now supports subdomains and emoji characters
+        // Check for new format like onshow.eth:btc - now supports subdomains and emoji characters
         let newFormatRegex = #"^[\p{L}\p{N}\p{M}\p{S}\p{P}\p{Z}.-]+\.eth:[\p{L}\p{N}\p{M}\p{S}\p{P}\p{Z}-]+$"#
         
         if let regex = try? NSRegularExpression(pattern: newFormatRegex) {

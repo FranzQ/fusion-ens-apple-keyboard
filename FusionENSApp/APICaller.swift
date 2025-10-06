@@ -9,7 +9,7 @@ import Foundation
 import Alamofire
 
 /// A shared API client for resolving ENS (Ethereum Name Service) names to addresses
-/// Supports multiple chains and text records through Fusion API and ENS Ideas API
+/// Supports multiple chains and text records through Fusion API and ENSData API
 class APICaller {
     static let shared = APICaller()
     
@@ -17,7 +17,7 @@ class APICaller {
     
     /// Resolves an ENS name to its corresponding address
     /// - Parameters:
-    ///   - name: The ENS name to resolve (e.g., "vitalik.eth", "vitalik.eth:btc")
+    ///   - name: The ENS name to resolve (e.g., "vitalik.eth", "onshow.eth:btc")
     ///   - completion: Completion handler that returns the resolved address or empty string if not found
     func resolveENSName(name: String, completion: @escaping (String) -> Void) {
         let chain = detectChain(name)
@@ -29,13 +29,22 @@ class APICaller {
             // Use Fusion API for text records (.x, .url, .github, etc.)
             resolveWithFusionAPI(name: name, completion: completion)
         } else {
-            // Use Fusion API for all ENS names (including subdomains)
-            resolveWithFusionAPI(name: name) { address in
-                if !address.isEmpty {
+            // Check if this is an ETH subdomain (.base.eth, .uni.eth, etc.)
+            let isEthSubdomain = name.hasSuffix(".eth") && name.contains(".")
+            if isEthSubdomain {
+                // For ETH subdomains (.base.eth, .uni.eth, etc.), use ENSData API
+                resolveWithENSDataAPI(name: name) { address in
                     completion(address)
-                } else {
-                    // Fallback to ENS Ideas API for compatibility
-                    self.resolveWithENSIdeasAPI(name: name, completion: completion)
+                }
+            } else {
+                // Use Fusion API for all other ENS names (including regular .eth)
+                resolveWithFusionAPI(name: name) { address in
+                    if !address.isEmpty {
+                        completion(address)
+                    } else {
+                        // Fallback to ENSData API
+                        self.resolveWithENSDataAPI(name: name, completion: completion)
+                    }
                 }
             }
         }
@@ -69,11 +78,18 @@ class APICaller {
         }
     }
     
-    private func resolveWithENSIdeasAPI(name: String, completion: @escaping (String) -> Void) {
-        guard let url = URL(string: "\(URLS.ensIdeasResolver(name: name))") else {
+    
+    private func resolveWithENSDataAPI(name: String, completion: @escaping (String) -> Void) {
+        let urlString = "\(URLS.ensDataResolver(name: name))"
+        guard let url = URL(string: urlString) else {
             completion("")
             return
         }
+        
+        // Add timeout configuration
+        let session = AF.session
+        session.configuration.timeoutIntervalForRequest = 3.0
+        session.configuration.timeoutIntervalForResource = 5.0
         
         AF.request(url).response { response in
             guard let data = response.data,
@@ -83,26 +99,11 @@ class APICaller {
                 return
             }
             
-            // Handle ENS Ideas API response format
-            if let address = json["address"] as? String {
-                completion(address)
-            } else if let address = json["result"] as? String {
-                completion(address)
-            } else if let address = json["data"] as? String {
+            // Handle ENSData API response format
+            if let address = json["address"] as? String, !address.isEmpty {
                 completion(address)
             } else {
-                // Try to find any field that might contain the address
-                let possibleAddressFields = ["address", "result", "data", "mappedAddress", "resolvedAddress"]
-                var foundAddress: String?
-                
-                for field in possibleAddressFields {
-                    if let value = json[field] as? String, !value.isEmpty {
-                        foundAddress = value
-                        break
-                    }
-                }
-                
-                completion(foundAddress ?? "")
+                completion("")
             }
         }
     }
@@ -125,7 +126,7 @@ class APICaller {
         } else if name.hasSuffix(".bio") {
             return "bio"
         } else if name.contains(":") {
-            // Handle new format like vitalik.eth:btc
+            // Handle new format like onshow.eth:btc
             let parts = name.components(separatedBy: ":")
             if parts.count == 2 {
                 return parts[1]

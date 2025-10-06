@@ -43,6 +43,41 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
       shouldAutocreateTestPlan = "YES">
+      <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "1E770F292E93B6CA00801033"
+               BuildableName = "Fusion ENSTests.xctest"
+               BlueprintName = "Fusion ENSTests"
+               ReferencedContainer = "container:Fusion ENS.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "1E770F362E93B70100801033"
+               BuildableName = "FusionENSUITests.xctest"
+               BlueprintName = "FusionENSUITests"
+               ReferencedContainer = "container:Fusion ENS.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "1E770F452E93B76D00801033"
+               BuildableName = "FusionENSTests.xctest"
+               BlueprintName = "FusionENSTests"
+               ReferencedContainer = "container:Fusion ENS.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"

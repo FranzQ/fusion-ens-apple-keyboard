@@ -734,8 +734,8 @@ class PaymentRequestViewController: UIViewController {
                   let dataDict = json["data"] as? [String: Any],
                   let fullName = dataDict["address"] as? String,
                   !fullName.isEmpty else {
-                // Fallback: try ENS Ideas API for full name
-                self.loadENSFullNameFromENSIdeas()
+                // Fallback: try ENSData API for full name
+                self.loadENSFullNameFromENSData()
                 return
             }
             
@@ -748,18 +748,18 @@ class PaymentRequestViewController: UIViewController {
                     self.fullNameLabel.text = cleanName
                 } else {
                     // If still empty, try fallback
-                    self.loadENSFullNameFromENSIdeas()
+                    self.loadENSFullNameFromENSData()
                 }
             }
         }
     }
     
-    private func loadENSFullNameFromENSIdeas() {
-        // Fallback: try ENS Ideas API
+    private func loadENSFullNameFromENSData() {
+        // Fallback: try ENSData API
         let baseDomain = extractBaseDomain(from: ensName.name)
-        let ensIdeasURL = "https://api.ensideas.com/ens/resolve/\(baseDomain)"
+        let ensDataURL = "https://api.ensdata.net/\(baseDomain)"
         
-        AF.request(ensIdeasURL).responseData { [weak self] response in
+        AF.request(ensDataURL).responseData { [weak self] response in
             guard let self = self else { return }
             
             guard let data = response.data,
@@ -809,15 +809,15 @@ class PaymentRequestViewController: UIViewController {
                 guard let avatarURLString = response.value,
                       !avatarURLString.isEmpty,
                       avatarURLString != "data:image/svg+xml;base64," else {
-                    // Fallback: try ENS Ideas API for avatar
-                    self.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
+                    // Fallback: try ENSData API for avatar
+                    self.loadENSAvatarFromENSData(baseDomain: baseDomain)
                     return
                 }
                 
                 // Check if the response is a JSON error message
                 if avatarURLString.hasPrefix("{") && avatarURLString.contains("message") {
-                    // Fallback: try ENS Ideas API for avatar
-                    self.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
+                    // Fallback: try ENSData API for avatar
+                    self.loadENSAvatarFromENSData(baseDomain: baseDomain)
                     return
                 }
                 
@@ -827,8 +827,8 @@ class PaymentRequestViewController: UIViewController {
                 // Check if it's a valid URL
                 guard !cleanURLString.isEmpty,
                       let url = URL(string: cleanURLString) else {
-                    // Fallback: try ENS Ideas API for avatar
-                    self.loadENSAvatarFromENSIdeas(baseDomain: baseDomain)
+                    // Fallback: try ENSData API for avatar
+                    self.loadENSAvatarFromENSData(baseDomain: baseDomain)
                     return
                 }
                 
@@ -847,11 +847,11 @@ class PaymentRequestViewController: UIViewController {
         }
     }
     
-    private func loadENSAvatarFromENSIdeas(baseDomain: String) {
-        // Fallback: try ENS Ideas API for avatar (same as Chrome extension)
-        let ensIdeasURL = "https://api.ensideas.com/ens/resolve/\(baseDomain)"
+    private func loadENSAvatarFromENSData(baseDomain: String) {
+        // Fallback: try ENSData API for avatar (same as Chrome extension)
+        let ensDataURL = "https://api.ensdata.net/\(baseDomain)"
         
-        AF.request(ensIdeasURL).responseData { [weak self] response in
+        AF.request(ensDataURL).responseData { [weak self] response in
             guard let self = self,
                   let data = response.data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -1113,7 +1113,7 @@ class PaymentRequestViewController: UIViewController {
     }
     
     private func extractBaseDomain(from ensName: String) -> String {
-        // Handle new format like vitalik.eth:btc
+        // Handle new format like onshow.eth:btc
         if ensName.contains(":") {
             let parts = ensName.components(separatedBy: ":")
             if parts.count == 2 {
